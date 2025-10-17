@@ -19,7 +19,7 @@ export default async function AppsPage() {
 
   try {
     const userId = session?.user?.strapiUserId
-    const url = buildStrapiUrl('/api/chatbots')
+    const url = buildStrapiUrl(`/api/chatbots?filters[users_permissions_user][id][$eq]=${encodeURIComponent(userId)}`)
     const res = await fetch(url, {
       method: 'GET',
       headers: {
