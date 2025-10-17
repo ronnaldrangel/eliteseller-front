@@ -85,9 +85,9 @@ const data = {
       url: "#",
       icon: PlugIcon,
       items: [
-        { title: "WhatsApp", url: "#" },
-        { title: "Shopify", url: "#" },
-        { title: "Zapier", url: "#" },
+        { title: "WhatsApp", url: "/integrations/whatsapp" },
+        { title: "Shopify", url: "/integrations/shopify" },
+        { title: "n8n", url: "/integrations/n8n" },
       ],
     },
   ],
