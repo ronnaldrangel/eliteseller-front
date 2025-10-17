@@ -94,17 +94,17 @@ const data = {
   navSecondary: [
     {
       title: "Ayuda",
-      url: "#",
+      url: "/help",
       icon: HelpCircleIcon,
     },
     {
       title: "Documentacion",
-      url: "#",
+      url: "/docs",
       icon: FileTextIcon,
     },
     {
       title: "Afiliados",
-      url: "/afiliados",
+      url: "/affiliates",
       icon: UsersIcon,
     },
   ],
