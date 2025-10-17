@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { PhoneInput } from "@/components/ui/phone-input"
 
 export default function AccountProfileForm({ initialName = '', initialPhone = '' }) {
   const [name, setName] = useState(initialName || '')
@@ -49,12 +50,14 @@ export default function AccountProfileForm({ initialName = '', initialPhone = ''
 
         <Field>
           <FieldLabel htmlFor="phone">Teléfono</FieldLabel>
-          <Input
+          <PhoneInput
             id="phone"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            name="phone"
             placeholder="Tu teléfono"
+            value={phone}
+            onChange={(value) => setPhone(value || "")}
+            international
+            defaultCountry="ES"
           />
         </Field>
 

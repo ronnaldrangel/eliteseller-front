@@ -23,6 +23,8 @@ import {
   BoxIcon,
   ChartBarIcon,
   BotIcon,
+  MenuSquareIcon,
+  MessageSquareIcon,
 } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -51,6 +53,11 @@ const data = {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboardIcon,
+    },
+    {
+      title: "Chats",
+      url: "/chats",
+      icon: MessageSquareIcon,
     },
     {
       title: "Productos",
@@ -166,14 +173,14 @@ export function AppSidebar({
           </SidebarMenuItem>
         </SidebarMenu> */}
         <div className="flex pb-2">
-              <Image
-              src={resolvedTheme === "dark" ? "/images/logo-white.png" : "/images/logo-black.png"}
-              alt="Logo"
-              width={140}
-              height={24}
-              priority
-              className="h-8 w-auto"
-            />
+          <Image
+            src={resolvedTheme === "dark" ? "/images/logo-white.png" : "/images/logo-black.png"}
+            alt="Logo"
+            width={140}
+            height={24}
+            priority
+            className="h-8 w-auto"
+          />
         </div>
 
       </SidebarHeader>
