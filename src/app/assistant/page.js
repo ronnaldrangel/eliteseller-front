@@ -91,10 +91,10 @@ export default async function AppsPage() {
                 </div>
               )}
 
-              <div className="mt-6 rounded-lg border bg-muted/10 p-4">
+              {/* <div className="mt-6 rounded-lg border bg-muted/10 p-4">
                 <h3 className="mb-2 text-sm font-medium">Payload del GET /api/chatbots</h3>
                 <pre className="text-xs whitespace-pre-wrap break-words">{rawPayload ? JSON.stringify(rawPayload, null, 2) : 'Sin contenido'}</pre>
-              </div>
+              </div> */}
 
               {Array.isArray(chatbots) && chatbots.length > 0 && (
                 <div className="my-6">

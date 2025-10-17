@@ -191,7 +191,7 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-xs md:max-w-sm mx-auto">
+      <div className="w-full">
         <div className="space-y-1 text-left mb-6">
           <h1 className="text-2xl font-extrabold">Crear cuenta</h1>
           <p className="text-sm text-muted-foreground">Completa el formulario para crear tu cuenta</p>

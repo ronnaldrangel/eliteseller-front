@@ -90,14 +90,14 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
         <h4 className="text-lg font-semibold">Información básica</h4>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="chatbot_name">Nombre del chatbot</Label>
+          <Field>
+            <FieldLabel htmlFor="chatbot_name">Nombre del chatbot</FieldLabel>
             <Input id="chatbot_name" name="chatbot_name" value={form.chatbot_name} onChange={handleChange} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="company_name">Nombre de la empresa</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="company_name">Nombre de la empresa</FieldLabel>
             <Input id="company_name" name="company_name" value={form.company_name} onChange={handleChange} />
-          </div>
+          </Field>
           <Field>
             <FieldLabel htmlFor="gender">Género</FieldLabel>
             <Select value={form.gender || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))}>
@@ -124,10 +124,10 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
                </SelectContent>
              </Select>
            </Field>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="company_description">Descripción de la empresa</Label>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="company_description">Descripción de la empresa</FieldLabel>
             <Textarea id="company_description" name="company_description" value={form.company_description} onChange={handleChange} rows={3} />
-          </div>
+          </Field>
         </div>
       </div>
 
@@ -135,6 +135,15 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
         <h4 className="text-lg font-semibold">Personalidad</h4>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
+            <FieldLabel htmlFor="style_communication">Estilo de comunicación</FieldLabel>
+            <Textarea id="style_communication" name="style_communication" value={form.style_communication} onChange={handleChange} rows={3} placeholder="friendly, concise, and clear" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="style_sale">Estilo de venta</FieldLabel>
+            <Input id="style_sale" name="style_sale" value={form.style_sale} onChange={handleChange} placeholder="consultative" />
+          </Field>
+
+          <Field className="sm:col-span-2">
             <FieldLabel htmlFor="response_length">Longitud de respuesta</FieldLabel>
             <Select value={form.response_length || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, response_length: value }))}>
               <SelectTrigger id="response_length" className="w-full">
@@ -150,69 +159,66 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
             </Select>
           </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="style_sale">Estilo de venta</Label>
-            <Input id="style_sale" name="style_sale" value={form.style_sale} onChange={handleChange} placeholder="consultative" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="style_communication">Estilo de comunicación</Label>
-            <Textarea id="style_communication" name="style_communication" value={form.style_communication} onChange={handleChange} rows={3} placeholder="friendly, concise, and clear" />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="signs">Usar signos</Label>
-            <div className="flex items-center gap-2">
-              <Switch id="signs" checked={form.signs} onCheckedChange={handleToggleSigns} />
-              <span className="text-sm text-muted-foreground">Activa o desactiva signos</span>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="ban_words">Palabras prohibidas</Label>
-            <Textarea id="ban_words" name="ban_words" value={form.ban_words} onChange={handleChange} rows={3} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="available_emojis">Emojis disponibles</Label>
-            <Input id="available_emojis" name="available_emojis" value={form.available_emojis} onChange={handleChange} placeholder="🙂👍🎉✅" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="emoji">Usar emojis</Label>
+          <Field>
+            <FieldLabel htmlFor="emoji">Usar emojis</FieldLabel>
             <div className="flex items-center gap-2">
               <Switch id="emoji" checked={form.emoji} onCheckedChange={handleToggleEmoji} />
               <span className="text-sm text-muted-foreground">Activa o desactiva el uso de emojis</span>
             </div>
-          </div>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="signs">Usar signos</FieldLabel>
+            <div className="flex items-center gap-2">
+              <Switch id="signs" checked={form.signs} onCheckedChange={handleToggleSigns} />
+              <span className="text-sm text-muted-foreground">Activa o desactiva signos</span>
+            </div>
+          </Field>
+
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="ban_words">Palabras prohibidas</FieldLabel>
+            <Textarea id="ban_words" name="ban_words" value={form.ban_words} onChange={handleChange} rows={3} placeholder="ej. estafa, gratis" />
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="available_emojis">Emojis disponibles</FieldLabel>
+            <Textarea
+              id="available_emojis"
+              placeholder="ej. 😊, 🚀"
+              value={form.available_emojis}
+              onChange={(e) => setForm({ ...form, available_emojis: e.target.value })}
+            />
+          </Field>
         </div>
       </div>
 
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
         <h4 className="text-lg font-semibold">Audiencia e instrucciones</h4>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="target">Público objetivo</Label>
+          <Field>
+            <FieldLabel htmlFor="target">Público objetivo</FieldLabel>
             <Input id="target" name="target" value={form.target} onChange={handleChange} />
-          </div>
-          <div className="space-y-2">
-             <Label htmlFor="instructions">Instrucciones</Label>
+          </Field>
+          <Field>
+             <FieldLabel htmlFor="instructions">Instrucciones</FieldLabel>
              <Input id="instructions" name="instructions" value={form.instructions} onChange={handleChange} />
-           </div>
+           </Field>
         </div>
       </div>
 
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
         <h4 className="text-lg font-semibold">Mensajes</h4>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label htmlFor="welcome_message">Mensaje de bienvenida</Label>
+          <Field>
+            <FieldLabel htmlFor="welcome_message">Mensaje de bienvenida</FieldLabel>
             <Textarea id="welcome_message" name="welcome_message" value={form.welcome_message} onChange={handleChange} rows={3} />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmation_message">Mensaje de confirmación</Label>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="confirmation_message">Mensaje de confirmación</FieldLabel>
             <Textarea id="confirmation_message" name="confirmation_message" value={form.confirmation_message} onChange={handleChange} rows={3} />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label htmlFor="human_derivation_message">Mensaje de derivación a humano</Label>
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="human_derivation_message">Mensaje de derivación a humano</FieldLabel>
             <Textarea id="human_derivation_message" name="human_derivation_message" value={form.human_derivation_message} onChange={handleChange} rows={3} />
-          </div>
+          </Field>
         </div>
       </div>
 

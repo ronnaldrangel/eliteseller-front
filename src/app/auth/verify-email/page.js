@@ -59,7 +59,7 @@ export default function VerifyEmail() {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full">
         <div className="space-y-1 text-left mb-6">
           <h1 className="text-2xl font-extrabold">Verifica tu email</h1>
           <p className="text-sm text-muted-foreground">Revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta.</p>

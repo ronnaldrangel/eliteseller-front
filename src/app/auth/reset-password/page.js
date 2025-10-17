@@ -130,7 +130,7 @@ function ResetPasswordContent() {
 
   return (
     <AuthLayout>
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full">
         <div className="space-y-1">
           <h1 className="text-2xl font-extrabold">Restablecer contraseña</h1>
           <p className="text-sm text-muted-foreground">Ingresa tu nueva contraseña</p>
