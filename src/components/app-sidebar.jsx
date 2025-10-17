@@ -25,7 +25,8 @@ import {
   BotIcon,
   MenuSquareIcon,
   MessageSquareIcon,
-} from "lucide-react"
+  ChevronRight,
+  PlugIcon } from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -38,7 +39,12 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarGroup,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import Image from "next/image"
 import { useTheme } from 'next-themes'
 
@@ -140,7 +146,18 @@ const data = {
       icon: UsersIcon,
     },
   ],
-  // Se eliminó la sección de documentos del sidebar
+  navIntegrations: [
+    {
+      title: "Integraciones",
+      url: "#",
+      icon: PlugIcon,
+      items: [
+        { title: "WhatsApp", url: "#" },
+        { title: "Shopify", url: "#" },
+        { title: "Zapier", url: "#" },
+      ],
+    },
+  ],
 }
 
 export function AppSidebar({
@@ -186,6 +203,42 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
+        {/* Collapsible debajo de Mi vendedor */}
+        <SidebarGroup>
+          <SidebarMenu>
+            {data.navIntegrations.map((item) => (
+              <Collapsible
+                key={item.title}
+                asChild
+                defaultOpen={item.isActive}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton tooltip={item.title}>
++                     {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {item.items?.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton asChild>
+                            <a href={subItem.url}>
+                              <span>{subItem.title}</span>
+                            </a>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            ))}
+          </SidebarMenu>
+        </SidebarGroup>
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import {
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -19,6 +20,7 @@ export function NavMain({
   const pathname = usePathname()
   return (
     <SidebarGroup>
+      <SidebarGroupLabel>Plataforma</SidebarGroupLabel>
       <SidebarGroupContent className="flex flex-col gap-2">
         {/* <SidebarMenu>
           <SidebarMenuItem className="flex items-center gap-2">
