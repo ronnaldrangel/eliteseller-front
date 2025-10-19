@@ -22,10 +22,11 @@ export default async function ProductsPage({ params }) {
     qs.set('filters[chatbot][documentId][$eq]', chatbotDocumentId)
   }
 
-  const url = buildStrapiUrl(`/api/products?${qs.toString()}`)
+  const url = buildStrapiUrl(`/api/products?${qs.toString()}&populate=media`)
 
   let products = []
   let error = null
+  let rawPayload = null
 
   try {
     const res = await fetch(url, {
@@ -40,9 +41,11 @@ export default async function ProductsPage({ params }) {
     if (!res.ok) {
       const details = await res.json().catch(() => ({}))
       error = details?.error?.message || `No se pudo cargar productos (status ${res.status})`
+      rawPayload = details
     } else {
       const data = await res.json()
       products = Array.isArray(data) ? data : (data?.data || [])
+      rawPayload = data
     }
   } catch (e) {
     error = 'Error al conectar con Strapi. Verifica tu conexión.'
@@ -69,6 +72,10 @@ export default async function ProductsPage({ params }) {
         ) : (
           <ProductsClientTable columns={columns} data={products} />
         )}
+        <div className="rounded-lg border bg-muted/20 p-4 mt-4">
+          <h3 className="mb-2 text-sm font-medium">Payload del GET /api/products</h3>
+          <pre className="text-xs whitespace-pre-wrap break-words">{rawPayload ? JSON.stringify(rawPayload, null, 2) : 'Sin contenido'}</pre>
+        </div>
       </div>
     </div>
   )
