@@ -47,6 +47,8 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import Image from "next/image"
 import { useTheme } from 'next-themes'
+import { TeamSwitcher } from "@/components/team-switcher"
+import { useChatbot } from "@/contexts/chatbot-context"
 
 const data = {
   user: {
@@ -57,7 +59,7 @@ const data = {
   navMain: [
     {
       title: "Dashboard",
-      url: "/dashboard",
+      url: "/home",
       icon: LayoutDashboardIcon,
     },
     {
@@ -98,11 +100,6 @@ const data = {
       icon: HelpCircleIcon,
     },
     {
-      title: "Documentacion",
-      url: "/docs",
-      icon: FileTextIcon,
-    },
-    {
       title: "Afiliados",
       url: "/affiliates",
       icon: UsersIcon,
@@ -115,30 +112,48 @@ export function AppSidebar({
 }) {
   const { data: session } = useSession()
   const { resolvedTheme } = useTheme()
+  const { selectedChatbotId } = useChatbot()
+
+  const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
+  const withChatbotSegment = (path) => {
+    if (!cid) return "/select"
+    const trimmed = path.startsWith('/') ? path : `/${path}`
+    if (trimmed === '/dashboard') return `/dashboard/${cid}`
+    return `/dashboard/${cid}${trimmed}`
+  }
+
+  const navMainDynamic = data.navMain.map((item) => {
+    const dynamicPaths = ["/dashboard", "/home", "/chats", "/products", "/metrics", "/assistant", "/integrations"]
+    if (item.items && item.items.length > 0) {
+      // Map sub-items (e.g., Integrations) to dynamic URLs
+      const mappedSubItems = item.items.map((sub) => ({
+        ...sub,
+        url: withChatbotSegment(sub.url)
+      }))
+      const baseUrl = item.url && item.url !== "#" ? withChatbotSegment(item.url) : withChatbotSegment("/integrations")
+      return { ...item, url: baseUrl, items: mappedSubItems }
+    } else if (dynamicPaths.includes(item.url)) {
+      return { ...item, url: withChatbotSegment(item.url) }
+    }
+    return item
+  })
+
+  const navSecondaryDynamic = data.navSecondary.map((item) => {
+    const dynamicSecondary = ["/help", "/docs", "/affiliates"]
+    if (dynamicSecondary.includes(item.url)) {
+      return { ...item, url: withChatbotSegment(item.url) }
+    }
+    return item
+  })
+
   const userFromSession = {
     name: session?.user?.name || session?.user?.email || "Usuario",
     email: session?.user?.email || "",
-    // Avatar generado con Gravatar estilo retro a partir del email
     avatar: `https://www.gravatar.com/avatar/${md5((session?.user?.email || "").trim().toLowerCase())}?d=retro`,
   }
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
-        {/* <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Run8in</span>
-                  <span className="truncate text-xs">Power in 1 click</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu> */}
         <div className="flex pb-2">
           <Image
             src={resolvedTheme === "dark" ? "/images/logo-white.png" : "/images/logo-black.png"}
@@ -149,11 +164,28 @@ export function AppSidebar({
             className="h-8 w-auto"
           />
         </div>
-
+        <div className="pt-1">
+          <TeamSwitcher />
+        </div>
       </SidebarHeader>
+      {/* <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" asChild>
+            <a href="#">
+              <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <Command className="size-4" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">Run8in</span>
+                <span className="truncate text-xs">Power in 1 click</span>
+              </div>
+            </a>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu> */}
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
+        <NavMain items={navMainDynamic} />
+        <NavSecondary items={navSecondaryDynamic} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userFromSession} />

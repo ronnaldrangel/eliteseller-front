@@ -78,7 +78,7 @@ export default function LoginPageClient() {
           toast.error("Error al iniciar sesión. Inténtalo de nuevo.")
         }
       } else if (result?.ok) {
-        window.location.href = "/dashboard"
+        window.location.href = "/select"
       }
     } catch (error) {
       console.error("Error:", error)
@@ -91,7 +91,7 @@ export default function LoginPageClient() {
   const handleGoogleSignIn = async () => {
     try {
       setIsLoading(true)
-      await signIn("google", { callbackUrl: "/dashboard" })
+      await signIn("google", { callbackUrl: "/select" })
     } catch (error) {
       console.error("Error with Google sign in:", error)
       toast.error("Error al iniciar sesión con Google")

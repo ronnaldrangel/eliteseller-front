@@ -1,6 +1,7 @@
 'use client';
 
 import { AppProgressProvider as ProgressProvider } from '@bprogress/next';
+import { ChatbotProvider } from '@/contexts/chatbot-context';
 
 const Providers = ({ children }) => {
   return (
@@ -10,7 +11,7 @@ const Providers = ({ children }) => {
       options={{ showSpinner: false }}
       shallowRouting
     >
-      {children}
+      <ChatbotProvider>{children}</ChatbotProvider>
     </ProgressProvider>
   );
 };

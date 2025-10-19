@@ -6,7 +6,7 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
 
   // Define protected routes
-  const protectedRoutes = ["/dashboard", "/profile", "/settings"]
+  const protectedRoutes = ["/dashboard"]
   const authRoutes = ["/auth/login", "/auth/register"]
 
   // Check if the current path is a protected route
@@ -21,7 +21,7 @@ export default auth((req) => {
 
   // Redirect logged-in users away from auth pages
   if (isLoggedIn && isAuthRoute) {
-    return NextResponse.redirect(new URL("/dashboard", req.url))
+    return NextResponse.redirect(new URL("/select", req.url))
   }
 
   // Redirect non-logged-in users away from protected pages

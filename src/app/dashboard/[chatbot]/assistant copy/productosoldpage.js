@@ -2,14 +2,14 @@ import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ProductsClientTable } from "./client-table"
-import { columns } from "./columns"
+import { columns } from "../dashboard/[chatbot]/products/columns"
 import { auth } from "@/lib/auth"
 import { buildStrapiUrl } from "@/lib/strapi"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-export default async function ProductsPage() {
+export default async function ProductsPage({ searchParams }) {
   const session = await auth()
 
   if (!session) {
@@ -21,7 +21,19 @@ export default async function ProductsPage() {
 
   try {
     const userId = session?.user?.strapiUserId
-    const url = buildStrapiUrl(`/api/chatbots?populate=products&filters[users_permissions_user][id][$eq]=${encodeURIComponent(userId)}`)
+    const params = await searchParams
+    const selectedChatbotId = params?.chatbot
+
+    // Construir la URL según haya chatbot seleccionado o no
+    let endpoint = ''
+    if (selectedChatbotId) {
+      endpoint = `/api/products?filters[chatbot][id][$eq]=${encodeURIComponent(selectedChatbotId)}`
+    } else {
+      // Fallback: listar productos de los chatbots del usuario
+      endpoint = `/api/products?filters[chatbot][users_permissions_user][id][$eq]=${encodeURIComponent(userId)}`
+    }
+
+    const url = buildStrapiUrl(endpoint)
     const res = await fetch(url, {
       method: 'GET',
       headers: {
@@ -43,36 +55,21 @@ export default async function ProductsPage() {
   }
 
   // Extraer y ordenar productos
-  const chatbots = Array.isArray(payload) ? payload : (payload?.data || [])
+  const products = Array.isArray(payload) ? payload : (payload?.data || [])
   const productsRows = []
 
-  for (const item of chatbots) {
-    const attrs = item?.attributes || item || {}
-    const chatbotName = attrs.chatbot_name || attrs.name || attrs.title || `Chatbot #${item?.id || ''}`
-    const productsRel = attrs?.products
-
-    let productsRaw = []
-    if (Array.isArray(productsRel)) {
-      productsRaw = productsRel
-    } else if (productsRel?.data && Array.isArray(productsRel.data)) {
-      productsRaw = productsRel.data.map((p) => (p?.attributes ? { ...p.attributes, id: p.id } : p))
-    }
-
-    for (const p of productsRaw) {
-      const pr = p?.attributes || p || {}
-      productsRows.push({
-        id: pr?.id ?? p?.id,
-        name: pr?.name || '',
-        price: pr?.price ?? 0,
-        available: pr?.available ?? false,
-        stock: pr?.stock ?? 0,
-        updatedAt: pr?.updatedAt || '',
-        chatbot: chatbotName,
-      })
-    }
+  for (const p of products) {
+    const attrs = p?.attributes || p || {}
+    productsRows.push({
+      id: p?.id ?? attrs?.id,
+      name: attrs?.name || '',
+      price: attrs?.price ?? 0,
+      available: attrs?.available ?? false,
+      stock: attrs?.stock ?? 0,
+    })
   }
 
-  productsRows.sort((a, b) => a.name.localeCompare(b.name))
+  productsRows.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
   return (
     <SidebarProvider>

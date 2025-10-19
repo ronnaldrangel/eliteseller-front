@@ -31,11 +31,18 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useChatbot } from "@/contexts/chatbot-context"
 
 export function NavUser({
   user
 }) {
   const { isMobile } = useSidebar()
+  const { selectedChatbotId } = useChatbot()
+
+  const withChatbotSegment = (path) => {
+    return selectedChatbotId ? `/dashboard/${selectedChatbotId}${path}` : "/select"
+  }
+
   const initials = React.useMemo(() => {
     const name = user?.name || ""
     if (name.trim().length > 0) {
@@ -93,13 +100,13 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/account">
+                <Link href={withChatbotSegment('/account')}>
                   <UserCircleIcon />
                   Mi Cuenta
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/billing">
+                <Link href={withChatbotSegment('/billing')}>
                   <CreditCardIcon />
                   Facturacion
                 </Link>
