@@ -96,7 +96,7 @@ export default async function SelectPage() {
           <p className="text-sm text-muted-foreground mt-2">Dale click a tu chatbot para gestionarlo.</p>
         </div>
 
-        <div className="mt-8 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-8 grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {error ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
               {error}

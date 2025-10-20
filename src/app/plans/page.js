@@ -49,7 +49,7 @@ export default function PlansPage() {
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card>
+          <Card style={{ animationDelay: "0ms", animationFillMode: "both" }} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out">
             <CardHeader>
               <CardTitle>Básico</CardTitle>
               <CardDescription>Empieza gratis con lo esencial.</CardDescription>
@@ -61,7 +61,7 @@ export default function PlansPage() {
               <Button size="sm" className="w-full">Seleccionar</Button>
             </CardContent>
           </Card>
-          <Card>
+          <Card style={{ animationDelay: "150ms", animationFillMode: "both" }} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out">
             <CardHeader>
               <CardTitle>Pro</CardTitle>
               <CardDescription>Funciones avanzadas para crecer.</CardDescription>
@@ -73,7 +73,7 @@ export default function PlansPage() {
               <Button size="sm" className="w-full">Seleccionar</Button>
             </CardContent>
           </Card>
-          <Card>
+          <Card style={{ animationDelay: "300ms", animationFillMode: "both" }} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out">
             <CardHeader>
               <CardTitle>Business</CardTitle>
               <CardDescription>Escala con soporte y seguridad.</CardDescription>
