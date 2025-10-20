@@ -26,7 +26,8 @@ import {
   MenuSquareIcon,
   MessageSquareIcon,
   ChevronRight,
-  PlugIcon } from "lucide-react"
+  PlugIcon
+} from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
 import { NavSecondary } from "@/components/nav-secondary"
@@ -49,6 +50,7 @@ import Image from "next/image"
 import { useTheme } from 'next-themes'
 import { TeamSwitcher } from "@/components/team-switcher"
 import { useChatbot } from "@/contexts/chatbot-context"
+import { SidebarOptInForm } from "@/components/sidebar-optin-form"
 
 const data = {
   user: {
@@ -186,6 +188,7 @@ export function AppSidebar({
       <SidebarContent>
         <NavMain items={navMainDynamic} />
         <NavSecondary items={navSecondaryDynamic} className="mt-auto" />
+        <SidebarOptInForm />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userFromSession} />
