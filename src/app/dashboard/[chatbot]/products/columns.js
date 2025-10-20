@@ -3,13 +3,33 @@
 import { ArrowUpDown, MoreHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export const columns = [
+  {
+    id: "thumbnail",
+    header: "",
+    cell: ({ row }) => {
+      const media = row.original?.media
+      const thumbUrl = Array.isArray(media) && media.length > 0 ? media[0]?.url : null
+      return (
+        <div className="flex items-center">
+          {thumbUrl ? (
+            <img src={thumbUrl} alt={row.original?.name || "Producto"} className="h-12 w-12 rounded-md object-cover border" />
+          ) : (
+            <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground">N/A</div>
+          )}
+        </div>
+      )
+    },
+    enableSorting: false,
+  },
   {
     accessorKey: "name",
     header: ({ column }) => (
       <div
-        className="inline-flex items-center gap-1 cursor-pointer select-none"
+        className="inline-flex items-center gap-1 select-none"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Nombre <ArrowUpDown className="ml-1 h-3 w-3" />
@@ -78,7 +98,33 @@ export const columns = [
      id: "actions",
      header: "Acciones",
      cell: ({ row }) => {
-       const id = row.original?.id
+        const router = useRouter()
+        const id = row.original?.id
+        const documentId = row.original?.documentId || row.original?.attributes?.documentId || id
+        const handleEdit = () => {
+          const docId = row.original?.documentId || row.original?.attributes?.documentId || id
+          if (!docId) return
+          const base = typeof window !== "undefined" ? window.location.pathname : "/dashboard"
+          router.push(`${base}/${encodeURIComponent(docId)}/edit`)
+        }
+        const handleDelete = async () => {
+          if (!documentId) return
+          const ok = typeof window !== "undefined" ? window.confirm("¿Eliminar este producto?") : true
+          if (!ok) return
+          try {
+            const res = await fetch(`/api/products/${documentId}`, { method: "DELETE" })
+            const body = await res.json().catch(() => ({}))
+            if (!res.ok) {
+              const msg = body?.error?.message || "No se pudo eliminar el producto"
+              toast.error(msg)
+              return
+            }
+            toast.success("Eliminado")
+            router.refresh()
+          } catch (e) {
+            toast.error("Error de red al eliminar")
+          }
+        }
        return (
          <DropdownMenu>
            <DropdownMenuTrigger asChild>
@@ -89,11 +135,11 @@ export const columns = [
            </DropdownMenuTrigger>
            <DropdownMenuContent align="end">
              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-             <DropdownMenuItem onClick={() => console.log("Editar producto", id)}>
+             <DropdownMenuItem onClick={handleEdit}>
                Editar
              </DropdownMenuItem>
              <DropdownMenuSeparator />
-             <DropdownMenuItem className="text-destructive" onClick={() => console.log("Eliminar producto", id)}>
+             <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
                Eliminar
              </DropdownMenuItem>
            </DropdownMenuContent>

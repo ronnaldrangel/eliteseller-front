@@ -22,7 +22,7 @@ export default async function ProductsPage({ params }) {
     qs.set('filters[chatbot][documentId][$eq]', chatbotDocumentId)
   }
 
-  const url = buildStrapiUrl(`/api/products?${qs.toString()}&populate=media`)
+  const url = buildStrapiUrl(`/api/products?${qs.toString()}&populate[media][fields][0]=url&populate[media][fields][1]=name`)
 
   let products = []
   let error = null

@@ -5,14 +5,23 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
+import { Textarea } from "@/components/ui/textarea"
 import { buildStrapiUrl } from "@/lib/strapi"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Textarea } from "@/components/ui/textarea"
 
-export default function NewProductForm({ token, chatbotId }) {
+export default function EditProductForm({ initialData, token, chatbotId, documentId }) {
   const router = useRouter()
-  const [form, setForm] = useState({ name: "", price: "", available: true, stock: "", description_wsp: "", description_complete: "" })
+  const attrs = initialData?.attributes || initialData || {}
+
+  const [form, setForm] = useState({
+    name: attrs.name || "",
+    description_wsp: attrs.description_wsp || "",
+    description_complete: attrs.description_complete || "",
+    price: (attrs.price ?? "").toString(),
+    stock: (attrs.stock ?? "").toString(),
+    available: typeof attrs.available === "boolean" ? attrs.available : true,
+  })
   const [status, setStatus] = useState({ loading: false, error: null })
 
   const handleSubmit = async (e) => {
@@ -33,8 +42,8 @@ export default function NewProductForm({ token, chatbotId }) {
         },
       }
 
-      const res = await fetch(buildStrapiUrl(`/api/products`), {
-        method: "POST",
+      const res = await fetch(buildStrapiUrl(`/api/products/${documentId}`), {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -44,16 +53,16 @@ export default function NewProductForm({ token, chatbotId }) {
 
       const body = await res.json().catch(() => ({}))
       if (!res.ok) {
-        const msg = body?.error?.message || "No se pudo crear el producto"
+        const msg = body?.error?.message || "No se pudo actualizar el producto"
         setStatus({ loading: false, error: msg })
         return
       }
 
-      toast.success("Creado")
+      toast.success("Actualizado")
       setStatus({ loading: false, error: null })
       router.push(`/dashboard/${encodeURIComponent(chatbotId)}/products`)
     } catch (err) {
-      setStatus({ loading: false, error: "Error de red al crear" })
+      setStatus({ loading: false, error: "Error de red al actualizar" })
     }
   }
 
@@ -91,7 +100,7 @@ export default function NewProductForm({ token, chatbotId }) {
 
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/${encodeURIComponent(chatbotId)}/products`)}>Cancelar</Button>
-          <Button type="submit" disabled={status.loading || !token || !chatbotId}>{status.loading ? "Creando…" : "Crear"}</Button>
+          <Button type="submit" disabled={status.loading || !token || !chatbotId}>{status.loading ? "Guardando…" : "Guardar cambios"}</Button>
         </div>
       </form>
     </div>
