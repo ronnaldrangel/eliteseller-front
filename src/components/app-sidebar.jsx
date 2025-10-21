@@ -47,7 +47,6 @@ import {
 } from "@/components/ui/sidebar"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import Image from "next/image"
-import { useTheme } from 'next-themes'
 import { TeamSwitcher } from "@/components/team-switcher"
 import { useChatbot } from "@/contexts/chatbot-context"
 import { SidebarOptInForm } from "@/components/sidebar-optin-form"
@@ -113,7 +112,6 @@ export function AppSidebar({
   ...props
 }) {
   const { data: session } = useSession()
-  const { resolvedTheme } = useTheme()
   const { selectedChatbotId } = useChatbot()
 
   const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
@@ -158,12 +156,20 @@ export function AppSidebar({
       <SidebarHeader>
         <div className="flex pb-2">
           <Image
-            src={resolvedTheme === "dark" ? "/images/logo-white.png" : "/images/logo-black.png"}
+            src="/images/logo-black.png"
             alt="Logo"
             width={140}
             height={24}
             priority
-            className="h-8 w-auto"
+            className="h-8 w-auto dark:hidden"
+          />
+          <Image
+            src="/images/logo-white.png"
+            alt="Logo"
+            width={140}
+            height={24}
+            priority
+            className="h-8 w-auto hidden dark:block"
           />
         </div>
         <div className="pt-1">

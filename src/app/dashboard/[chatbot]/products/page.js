@@ -65,17 +65,20 @@ export default async function ProductsPage({ params }) {
           </Button>
         </div>
 
-        {error ? (
-          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
-            {error}
-          </div>
-        ) : (
-          <ProductsClientTable columns={columns} data={products} />
-        )}
-        <div className="rounded-lg border bg-muted/20 p-4 mt-4">
+        <div className="pb-6">
+          {error ? (
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
+              {error}
+            </div>
+          ) : (
+            <ProductsClientTable columns={columns} data={products} />
+          )}
+          {/* <div className="rounded-lg border bg-muted/20 p-4 mt-4">
           <h3 className="mb-2 text-sm font-medium">Payload del GET /api/products</h3>
           <pre className="text-xs whitespace-pre-wrap break-words">{rawPayload ? JSON.stringify(rawPayload, null, 2) : 'Sin contenido'}</pre>
+        </div> */}
         </div>
+
       </div>
     </div>
   )
