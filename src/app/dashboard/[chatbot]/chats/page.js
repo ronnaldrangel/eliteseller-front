@@ -16,7 +16,7 @@ export default async function ChatsPage({ params }) {
   if (chatbotDocumentId) {
     qs.set('filters[chatbot][documentId][$eq]', chatbotDocumentId)
   }
-  const channelUrl = buildStrapiUrl(`/api/channels?${qs.toString()}`)
+  const channelUrl = buildStrapiUrl(`/api/accounts?${qs.toString()}`)
 
   let channelRawPayload = null
   let channelError = null
@@ -40,21 +40,21 @@ export default async function ChatsPage({ params }) {
     channelError = 'Error al conectar con Strapi para channel.'
   }
 
-  // Wazend login URL using account_id_crm from Strapi channel
+  // Wazend login URL using id_account from Strapi channel
   let loginUrl = null
   let loginError = null
   const accountIdCrm = Array.isArray(channelRawPayload?.data) && channelRawPayload.data.length
-    ? channelRawPayload.data[0]?.account_id_crm
+    ? channelRawPayload.data[0]?.id_account
     : null
 
   const userId = typeof accountIdCrm === 'number' ? accountIdCrm : Number(accountIdCrm)
   if (!userId || Number.isNaN(userId)) {
-    loginError = 'No se encontró un account_id_crm válido en channel.'
+    loginError = 'No se encontró un id_account válido en channel.'
   } else {
     try {
-      const res = await fetch(`https://web.wazend.net/platform/api/v1/users/${userId}/login`, {
+      const res = await fetch(`https://crm.eliteseller.app/platform/api/v1/users/${userId}/login`, {
         method: 'GET',
-        headers: { 'api_access_token': 'gz3CXVvGvjYrZS2ka5g31cJH' },
+        headers: { 'api_access_token': 'ZseUZfnHyMzwFWGbHjgnsvSh' },
         cache: 'no-store',
       })
       const data = await res.json().catch(() => ({}))
@@ -88,12 +88,24 @@ export default async function ChatsPage({ params }) {
                   </Link>
                 </Button>
                 <div className="rounded-lg border bg-muted/20 p-4 mt-4">
-                  <h3 className="mb-2 text-sm font-medium">Payload del GET /api/channels</h3>
+                  <h3 className="mb-2 text-sm font-medium">Payload del GET /api/accounts</h3>
                   {channelError ? (
                     <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">{channelError}</div>
                   ) : (
                     <pre className="text-xs whitespace-pre-wrap break-words">{channelRawPayload ? JSON.stringify(channelRawPayload, null, 2) : 'Sin contenido'}</pre>
                   )}
+                </div>
+
+                <div className="rounded-lg border bg-muted/20 p-4 mt-4">
+                  <h3 className="mb-2 text-sm font-medium">Vista embebida de chats</h3>
+                  <div className="w-full h-[600px] rounded-md overflow-hidden border bg-muted/30">
+                    <iframe
+                      src={loginUrl || "https://web.wazend.net/"}
+                      title="Chats embebidos"
+                      className="w-full h-full"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
