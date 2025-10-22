@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { auth } from "@/lib/auth"
 import { buildStrapiUrl } from "@/lib/strapi"
+import IframeWithPreloader from "@/components/iframe-with-preloader"
 
 export default async function ChatsPage({ params }) {
   const p = await params
@@ -83,7 +84,7 @@ export default async function ChatsPage({ params }) {
                   </div>
                 )}
                 <Button asChild>
-                  <Link href={loginUrl || "https://web.wazend.net/"} target="_blank" rel="noopener noreferrer">
+                  <Link href={loginUrl || "https://crm.eliteseller.app/"} target="_blank" rel="noopener noreferrer">
                     Accede a tus chats
                   </Link>
                 </Button>
@@ -99,11 +100,10 @@ export default async function ChatsPage({ params }) {
                 <div className="rounded-lg border bg-muted/20 p-4 mt-4">
                   <h3 className="mb-2 text-sm font-medium">Vista embebida de chats</h3>
                   <div className="w-full h-[600px] rounded-md overflow-hidden border bg-muted/30">
-                    <iframe
-                      src={loginUrl || "https://web.wazend.net/"}
+                    <IframeWithPreloader
+                      src={loginUrl || "https://crm.eliteseller.app/"}
                       title="Chats embebidos"
                       className="w-full h-full"
-                      loading="lazy"
                     />
                   </div>
                 </div>
