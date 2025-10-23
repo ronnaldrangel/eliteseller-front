@@ -73,11 +73,11 @@ const data = {
       url: "/products",
       icon: BoxIcon,
     },
-    {
-      title: "Metricas",
-      url: "/metrics",
-      icon: ChartBarIcon,
-    },
+    // {
+    //   title: "Metricas",
+    //   url: "/metrics",
+    //   icon: ChartBarIcon,
+    // },
     {
       title: "Mi vendedor",
       url: "/assistant",

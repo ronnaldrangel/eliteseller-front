@@ -19,7 +19,7 @@ export default async function WhatsAppIntegrationPage({ params }) {
   if (chatbotDocumentId) {
     qs.set('filters[chatbot][documentId][$eq]', chatbotDocumentId)
   }
-  const channelUrl = buildStrapiUrl(`/api/channels?${qs.toString()}`)
+  const channelUrl = buildStrapiUrl(`/api/accounts?${qs.toString()}`)
 
   let channelRawPayload = null
   let channelError = null
@@ -151,14 +151,14 @@ export default async function WhatsAppIntegrationPage({ params }) {
       {/* <WazendSessionMe sessionUrl={sessionUrl} sessionName={sessionName} apiKey={sessionApiKey} maskedApiKey={maskedApiKey} /> */}
 
 
-
-      {/* <div className="rounded-lg border p-6">
+      <div className="rounded-lg border p-6">
         <h2 className="text-lg font-semibold">Debug: Channels GET</h2>
         <p className="text-xs text-muted-foreground">URL: {channelUrl}</p>
         <pre className="mt-2 text-xs font-mono bg-muted/30 rounded-md p-3 overflow-auto whitespace-pre">
 {channelRawPayload ? JSON.stringify(channelRawPayload, null, 2) : '—'}
         </pre>
-      </div> */}
+      </div>
+
     </div>
   )
 }
