@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react"
 import { usePathname, useRouter } from "next/navigation"
 import { useChatbot } from "@/contexts/chatbot-context"
 import { buildStrapiUrl } from "@/lib/strapi"
+import useSWR from 'swr'
 
 import {
   DropdownMenu,
@@ -29,45 +30,25 @@ export function TeamSwitcher({ addLabel = "Crear chatbot", onAdd } = {}) {
   const pathname = usePathname()
   const router = useRouter()
   const { chatbots, setChatbots, selectedChatbotId, setSelectedChatbotId } = useChatbot()
-  const [loadingChatbots, setLoadingChatbots] = React.useState(false)
-  const [chatbotsPayloadDebug, setChatbotsPayloadDebug] = React.useState(null)
+
+  const userId = session?.user?.strapiUserId
+  const token = session?.strapiToken
+  const chatbotsUrl = (token && userId)
+    ? buildStrapiUrl(`/api/chatbots?filters[users_permissions_user][id][$eq]=${encodeURIComponent(userId)}`)
+    : null
+
+  const { data: chatbotsData, error, isLoading } = useSWR(chatbotsUrl)
 
   React.useEffect(() => {
-    const fetchChatbots = async () => {
-      const userId = session?.user?.strapiUserId
-      if (!session?.strapiToken || !userId) return
-      try {
-        setLoadingChatbots(true)
-        const url = buildStrapiUrl(`/api/chatbots?filters[users_permissions_user][id][$eq]=${encodeURIComponent(userId)}`)
-        const res = await fetch(url, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.strapiToken}`,
-          },
-          cache: 'no-store',
-        })
-        if (!res.ok) {
-          console.error('No se pudo cargar chatbots:', res.status)
-          return
-        }
-        const data = await res.json()
-        setChatbotsPayloadDebug(data)
-        const items = Array.isArray(data) ? data : (data?.data || [])
-        setChatbots(items)
-        if (!selectedChatbotId && items.length > 0) {
-          const first = items[0]
-          const firstDocId = String(first?.documentId ?? first?.id ?? '')
-          if (firstDocId) setSelectedChatbotId(firstDocId)
-        }
-      } catch (e) {
-        console.error('Error al cargar chatbots:', e)
-      } finally {
-        setLoadingChatbots(false)
-      }
+    if (!chatbotsData) return
+    const items = Array.isArray(chatbotsData) ? chatbotsData : (chatbotsData?.data || [])
+    setChatbots(items)
+    if (!selectedChatbotId && items.length > 0) {
+      const first = items[0]
+      const firstDocId = String(first?.documentId ?? first?.id ?? '')
+      if (firstDocId) setSelectedChatbotId(firstDocId)
     }
-    fetchChatbots()
-  }, [session?.strapiToken, session?.user?.strapiUserId])
+  }, [chatbotsData])
 
   const teams = chatbots.map((cb) => {
     const routeId = String(cb?.documentId ?? cb?.id ?? '')
@@ -113,7 +94,7 @@ export function TeamSwitcher({ addLabel = "Crear chatbot", onAdd } = {}) {
     }
   }
 
-  if (!activeTeam) {
+  if (!activeTeam || isLoading) {
     return (
       <SidebarMenu>
         <SidebarMenuItem>

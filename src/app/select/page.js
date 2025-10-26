@@ -41,13 +41,13 @@ export default async function SelectPage() {
 
 
   // Si el usuario tiene al menos un chatbot, redirige automáticamente al primero usando documentId
-  if (!error && Array.isArray(chatbots) && chatbots.length > 0) {
-    const first = chatbots[0]
-    const firstRouteId = String(first?.documentId ?? first?.id ?? '')
-    if (firstRouteId) {
-      redirect(`/dashboard/${encodeURIComponent(firstRouteId)}/home`)
-    }
-  }
+  // if (!error && Array.isArray(chatbots) && chatbots.length > 0) {
+  //   const first = chatbots[0]
+  //   const firstRouteId = String(first?.documentId ?? first?.id ?? '')
+  //   if (firstRouteId) {
+  //     redirect(`/dashboard/${encodeURIComponent(firstRouteId)}/home`)
+  //   }
+  // }
 
 
   const cards = Array.isArray(chatbots) ? chatbots.map((item) => {
