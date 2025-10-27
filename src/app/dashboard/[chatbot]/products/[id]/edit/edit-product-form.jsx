@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { buildStrapiUrl } from "@/lib/strapi"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
+import CardUpload from "@/components/card-upload"
 
 export default function EditProductForm({ initialData, token, chatbotId, documentId }) {
   const router = useRouter()
@@ -22,6 +23,9 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
     available: typeof attrs.available === "boolean" ? attrs.available : true,
   })
   const [status, setStatus] = useState({ loading: false, error: null })
+  const [files, setFiles] = useState([])
+  const [uploadItems, setUploadItems] = useState([])
+  const existingMedia = Array.isArray(attrs?.media) ? attrs.media : []
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -37,6 +41,46 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
         },
+      }
+
+      // Derivar arrays desde CardUpload
+      const newFiles = (uploadItems || [])
+        .map((item) => item?.file)
+        .filter((f) => typeof File !== 'undefined' && f instanceof File)
+
+      // Upload new files if provided
+      let uploadedMediaIds = []
+      if (newFiles && newFiles.length > 0) {
+        const fd = new FormData()
+        newFiles.forEach((f) => fd.append("files", f))
+
+        const uploadRes = await fetch(buildStrapiUrl(`/api/upload`), {
+          method: "POST",
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: fd,
+        })
+
+        const uploaded = await uploadRes.json().catch(() => [])
+        if (!uploadRes.ok) {
+          const msg = Array.isArray(uploaded) ? "No se pudieron subir las imágenes" : (uploaded?.error?.message || "No se pudieron subir las imágenes")
+          setStatus({ loading: false, error: msg })
+          return
+        }
+        uploadedMediaIds = (Array.isArray(uploaded) ? uploaded : []).map((u) => u?.id).filter(Boolean)
+      }
+
+      // IDs de imágenes existentes se derivan de uploadItems actuales (excluyendo las eliminadas)
+      const existingMediaIds = (uploadItems || [])
+        .map((item) => item?.file)
+        .filter((f) => !(typeof File !== 'undefined' && f instanceof File))
+        .map((f) => f?.id)
+        .filter(Boolean)
+
+      const finalMedia = [...existingMediaIds, ...uploadedMediaIds]
+      if (finalMedia.length > 0) {
+        payload.data.media = finalMedia
       }
 
       const res = await fetch(buildStrapiUrl(`/api/products/${documentId}`), {
@@ -63,6 +107,14 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
     }
   }
 
+  const handleUploadChange = (items) => {
+    setUploadItems(items)
+    const newFiles = items
+      .map((item) => item?.file)
+      .filter((f) => typeof File !== 'undefined' && f instanceof File)
+    setFiles(newFiles)
+  }
+
   return (
     <div className="rounded-lg border bg-muted/20 p-4">
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,6 +131,23 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
             <Label htmlFor="product-description-complete">Descripción completa del producto</Label>
             <Textarea id="product-description-complete" rows={3} maxLength={500} value={form.description_complete} onChange={(e) => setForm((p) => ({ ...p, description_complete: e.target.value }))} />
           </div>
+        </div>
+        <Label className="font-medium">Imágenes y videos del producto</Label>
+        <div className="rounded-lg border bg-background p-4">
+          <CardUpload
+            accept="image/*"
+            multiple={true}
+            simulateUpload={false}
+            defaultFilesEnabled={false}
+            initialFiles={existingMedia.map((m) => ({
+              id: m?.id,
+              name: m?.name || `Imagen`,
+              size: typeof m?.size === 'number' ? m.size : 0,
+              type: m?.mime || 'image/jpeg',
+              url: m?.url,
+            }))}
+            onFilesChange={handleUploadChange}
+          />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="product-price">Precio</Label>

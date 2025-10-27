@@ -17,7 +17,7 @@ export default async function EditProductPage({ params }) {
   let error = null
 
   try {
-    const res = await fetch(buildStrapiUrl(`/api/products/${documentId}?populate[media][fields][0]=url&populate[media][fields][1]=name`), {
+    const res = await fetch(buildStrapiUrl(`/api/products/${documentId}?populate[media][fields][0]=url&populate[media][fields][1]=name&populate[media][fields][2]=id`), {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
