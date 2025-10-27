@@ -61,17 +61,41 @@ const data = {
     {
       title: "Dashboard",
       url: "/home",
-      icon: LayoutDashboardIcon,
+      icon: () => (
+        <Image
+          src="/icons/dashboard.webp"
+          alt="Dashboard"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
     {
       title: "Chats",
       url: "/chats",
-      icon: MessageSquareIcon,
+      icon: () => (
+        <Image
+          src="/icons/chats.png"
+          alt="Chats"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
     {
       title: "Productos",
       url: "/products",
-      icon: BoxIcon,
+      icon: () => (
+        <Image
+          src="/icons/productos.webp"
+          alt="Productos"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
     // {
     //   title: "Metricas",
@@ -81,12 +105,28 @@ const data = {
     {
       title: "Mi vendedor",
       url: "/assistant",
-      icon: BotIcon,
+      icon: () => (
+        <Image
+          src="/icons/vendedor.png"
+          alt="Mi vendedor"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
     {
       title: "Integraciones",
       url: "#",
-      icon: PlugIcon,
+      icon: () => (
+        <Image
+          src="/icons/integraciones.png"
+          alt="Integraciones"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
       items: [
         { title: "WhatsApp", url: "/integrations/whatsapp" },
         { title: "Shopify", url: "/integrations/shopify" },
@@ -98,12 +138,28 @@ const data = {
     {
       title: "Ayuda",
       url: "/help",
-      icon: HelpCircleIcon,
+      icon: () => (
+        <Image
+          src="/icons/ayuda.png"
+          alt="Ayuda"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
     {
       title: "Afiliados",
       url: "/affiliates",
-      icon: UsersIcon,
+      icon: () => (
+        <Image
+          src="/icons/afiliados.png"
+          alt="Afiliados"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
   ],
 }
@@ -194,7 +250,7 @@ export function AppSidebar({
       <SidebarContent>
         <NavMain items={navMainDynamic} />
         <NavSecondary items={navSecondaryDynamic} className="mt-auto" />
-        <SidebarOptInForm />
+        {/* <SidebarOptInForm /> */}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userFromSession} />

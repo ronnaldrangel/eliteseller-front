@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
 import SelectUserAvatarMenu from "@/components/select-user-avatar-menu"
-import { PlusIcon, BotIcon } from "lucide-react"
+import { PlusIcon } from "lucide-react"
 
 export default async function SelectPage() {
   const session = await auth()
@@ -56,7 +56,8 @@ export default async function SelectPage() {
     const displayId = (typeof item?.id !== 'undefined' && item?.id !== null) ? String(item.id) : ''
     const name = attrs.chatbot_name || item?.chatbot_name || attrs.name || attrs.title || attrs.slug || `Chatbot #${displayId || routeId}`
     const description = attrs.description || ''
-    return { routeId, displayId, name, description }
+    const custom = !!(attrs.custom ?? item?.custom ?? false)
+    return { routeId, displayId, name, description, custom }
   }) : []
 
   return (
@@ -119,10 +120,15 @@ export default async function SelectPage() {
                     <Link
                       key={c.routeId}
                       href={`/dashboard/${encodeURIComponent(c.routeId)}/home`}
-                      className="group rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
+                      className="group relative rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
                       aria-label={`Entrar a ${c.name}`}>
-                      <BotIcon className="size-16 text-muted-foreground group-hover:text-primary transition-colors" />
-                      <div className="mt-3 font-medium line-clamp-1">{c.name}</div>
+                      <Image src="/images/bot.webp" alt={c.name} width={120} height={120} className="h-20 w-20 rounded-md object-cover grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0 transition-all duration-200" />
+                      <div className="mt-3 font-medium line-clamp-1 text-lg">{c.name}</div>
+                      {c.custom && (
+                        <span className="mt-2 rounded px-2 py-0.5 text-xs font-medium bg-purple-600 text-white shadow-sm">
+                          Personalizado
+                        </span>
+                      )}
                     </Link>
                   ))}
                 </>
