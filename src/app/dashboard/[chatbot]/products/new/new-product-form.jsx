@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea"
 
 export default function NewProductForm({ token, chatbotId }) {
   const router = useRouter()
-  const [form, setForm] = useState({ name: "", price: "", available: true, stock: "", description_wsp: "", description_complete: "" })
+  const [form, setForm] = useState({ name: "", price: "", available: true, description_wsp: "", description_complete: "" })
   const [status, setStatus] = useState({ loading: false, error: null })
 
   const handleSubmit = async (e) => {
@@ -20,13 +20,11 @@ export default function NewProductForm({ token, chatbotId }) {
     setStatus({ loading: true, error: null })
     try {
       const priceNum = Number(form.price)
-      const stockNum = Number(form.stock)
       const payload = {
         data: {
           name: form.name,
           price: Number.isFinite(priceNum) ? priceNum : 0,
           available: !!form.available,
-          stock: Number.isFinite(stockNum) ? stockNum : 0,
           chatbot: chatbotId,
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
@@ -77,10 +75,6 @@ export default function NewProductForm({ token, chatbotId }) {
         <div className="grid gap-2">
           <Label htmlFor="product-price">Precio</Label>
           <Input id="product-price" type="number" step="0.01" value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="product-stock">Stock</Label>
-          <Input id="product-stock" type="number" value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} />
         </div>
         <div className="flex items-center gap-2">
           <Switch id="product-available" checked={!!form.available} onCheckedChange={(val) => setForm((p) => ({ ...p, available: !!val }))} />

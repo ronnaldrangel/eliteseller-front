@@ -19,7 +19,6 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
     description_wsp: attrs.description_wsp || "",
     description_complete: attrs.description_complete || "",
     price: (attrs.price ?? "").toString(),
-    stock: (attrs.stock ?? "").toString(),
     available: typeof attrs.available === "boolean" ? attrs.available : true,
   })
   const [status, setStatus] = useState({ loading: false, error: null })
@@ -29,13 +28,11 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
     setStatus({ loading: true, error: null })
     try {
       const priceNum = Number(form.price)
-      const stockNum = Number(form.stock)
       const payload = {
         data: {
           name: form.name,
           price: Number.isFinite(priceNum) ? priceNum : 0,
           available: !!form.available,
-          stock: Number.isFinite(stockNum) ? stockNum : 0,
           chatbot: chatbotId,
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
@@ -86,10 +83,6 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
         <div className="grid gap-2">
           <Label htmlFor="product-price">Precio</Label>
           <Input id="product-price" type="number" step="0.01" value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))} />
-        </div>
-        <div className="grid gap-2">
-          <Label htmlFor="product-stock">Stock</Label>
-          <Input id="product-stock" type="number" value={form.stock} onChange={(e) => setForm((p) => ({ ...p, stock: e.target.value }))} />
         </div>
         <div className="flex items-center gap-2">
           <Switch id="product-available" checked={!!form.available} onCheckedChange={(val) => setForm((p) => ({ ...p, available: !!val }))} />

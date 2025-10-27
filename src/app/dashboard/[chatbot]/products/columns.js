@@ -78,22 +78,7 @@ export const columns = [
       return <span className={b ? "text-green-600" : "text-red-600"}>{b ? "Sí" : "No"}</span>
     },
   },
-  {
-    accessorKey: "stock",
-    header: ({ column }) => (
-      <div
-        className="inline-flex items-center gap-1 cursor-pointer select-none"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        Stock <ArrowUpDown className="ml-1 h-3 w-3" />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const val = row.getValue("stock")
-      const n = typeof val === "number" ? val : Number(val)
-      return <span>{Number.isFinite(n) ? n.toLocaleString("es-ES") : "-"}</span>
-    },
-  },
+
   {
      id: "actions",
      header: "Acciones",
