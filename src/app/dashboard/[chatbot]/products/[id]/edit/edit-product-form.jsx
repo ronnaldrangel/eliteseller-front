@@ -132,10 +132,10 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
             <Textarea id="product-description-complete" rows={3} maxLength={500} value={form.description_complete} onChange={(e) => setForm((p) => ({ ...p, description_complete: e.target.value }))} />
           </div>
         </div>
-        <Label className="font-medium">Imágenes y videos del producto</Label>
+        <Label className="font-medium">Imágenes, videos (MP4) y PDF del producto</Label>
         <div className="rounded-lg border bg-background p-4">
           <CardUpload
-            accept="image/*"
+            accept="image/*,video/mp4,application/pdf"
             multiple={true}
             simulateUpload={false}
             defaultFilesEnabled={false}

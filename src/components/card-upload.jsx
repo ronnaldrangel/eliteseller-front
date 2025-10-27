@@ -5,14 +5,12 @@ import { Alert, AlertContent, AlertDescription, AlertIcon, AlertTitle } from '@/
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  CloudUpload,
   FileArchiveIcon,
   FileSpreadsheetIcon,
   FileTextIcon,
   HeadphonesIcon,
   ImageIcon,
   RefreshCwIcon,
-  Trash2,
   TriangleAlert,
   Upload,
   VideoIcon,
@@ -204,16 +202,16 @@ export default function CardUpload({
 
           <div className="space-y-2">
             <p className="text-sm font-medium">
-              Drop files here or{' '}
+              Suelta archivos aquí o{' '}
               <button
                 type="button"
                 onClick={openFileDialog}
                 className="cursor-pointer text-primary underline-offset-4 hover:underline">
-                browse files
+                examinar archivos
               </button>
             </p>
             <p className="text-xs text-muted-foreground">
-              Maximum file size: {formatBytes(maxSize)} • Maximum files: {maxFiles}
+              Tamaño máximo de archivo: {formatBytes(maxSize)} • Máximo de archivos: {maxFiles}
             </p>
           </div>
         </div>
@@ -223,16 +221,6 @@ export default function CardUpload({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">Files ({uploadFiles.length})</h3>
-            <div className="flex gap-2">
-              <Button onClick={openFileDialog} variant="outline" size="sm">
-                <CloudUpload />
-                Add files
-              </Button>
-              <Button onClick={clearFiles} variant="outline" size="sm">
-                <Trash2 />
-                Remove all
-              </Button>
-            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
@@ -259,69 +247,13 @@ export default function CardUpload({
                           src={fileItem.preview}
                           alt={fileItem.file.name}
                           className="h-full w-full object-cover" />
-                        {/* Progress overlay for uploading images */}
-                        {fileItem.status === 'uploading' && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-                            <div className="relative">
-                              <svg className="size-8 -rotate-90" viewBox="0 0 48 48">
-                                <circle
-                                  cx="24"
-                                  cy="24"
-                                  r="20"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  className="text-muted/60" />
-                                <circle
-                                  cx="24"
-                                  cy="24"
-                                  r="20"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3"
-                                  strokeDasharray={`${2 * Math.PI * 20}`}
-                                  strokeDashoffset={`${2 * Math.PI * 20 * (1 - fileItem.progress / 100)}`}
-                                  className="text-white transition-all duration-300"
-                                  strokeLinecap="round" />
-                              </svg>
-                            </div>
-                          </div>
-                        )}
+                        {/* Se quita el overlay de progreso: subida ocurrirá al guardar */}
                       </>
                     ) : (
                       /* File icon area for non-images */
                       (<div
                         className="flex h-full items-center justify-center text-muted-foreground/80">
-                        {fileItem.status === 'uploading' ? (
-                          <div className="relative">
-                            <svg className="size-8 -rotate-90" viewBox="0 0 48 48">
-                              <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                className="text-muted-foreground/20" />
-                              <circle
-                                cx="24"
-                                cy="24"
-                                r="20"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                strokeDasharray={`${2 * Math.PI * 20}`}
-                                strokeDashoffset={`${2 * Math.PI * 20 * (1 - fileItem.progress / 100)}`}
-                                className="text-primary transition-all duration-300"
-                                strokeLinecap="round" />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              {getFileIcon(fileItem.file)}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-2xl">{getFileIcon(fileItem.file)}</div>
-                        )}
+                        <div className="text-2xl">{getFileIcon(fileItem.file)}</div>
                       </div>)
                     )}
                   </div>
@@ -344,7 +276,7 @@ export default function CardUpload({
                                 <RefreshCwIcon className="size-3 opacity-100" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>Upload failed. Retry</TooltipContent>
+                            <TooltipContent>Error al subir. Reintentar</TooltipContent>
                           </Tooltip>
                         )}
                       </div>
