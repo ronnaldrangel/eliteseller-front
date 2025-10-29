@@ -2,15 +2,15 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/theme-provider"
-import Providers from './providers';
+import { ThemeProvider } from "@/components/theme-provider";
+import Providers from "./providers";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Mi App"
+const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Mi App";
 
 export const metadata = {
   title: {

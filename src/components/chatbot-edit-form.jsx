@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { CheckCircle2Icon } from "lucide-react"
 
 export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) {
   const base = initialData?.attributes || initialData || {}
@@ -88,7 +89,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
-        <h4 className="text-lg font-semibold">Información básica</h4>
+        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Información básica</h4>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="chatbot_name">Nombre del chatbot</FieldLabel>
@@ -132,7 +133,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
       </div>
 
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
-        <h4 className="text-lg font-semibold">Personalidad</h4>
+        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Personalidad</h4>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="style_communication">Estilo de comunicación</FieldLabel>
@@ -191,7 +192,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
       </div>
 
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
-        <h4 className="text-lg font-semibold">Audiencia e instrucciones</h4>
+        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Audiencia e instrucciones</h4>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="target">Público objetivo</FieldLabel>
@@ -205,7 +206,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
       </div>
 
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
-        <h4 className="text-lg font-semibold">Mensajes</h4>
+        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Mensajes</h4>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="welcome_message">Mensaje de bienvenida</FieldLabel>
