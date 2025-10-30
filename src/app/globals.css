@@ -140,7 +140,6 @@
 }
 
 /* Loader styles */
-/* Loader styles */
 .loader {
   --s: 20px;
   --_d: calc(0.353 * var(--s));
