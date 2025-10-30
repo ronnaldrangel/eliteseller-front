@@ -165,6 +165,7 @@ const data = {
 }
 
 export function AppSidebar({
+  chatbotSlug,
   ...props
 }) {
   const { data: session } = useSession()
@@ -229,7 +230,7 @@ export function AppSidebar({
           />
         </div>
         <div className="pt-1">
-          <TeamSwitcher />
+          <TeamSwitcher chatbotSlug={chatbotSlug} />
         </div>
       </SidebarHeader>
       {/* <SidebarMenu>
