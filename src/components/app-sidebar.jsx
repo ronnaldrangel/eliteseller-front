@@ -169,16 +169,16 @@ export function AppSidebar({
   ...props
 }) {
   const { data: session } = useSession()
-  const { selectedChatbotId } = useChatbot()
+  // const { selectedChatbotId } = useChatbot()
+  const slug = chatbotSlug || null
 
-  const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
+  // const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
   const withChatbotSegment = (path) => {
-    if (!cid) return "/select"
+    if (!slug) return "/select" // ← Usa slug en lugar de cid
     const trimmed = path.startsWith('/') ? path : `/${path}`
-    if (trimmed === '/dashboard') return `/dashboard/${cid}`
-    return `/dashboard/${cid}${trimmed}`
+    if (trimmed === '/dashboard') return `/dashboard/${slug}`
+    return `/dashboard/${slug}${trimmed}`
   }
-
   const navMainDynamic = data.navMain.map((item) => {
     const dynamicPaths = ["/dashboard", "/home", "/chats", "/products", "/metrics", "/assistant", "/integrations"]
     if (item.items && item.items.length > 0) {
