@@ -10,7 +10,7 @@ import Link from "next/link"
 export default async function ProductsPage({ params }) {
   const session = await auth()
   const { chatbot: chatbotParam } = await params
-  const chatbotDocumentId = String(chatbotParam || '')
+  const chatbotSlug = String(chatbotParam || '')
 
   if (!session) {
     redirect(`/auth/login?callbackUrl=${encodeURIComponent(`/dashboard/${chatbotDocumentId}/products`)}`)
