@@ -31,13 +31,18 @@ const Providers = ({ children }) => {
         !target.target &&
         target.href.startsWith(window.location.origin)
       ) {
-        setLoading(true);
+        const targetUrl = new URL(target.href);
+        const targetPath = targetUrl.pathname;
+
+        if (targetPath !== pathname) {
+          setLoading(true);
+        }
       }
     };
 
     document.addEventListener("click", handleClick, true);
     return () => document.removeEventListener("click", handleClick, true);
-  }, []);
+  }, [pathname]);
 
   const fetcher = async (url) => {
     const res = await fetch(url, {
