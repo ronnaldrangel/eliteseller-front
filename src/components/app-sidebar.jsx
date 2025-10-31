@@ -72,12 +72,38 @@ const data = {
       ),
     },
     {
-      title: "Chats",
+      title: "Chats (CRM)",
       url: "/chats",
       icon: () => (
         <Image
           src="/icons/chats.png"
           alt="Chats"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
+    {
+      title: "Etiquetas",
+      url: "/tags",
+      icon: () => (
+        <Image
+          src="/icons/tags.webp"
+          alt="Etiquetas"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
+    {
+      title: "Disparadores",
+      url: "/triggers",
+      icon: () => (
+        <Image
+          src="/icons/triggers.webp"
+          alt="Disparadores"
           width={16}
           height={16}
           className="size-4 rounded-sm object-cover"
@@ -97,18 +123,31 @@ const data = {
         />
       ),
     },
+    {
+      title: "Ventas",
+      url: "/sales",
+      icon: () => (
+        <Image
+          src="/icons/sales.png"
+          alt="Ventas"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
     // {
     //   title: "Metricas",
     //   url: "/metrics",
     //   icon: ChartBarIcon,
     // },
     {
-      title: "Mi vendedor",
+      title: "Asistente AI",
       url: "/assistant",
       icon: () => (
         <Image
           src="/icons/vendedor.png"
-          alt="Mi vendedor"
+          alt="Asistente AI"
           width={16}
           height={16}
           className="size-4 rounded-sm object-cover"
@@ -180,7 +219,7 @@ export function AppSidebar({
     return `/dashboard/${slug}${trimmed}`
   }
   const navMainDynamic = data.navMain.map((item) => {
-    const dynamicPaths = ["/dashboard", "/home", "/chats", "/products", "/metrics", "/assistant", "/integrations"]
+    const dynamicPaths = ["/dashboard", "/home", "/chats", "/tags", "/triggers", "/products", "/sales", "/assistant", "/integrations"]
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs
       const mappedSubItems = item.items.map((sub) => ({
