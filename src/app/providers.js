@@ -3,11 +3,11 @@
 import { ChatbotProvider } from "@/contexts/chatbot-context";
 import { SWRConfig } from "swr";
 import { useSession } from "next-auth/react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const CenteredSpinner = () => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
     <div className="loader"></div>
   </div>
 );
@@ -15,12 +15,12 @@ const CenteredSpinner = () => (
 const Providers = ({ children }) => {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
 
+  // Solo escuchar cambios en pathname (sin searchParams)
   useEffect(() => {
     setLoading(false);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   useEffect(() => {
     const handleClick = (e) => {
