@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
@@ -89,13 +89,13 @@ export default function NewProductForm({ token, chatbotId }) {
     }
   }
 
-  const handleUploadChange = (items) => {
+  const handleUploadChange = useCallback((items) => {
     setUploadItems(items)
     const newFiles = items
       .map((item) => item?.file)
       .filter((f) => typeof File !== 'undefined' && f instanceof File)
     setFiles(newFiles)
-  }
+  }, [])
 
   return (
     <div className="rounded-lg border bg-muted/20 p-4">
@@ -115,9 +115,9 @@ export default function NewProductForm({ token, chatbotId }) {
           </div>
         </div>
         <div className="rounded-lg border bg-background p-4">
-          <Label className="font-medium">Imágenes, videos (MP4) y PDF del producto</Label>
+          <Label className="font-medium">Imagenes y videos (MP4) del producto. Solo JPG, PNG o MP4.</Label>
           <CardUpload
-            accept="image/*,video/mp4,application/pdf"
+            accept=".jpg,.jpeg,.png,.mp4,video/mp4"
             multiple={true}
             simulateUpload={false}
             defaultFilesEnabled={false}

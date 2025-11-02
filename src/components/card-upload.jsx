@@ -94,28 +94,26 @@ export default function CardUpload({
     initialFiles: defaultFiles,
     onFilesChange: (newFiles) => {
       // Convert to upload items when files change, preserving existing status
-      const newUploadFiles = newFiles.map((file) => {
-        // Check if this file already exists in uploadFiles
-        const existingFile = uploadFiles.find((existing) => existing.id === file.id);
+      setUploadFiles((prev) =>
+        newFiles.map((file) => {
+          const existingFile = prev.find((existing) => existing.id === file.id);
 
-        if (existingFile) {
-          // Preserve existing file status and progress
-          return {
-            ...existingFile,
-            ...file, // Update any changed properties from the file
-          };
-        } else {
+          if (existingFile) {
+            // Preserve existing file status and progress
+            return {
+              ...existingFile,
+              ...file,
+            };
+          }
+
           // New file - set to uploading
           return {
             ...file,
             progress: 0,
             status: "uploading",
           };
-        }
-      });
-
-      setUploadFiles(newUploadFiles);
-      onFilesChange?.(newUploadFiles);
+        })
+      );
     },
   });
 
@@ -158,6 +156,11 @@ export default function CardUpload({
       removeFile(fileToRemove.id);
     }
   };
+
+  useEffect(() => {
+    if (!onFilesChange) return;
+    onFilesChange(uploadFiles);
+  }, [uploadFiles, onFilesChange]);
 
   const retryUpload = (fileId) => {
     setUploadFiles((prev) =>

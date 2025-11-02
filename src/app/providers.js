@@ -24,19 +24,33 @@ const Providers = ({ children }) => {
 
   useEffect(() => {
     const handleClick = (e) => {
-      const target = e.target.closest("a");
-      if (
-        target &&
-        target.href &&
-        !target.target &&
-        target.href.startsWith(window.location.origin)
-      ) {
-        const targetUrl = new URL(target.href);
-        const targetPath = targetUrl.pathname;
+      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+        return;
+      }
 
-        if (targetPath !== pathname) {
-          setLoading(true);
+      const anchor = e.target.closest("a");
+      if (!anchor || !anchor.href || anchor.target || anchor.hasAttribute("download")) {
+        return;
+      }
+
+      try {
+        const destination = new URL(anchor.href);
+        const current = new URL(window.location.href);
+
+        if (destination.origin !== current.origin) {
+          return;
         }
+
+        const samePath = destination.pathname === current.pathname;
+        const sameSearch = destination.search === current.search;
+
+        if (samePath && sameSearch) {
+          return;
+        }
+
+        setLoading(true);
+      } catch (_) {
+        // Ignore malformed URLs
       }
     };
 
