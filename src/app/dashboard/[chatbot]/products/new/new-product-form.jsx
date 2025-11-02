@@ -11,7 +11,7 @@ import { toast } from "sonner"
 import { Textarea } from "@/components/ui/textarea"
 import CardUpload from "@/components/card-upload"
 
-export default function NewProductForm({ token, chatbotId }) {
+export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   const router = useRouter()
   const [form, setForm] = useState({ name: "", price: "", available: true, description_wsp: "", description_complete: "" })
   const [files, setFiles] = useState([])
@@ -28,10 +28,15 @@ export default function NewProductForm({ token, chatbotId }) {
           name: form.name,
           price: Number.isFinite(priceNum) ? priceNum : 0,
           available: !!form.available,
-          chatbot: chatbotId,
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
         },
+      }
+
+      if (chatbotId) {
+        payload.data.chatbot = {
+          connect: [{ documentId: chatbotId }]
+        }
       }
 
       // If there are files, upload them first to Strapi and collect ids
@@ -83,7 +88,8 @@ export default function NewProductForm({ token, chatbotId }) {
 
       toast.success("Creado")
       setStatus({ loading: false, error: null })
-      router.push(`/dashboard/${encodeURIComponent(chatbotId)}/products`)
+      const segment = chatbotSlug || chatbotId
+      router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
     } catch (err) {
       setStatus({ loading: false, error: "Error de red al crear" })
     }
@@ -136,7 +142,10 @@ export default function NewProductForm({ token, chatbotId }) {
         {status.error && <p className="text-sm text-red-600">{status.error}</p>}
 
         <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/${encodeURIComponent(chatbotId)}/products`)}>Cancelar</Button>
+          <Button type="button" variant="outline" onClick={() => {
+            const segment = chatbotSlug || chatbotId
+            router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
+          }}>Cancelar</Button>
           <Button type="submit" disabled={status.loading || !token || !chatbotId}>{status.loading ? "Creando…" : "Crear"}</Button>
         </div>
       </form>

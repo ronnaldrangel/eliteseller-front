@@ -8,48 +8,58 @@ import { buildStrapiUrl } from "@/lib/strapi";
  * @param {string} userId - ID del usuario (opcional, para validar permisos)
  * @returns {Promise<string|null>} - El documentId del chatbot o null si no se encuentra
  */
+// src/lib/utils/chatbot-utils.js
 export async function getChatbotBySlug(slug, token, userId = null) {
   if (!slug || !token) return null;
 
-  try {
-    const filters = [`filters[slug][$eq]=${encodeURIComponent(slug)}`];
+  const filters = [`filters[slug][$eq]=${encodeURIComponent(slug)}`];
+  if (userId) {
+    filters.push(`filters[users_permissions_user][id][$eq]=${encodeURIComponent(userId)}`);
+  }
 
-    if (userId) {
-      filters.push(`filters[users_permissions_user][id][$eq]=${userId}`);
-    }
-
-    const chatbotUrl = buildStrapiUrl(
-      `/api/chatbots?${filters.join(
-        "&"
-      )}&fields[0]=documentId&fields[1]=id&fields[2]=slug&fields[3]=chatbot_name`
-    );
-
-    const res = await fetch(chatbotUrl, {
-      method: "GET",
+  const res = await fetch(
+    buildStrapiUrl(
+      `/api/chatbots?${filters.join('&')}` +
+        `&fields[0]=documentId&fields[1]=id&fields[2]=slug&fields[3]=chatbot_name`
+    ),
+    {
+      method: 'GET',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      cache: "no-store",
-    });
-
-    if (!res.ok) return null;
-
-    const data = await res.json();
-    const chatbots = Array.isArray(data) ? data : data?.data || [];
-
-    if (chatbots.length > 0) {
-      return {
-        documentId: chatbots[0].documentId || chatbots[0].id,
-        id: chatbots[0].id,
-        slug: chatbots[0].slug,
-        name: chatbots[0].chatbot_name,
-      };
+      cache: 'no-store',
     }
+  );
 
-    return null;
-  } catch (e) {
-    console.error("Error fetching chatbot by slug:", e);
-    return null;
-  }
+  if (!res.ok) return null;
+
+  const payload = await res.json();
+  const items = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.data)
+    ? payload.data
+    : payload?.data
+    ? [payload.data]
+    : [];
+
+  const first = items[0];
+  if (!first) return null;
+
+  const attrs = first.attributes ?? first;
+  const documentId =
+    first.documentId ??
+    attrs.documentId ??
+    first.id ??
+    attrs.id;
+
+  if (!documentId) return null;
+
+  return {
+    documentId: String(documentId),
+    id: String(first.id ?? attrs.id ?? documentId),
+    slug: attrs.slug ?? first.slug ?? slug,
+    name: attrs.chatbot_name ?? first.chatbot_name ?? slug,
+  };
 }
+

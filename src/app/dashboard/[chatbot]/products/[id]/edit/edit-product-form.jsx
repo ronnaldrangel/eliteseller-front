@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import CardUpload from "@/components/card-upload"
 
-export default function EditProductForm({ initialData, token, chatbotId, documentId }) {
+export default function EditProductForm({ initialData, token, chatbotId, chatbotSlug, documentId }) {
   const router = useRouter()
   const attrs = initialData?.attributes || initialData || {}
 
@@ -37,10 +37,15 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
           name: form.name,
           price: Number.isFinite(priceNum) ? priceNum : 0,
           available: !!form.available,
-          chatbot: chatbotId,
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
         },
+      }
+
+      if (chatbotId) {
+        payload.data.chatbot = {
+          set: [{ documentId: chatbotId }]
+        }
       }
 
       // Derivar arrays desde CardUpload
@@ -101,7 +106,8 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
 
       toast.success("Actualizado")
       setStatus({ loading: false, error: null })
-      router.push(`/dashboard/${encodeURIComponent(chatbotId)}/products`)
+      const segment = chatbotSlug || chatbotId
+      router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
     } catch (err) {
       setStatus({ loading: false, error: "Error de red al actualizar" })
     }
@@ -161,7 +167,16 @@ export default function EditProductForm({ initialData, token, chatbotId, documen
         {status.error && <p className="text-sm text-red-600">{status.error}</p>}
 
         <div className="flex gap-2">
-          <Button type="button" variant="outline" onClick={() => router.push(`/dashboard/${encodeURIComponent(chatbotId)}/products`)}>Cancelar</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const segment = chatbotSlug || chatbotId
+              router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
+            }}
+          >
+            Cancelar
+          </Button>
           <Button type="submit" disabled={status.loading || !token || !chatbotId}>{status.loading ? "Guardando…" : "Guardar cambios"}</Button>
         </div>
       </form>
