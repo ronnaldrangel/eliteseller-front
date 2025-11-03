@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useEffect, useMemo, useState } from "react"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 
-import { buildStrapiUrl } from "@/lib/strapi"
-import { Button } from "@/components/ui/button"
+import { buildStrapiUrl } from "@/lib/strapi";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,7 +12,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Field,
   FieldContent,
@@ -20,149 +20,120 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldLegend,
   FieldSeparator,
   FieldSet,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
-const TRIGGER_EVENTS = [
-  { value: "message_received", label: "Mensaje recibido" },
-  { value: "order_created", label: "Pedido creado" },
-  { value: "client_tagged", label: "Cliente etiquetado" },
-  { value: "cart_abandoned", label: "Carrito abandonado" },
-]
-
-const MAX_CONDITION_LENGTH = 360
-const MAX_RESPONSE_LENGTH = 500
+const MAX_KEYWORDS_LENGTH = 360;
+const MAX_CONTENT_LENGTH = 500;
 
 const randomId = () =>
   typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
     ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2)
+    : Math.random().toString(36).slice(2);
 
 const normalizeTrigger = (entry) => {
-  if (!entry) return null
+  if (!entry) return null;
 
-  const attributes = entry.attributes ?? entry
-  const documentId =
-    entry.documentId ??
-    attributes.documentId ??
-    entry.id ??
-    attributes.id ??
-    randomId() ??
-    attributes.name ??
-    entry.name
-
+  // Los datos vienen directamente en el entry, no en attributes
   return {
-    id: String(documentId ?? attributes.name ?? entry.name ?? randomId()),
-    documentId: documentId ? String(documentId) : null,
-    name: attributes.name ?? entry.name ?? "",
-    event: attributes.event ?? entry.event ?? "message_received",
-    condition: attributes.condition ?? entry.condition ?? "",
-    response: attributes.response ?? entry.response ?? "",
-    active:
-      attributes.active ??
-      attributes.isActive ??
-      entry.active ??
-      entry.isActive ??
-      true,
-  }
-}
+    id: String(entry.documentId ?? entry.id ?? randomId()),
+    documentId: entry.documentId ? String(entry.documentId) : null,
+    name: entry.name ?? "",
+    keywords: entry.keywords ?? "",
+    keywords_ai: entry.keywords_ai ?? "",
+    content: entry.content ?? "",
+    available: entry.available ?? false,
+    id_ads: entry.id_ads ?? null,
+  };
+};
 
 export default function TriggerManagement({
   initialTriggers = [],
   token,
   chatbotId,
 }) {
+  console.log("Initial triggers:", initialTriggers);
   const [triggers, setTriggers] = useState(
     Array.isArray(initialTriggers)
       ? initialTriggers.map(normalizeTrigger).filter(Boolean)
       : []
-  )
+  );
+  console.log("Normalized triggers:", triggers);
   const [form, setForm] = useState({
     name: "",
-    event: TRIGGER_EVENTS[0].value,
-    condition: "",
-    response: "",
-    active: true,
-  })
-  const [errors, setErrors] = useState({})
-  const [status, setStatus] = useState({ loading: false, error: null })
+    keywords: "",
+    keywords_ai: "",
+    content: "",
+    available: true,
+    id_ads: "",
+  });
+  const [errors, setErrors] = useState({});
+  const [status, setStatus] = useState({ loading: false, error: null });
 
   useEffect(() => {
-    if (!Array.isArray(initialTriggers)) return
-    setTriggers(initialTriggers.map(normalizeTrigger).filter(Boolean))
-  }, [initialTriggers])
-
-  const eventLabel = useMemo(() => {
-    const found = TRIGGER_EVENTS.find((item) => item.value === form.event)
-    return found?.label ?? "Mensaje recibido"
-  }, [form.event])
+    if (!Array.isArray(initialTriggers)) return;
+    setTriggers(initialTriggers.map(normalizeTrigger).filter(Boolean));
+  }, [initialTriggers]);
 
   const validate = () => {
-    const nextErrors = {}
+    const nextErrors = {};
 
     if (!form.name.trim()) {
-      nextErrors.name = "Asigna un nombre para identificar el disparador."
+      nextErrors.name = "Asigna un nombre para identificar el disparador.";
     }
 
-    if (!form.condition.trim()) {
-      nextErrors.condition =
-        "Describe cuando debe activarse este disparador."
-    } else if (form.condition.length > MAX_CONDITION_LENGTH) {
-      nextErrors.condition = `Maximo ${MAX_CONDITION_LENGTH} caracteres permitidos.`
+    if (!form.keywords.trim()) {
+      nextErrors.keywords =
+        "Define las palabras clave que activan este disparador.";
+    } else if (form.keywords.length > MAX_KEYWORDS_LENGTH) {
+      nextErrors.keywords = `Maximo ${MAX_KEYWORDS_LENGTH} caracteres permitidos.`;
     }
 
-    if (!form.response.trim()) {
-      nextErrors.response =
-        "Especifica la accion o respuesta que se ejecutara."
-    } else if (form.response.length > MAX_RESPONSE_LENGTH) {
-      nextErrors.response = `Maximo ${MAX_RESPONSE_LENGTH} caracteres permitidos.`
+    if (!form.content.trim()) {
+      nextErrors.content =
+        "Especifica el contenido o respuesta que se ejecutara.";
+    } else if (form.content.length > MAX_CONTENT_LENGTH) {
+      nextErrors.content = `Maximo ${MAX_CONTENT_LENGTH} caracteres permitidos.`;
     }
 
-    return nextErrors
-  }
+    return nextErrors;
+  };
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const validation = validate()
+    const validation = validate();
     if (Object.keys(validation).length > 0) {
-      setErrors(validation)
+      setErrors(validation);
       setStatus({
         loading: false,
         error: "Corregi los campos marcados para guardar el disparador.",
-      })
-      return
+      });
+      return;
     }
 
-    setErrors({})
-    setStatus({ loading: true, error: null })
+    setErrors({});
+    setStatus({ loading: true, error: null });
 
     try {
       const payload = {
         data: {
           name: form.name.trim(),
-          event: form.event,
-          condition: form.condition.trim(),
-          response: form.response.trim(),
-          active: Boolean(form.active),
+          keywords: form.keywords.trim(),
+          keywords_ai: form.keywords_ai.trim() || form.keywords.trim(),
+          content: form.content.trim(),
+          available: Boolean(form.available),
+          id_ads: form.id_ads.trim() || null,
         },
-      }
+      };
 
       if (chatbotId) {
-        payload.data.chatbot = { connect: [{ documentId: chatbotId }] }
+        payload.data.chatbot = { connect: [{ documentId: chatbotId }] };
       }
 
       const response = await fetch(buildStrapiUrl(`/api/triggers`), {
@@ -172,38 +143,39 @@ export default function TriggerManagement({
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
-      })
+      });
 
-      const body = await response.json().catch(() => ({}))
+      const body = await response.json().catch(() => ({}));
       if (!response.ok) {
         const message =
           body?.error?.message ||
-          "No se pudo crear el disparador. Intenta nuevamente."
-        setStatus({ loading: false, error: message })
-        return
+          "No se pudo crear el disparador. Intenta nuevamente.";
+        setStatus({ loading: false, error: message });
+        return;
       }
 
-      const normalized = normalizeTrigger(body?.data ?? body)
+      const normalized = normalizeTrigger(body?.data ?? body);
       if (normalized) {
-        setTriggers((previous) => [normalized, ...previous])
+        setTriggers((previous) => [normalized, ...previous]);
       }
 
-      toast.success("Disparador creado correctamente.")
+      toast.success("Disparador creado correctamente.");
       setForm({
         name: "",
-        event: TRIGGER_EVENTS[0].value,
-        condition: "",
-        response: "",
-        active: true,
-      })
-      setStatus({ loading: false, error: null })
+        keywords: "",
+        keywords_ai: "",
+        content: "",
+        available: true,
+        id_ads: "",
+      });
+      setStatus({ loading: false, error: null });
     } catch (error) {
       setStatus({
         loading: false,
         error: "Error de red al crear el disparador.",
-      })
+      });
     }
-  }
+  };
 
   return (
     <div className="grid gap-6 pb-6">
@@ -211,7 +183,8 @@ export default function TriggerManagement({
         <CardHeader className="gap-1">
           <CardTitle className="text-xl">Nuevo disparador</CardTitle>
           <CardDescription>
-            Automatiza tareas con disparadores basados en eventos y condiciones especificas.
+            Automatiza respuestas con disparadores basados en palabras clave
+            especificas.
           </CardDescription>
         </CardHeader>
 
@@ -219,112 +192,137 @@ export default function TriggerManagement({
           <CardContent className="space-y-6">
             <FieldSet className="gap-6">
               <FieldGroup className="gap-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Field data-invalid={errors.name ? true : undefined}>
-                    <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
-                    <FieldContent>
-                      <Input
-                        id="trigger-name"
-                        placeholder="Ej. Envio bienvenida"
-                        value={form.name}
-                        onChange={(event) =>
-                          setForm((previous) => ({
-                            ...previous,
-                            name: event.target.value,
-                          }))
-                        }
-                      />
-                      <FieldDescription>
-                        Sera visible dentro del panel para identificar el disparador.
-                      </FieldDescription>
-                      <FieldError>{errors.name}</FieldError>
-                    </FieldContent>
-                  </Field>
+                <Field data-invalid={errors.name ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id="trigger-name"
+                      placeholder="Ej. Bienvenida inicial"
+                      value={form.name}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          name: event.target.value,
+                        }))
+                      }
+                    />
+                    <FieldDescription>
+                      Sera visible dentro del panel para identificar el
+                      disparador.
+                    </FieldDescription>
+                    <FieldError>{errors.name}</FieldError>
+                  </FieldContent>
+                </Field>
 
-                  <Field>
-                    <FieldLabel htmlFor="trigger-event">Evento</FieldLabel>
-                    <FieldContent>
-                      <Select
-                        value={form.event}
-                        onValueChange={(value) =>
-                          setForm((previous) => ({ ...previous, event: value }))
-                        }
-                      >
-                        <SelectTrigger id="trigger-event" className="w-full">
-                          <SelectValue placeholder="Selecciona un evento" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TRIGGER_EVENTS.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FieldDescription>
-                        Elige cuando se evaluara la condicion del disparador.
-                      </FieldDescription>
-                    </FieldContent>
-                  </Field>
-                </div>
+                <Field>
+                  <FieldLabel htmlFor="trigger-id-ads">
+                    ID Ads (opcional)
+                  </FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id="trigger-id-ads"
+                      placeholder="ID de anuncio o campaña"
+                      value={form.id_ads}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          id_ads: event.target.value,
+                        }))
+                      }
+                    />
+                    <FieldDescription>
+                      Vincula este disparador con un anuncio o campaña
+                      especifica.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
               </FieldGroup>
 
               <FieldSeparator />
 
               <FieldGroup className="gap-6">
-                <Field data-invalid={errors.condition ? true : undefined}>
-                  <FieldLabel htmlFor="trigger-condition">Condicion</FieldLabel>
+                <Field data-invalid={errors.keywords ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-keywords">
+                    Palabras clave
+                  </FieldLabel>
                   <FieldContent>
                     <Textarea
-                      id="trigger-condition"
+                      id="trigger-keywords"
                       rows={3}
-                      maxLength={MAX_CONDITION_LENGTH}
-                      placeholder="Ej. Contiene las palabras bienvenido, hola, asesor."
-                      value={form.condition}
+                      maxLength={MAX_KEYWORDS_LENGTH}
+                      placeholder="Ej. hola, bienvenido, info, ayuda"
+                      value={form.keywords}
                       onChange={(event) =>
                         setForm((previous) => ({
                           ...previous,
-                          condition: event.target.value,
+                          keywords: event.target.value,
                         }))
                       }
                     />
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <FieldDescription className="text-xs">
-                        Describe las reglas o palabras clave que activan el disparador.
+                        Palabras o frases que activan este disparador.
                       </FieldDescription>
                       <span>
-                        {form.condition.length}/{MAX_CONDITION_LENGTH}
+                        {form.keywords.length}/{MAX_KEYWORDS_LENGTH}
                       </span>
                     </div>
-                    <FieldError>{errors.condition}</FieldError>
+                    <FieldError>{errors.keywords}</FieldError>
                   </FieldContent>
                 </Field>
 
-                <Field data-invalid={errors.response ? true : undefined}>
-                  <FieldLabel htmlFor="trigger-response">Accion o respuesta</FieldLabel>
+                <Field>
+                  <FieldLabel htmlFor="trigger-keywords-ai">
+                    Palabras clave IA (opcional)
+                  </FieldLabel>
                   <FieldContent>
                     <Textarea
-                      id="trigger-response"
-                      rows={4}
-                      maxLength={MAX_RESPONSE_LENGTH}
-                      placeholder="Define el mensaje de respuesta o la accion que debe ejecutarse."
-                      value={form.response}
+                      id="trigger-keywords-ai"
+                      rows={2}
+                      maxLength={MAX_KEYWORDS_LENGTH}
+                      placeholder="Palabras clave alternativas para IA"
+                      value={form.keywords_ai}
                       onChange={(event) =>
                         setForm((previous) => ({
                           ...previous,
-                          response: event.target.value,
+                          keywords_ai: event.target.value,
+                        }))
+                      }
+                    />
+                    <FieldDescription className="text-xs">
+                      Si esta vacio, se usaran las palabras clave principales.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+
+                <Field data-invalid={errors.content ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-content">
+                    Contenido de respuesta
+                  </FieldLabel>
+                  <FieldContent>
+                    <Textarea
+                      id="trigger-content"
+                      rows={4}
+                      maxLength={MAX_CONTENT_LENGTH}
+                      placeholder="Define el mensaje o accion que debe ejecutarse."
+                      value={form.content}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          content: event.target.value,
                         }))
                       }
                     />
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <FieldDescription className="text-xs">
-                        Puedes incluir variables, instrucciones internas o notas para tu equipo.
+                        El contenido que se enviara cuando se active el
+                        disparador.
                       </FieldDescription>
                       <span>
-                        {form.response.length}/{MAX_RESPONSE_LENGTH}
+                        {form.content.length}/{MAX_CONTENT_LENGTH}
                       </span>
                     </div>
-                    <FieldError>{errors.response}</FieldError>
+                    <FieldError>{errors.content}</FieldError>
                   </FieldContent>
                 </Field>
               </FieldGroup>
@@ -332,22 +330,28 @@ export default function TriggerManagement({
               <FieldSeparator />
 
               <Field orientation="responsive">
-                <FieldLabel htmlFor="trigger-active">Estado</FieldLabel>
+                <FieldLabel htmlFor="trigger-available">Estado</FieldLabel>
                 <FieldContent>
                   <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/20 bg-background px-4 py-3 md:flex-row md:items-center md:gap-4">
                     <Switch
-                      id="trigger-active"
-                      checked={!!form.active}
+                      id="trigger-available"
+                      checked={!!form.available}
                       onCheckedChange={(value) =>
-                        setForm((previous) => ({ ...previous, active: !!value }))
+                        setForm((previous) => ({
+                          ...previous,
+                          available: !!value,
+                        }))
                       }
                     />
                     <div className="space-y-1">
                       <p className="text-sm font-medium">
-                        {form.active ? "Disparador activo" : "Disparador en borrador"}
+                        {form.available
+                          ? "Disparador disponible"
+                          : "Disparador desactivado"}
                       </p>
                       <FieldDescription className="text-xs md:text-sm">
-                        Desactivalo temporalmente cuando quieras pausar la automatizacion.
+                        Desactivalo temporalmente cuando quieras pausar la
+                        automatizacion.
                       </FieldDescription>
                     </div>
                   </div>
@@ -364,7 +368,8 @@ export default function TriggerManagement({
 
           <CardFooter className="flex flex-col gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
             <div className="text-xs text-muted-foreground md:text-sm">
-              {eventLabel} se evaluara con la condicion indicada y ejecutara la accion configurada.
+              Cuando se detecten las palabras clave, se ejecutara la respuesta
+              configurada.
             </div>
             <Button
               type="submit"
@@ -381,21 +386,19 @@ export default function TriggerManagement({
         <CardHeader className="gap-1">
           <CardTitle className="text-lg">Disparadores configurados</CardTitle>
           <CardDescription>
-            Visualiza tus automatizaciones activas y revisa rapidamente sus condiciones y acciones.
+            Visualiza tus automatizaciones activas y revisa rapidamente sus
+            palabras clave.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {triggers.length === 0 ? (
             <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 px-4 py-6 text-center text-sm text-muted-foreground">
-              Aun no has configurado disparadores. Crea el primero para automatizar tus flujos.
+              Aun no has configurado disparadores. Crea el primero para
+              automatizar tus flujos.
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {triggers.map((trigger) => {
-                const label =
-                  TRIGGER_EVENTS.find((option) => option.value === trigger.event)
-                    ?.label ?? trigger.event
-
                 return (
                   <div
                     key={trigger.id}
@@ -406,36 +409,45 @@ export default function TriggerManagement({
                         <span className="text-sm font-semibold">
                           {trigger.name || "Sin nombre"}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {label}
-                        </span>
+                        {trigger.id_ads && (
+                          <span className="text-xs text-muted-foreground">
+                            ID: {trigger.id_ads}
+                          </span>
+                        )}
                       </div>
                       <Badge
-                        variant={trigger.active ? "default" : "outline"}
+                        variant={trigger.available ? "default" : "outline"}
                         className="uppercase"
                       >
-                        {trigger.active ? "Activo" : "Pausado"}
+                        {trigger.available ? "Activo" : "Pausado"}
                       </Badge>
                     </div>
                     <div className="rounded-md border border-muted-foreground/10 bg-background/70 px-3 py-2 text-xs text-muted-foreground">
                       <span className="font-medium text-foreground">
-                        Condicion:
+                        Palabras clave:
                       </span>{" "}
-                      {trigger.condition || "Sin condicion definida."}
+                      {trigger.keywords || "Sin palabras clave."}
                     </div>
+                    {trigger.keywords_ai &&
+                      trigger.keywords_ai !== trigger.keywords && (
+                        <div className="rounded-md border border-blue-500/10 bg-blue-500/5 px-3 py-2 text-xs text-blue-600 dark:text-blue-400">
+                          <span className="font-medium">Keywords IA:</span>{" "}
+                          {trigger.keywords_ai}
+                        </div>
+                      )}
                     <div className="rounded-md border border-primary/10 bg-primary/5 px-3 py-2 text-xs text-primary-foreground/80 dark:text-primary-foreground/60">
                       <span className="font-medium text-foreground">
-                        Accion:
+                        Respuesta:
                       </span>{" "}
-                      {trigger.response || "Sin accion configurada."}
+                      {trigger.content || "Sin contenido configurado."}
                     </div>
                   </div>
-                )
+                );
               })}
             </div>
           )}
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

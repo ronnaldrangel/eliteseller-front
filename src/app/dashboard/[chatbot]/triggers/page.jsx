@@ -1,40 +1,42 @@
-import { auth } from "@/lib/auth"
-import { buildStrapiUrl } from "@/lib/strapi"
-import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth";
+import { buildStrapiUrl } from "@/lib/strapi";
+import { redirect } from "next/navigation";
 
-import { getChatbotBySlug } from "@/lib/utils/chatbot-utils"
-import TriggerManagement from "./trigger-management"
+import { getChatbotBySlug } from "@/lib/utils/chatbot-utils";
+import TriggerManagement from "./trigger-management";
 
 export default async function TriggersPage({ params }) {
-  const session = await auth()
-  const { chatbot: chatbotParam } = await params
-  const chatbotSlug = String(chatbotParam || "")
+  const session = await auth();
+  const { chatbot: chatbotParam } = await params;
+  const chatbotSlug = String(chatbotParam || "");
 
   if (!session) {
     redirect(
       `/auth/login?callbackUrl=${encodeURIComponent(
         `/dashboard/${chatbotSlug}/triggers`
       )}`
-    )
+    );
   }
 
   const chatbot = await getChatbotBySlug(
     chatbotSlug,
     session.strapiToken,
     session.user.strapiUserId
-  )
+  );
 
   if (!chatbot) {
-    redirect("/select")
+    redirect("/select");
   }
 
-  const qs = new URLSearchParams()
-  qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId)
+  const qs = new URLSearchParams();
+  qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
+  qs.set("populate", "trigger_contents");
 
-  const url = buildStrapiUrl(`/api/triggers?${qs.toString()}`)
 
-  let triggers = []
-  let loadError = null
+  const url = buildStrapiUrl(`/api/triggers?${qs.toString()}`);
+
+  let triggers = [];
+  let loadError = null;
 
   try {
     const res = await fetch(url, {
@@ -44,19 +46,20 @@ export default async function TriggersPage({ params }) {
         Authorization: `Bearer ${session.strapiToken}`,
       },
       cache: "no-store",
-    })
+    });
 
     if (!res.ok) {
-      const details = await res.json().catch(() => ({}))
+      const details = await res.json().catch(() => ({}));
       loadError =
         details?.error?.message ||
-        `No se pudieron cargar los disparadores (status ${res.status}).`
+        `No se pudieron cargar los disparadores (status ${res.status}).`;
     } else {
-      const data = await res.json()
-      triggers = Array.isArray(data) ? data : data?.data || []
+      const data = await res.json();
+      console.log("Fetched triggers:", data, "from URL:", url);
+      triggers = Array.isArray(data) ? data : data?.data || [];
     }
   } catch (error) {
-    loadError = "Error al conectar con Strapi. Verifica tu conexion."
+    loadError = "Error al conectar con Strapi. Verifica tu conexion.";
   }
 
   return (
@@ -65,7 +68,8 @@ export default async function TriggersPage({ params }) {
         <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-semibold">Disparadores</h1>
           <p className="text-sm text-muted-foreground">
-            Configura automatizaciones que respondan a eventos clave de tu operacion.
+            Configura automatizaciones que respondan a eventos clave de tu
+            operacion.
           </p>
         </div>
 
@@ -82,5 +86,5 @@ export default async function TriggersPage({ params }) {
         />
       </div>
     </div>
-  )
+  );
 }
