@@ -1,22 +1,86 @@
-export default function TriggersPage() {
+import { auth } from "@/lib/auth"
+import { buildStrapiUrl } from "@/lib/strapi"
+import { redirect } from "next/navigation"
+
+import { getChatbotBySlug } from "@/lib/utils/chatbot-utils"
+import TriggerManagement from "./trigger-management"
+
+export default async function TriggersPage({ params }) {
+  const session = await auth()
+  const { chatbot: chatbotParam } = await params
+  const chatbotSlug = String(chatbotParam || "")
+
+  if (!session) {
+    redirect(
+      `/auth/login?callbackUrl=${encodeURIComponent(
+        `/dashboard/${chatbotSlug}/triggers`
+      )}`
+    )
+  }
+
+  const chatbot = await getChatbotBySlug(
+    chatbotSlug,
+    session.strapiToken,
+    session.user.strapiUserId
+  )
+
+  if (!chatbot) {
+    redirect("/select")
+  }
+
+  const qs = new URLSearchParams()
+  qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId)
+
+  const url = buildStrapiUrl(`/api/triggers?${qs.toString()}`)
+
+  let triggers = []
+  let loadError = null
+
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.strapiToken}`,
+      },
+      cache: "no-store",
+    })
+
+    if (!res.ok) {
+      const details = await res.json().catch(() => ({}))
+      loadError =
+        details?.error?.message ||
+        `No se pudieron cargar los disparadores (status ${res.status}).`
+    } else {
+      const data = await res.json()
+      triggers = Array.isArray(data) ? data : data?.data || []
+    }
+  } catch (error) {
+    loadError = "Error al conectar con Strapi. Verifica tu conexion."
+  }
+
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="px-4 lg:px-6">
-            <h1 className="text-2xl font-semibold">Disparadores</h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              Encuentra aquí tus disparadores
-            </p>
-          </div>
+    <div className="flex flex-1 flex-col px-4 lg:px-6">
+      <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-semibold">Disparadores</h1>
+          <p className="text-sm text-muted-foreground">
+            Configura automatizaciones que respondan a eventos clave de tu operacion.
+          </p>
         </div>
 
-        <div className="px-4 lg:px-6">
-          <div className="rounded-lg border bg-muted/20 p-4">
-            <p className="text-sm text-muted-foreground">Próximamente.</p>
+        {loadError && (
+          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-200">
+            {loadError}
           </div>
-        </div>
+        )}
+
+        <TriggerManagement
+          initialTriggers={triggers}
+          token={session.strapiToken}
+          chatbotId={chatbot.documentId}
+        />
       </div>
     </div>
-  );
+  )
 }

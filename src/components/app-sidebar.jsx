@@ -124,7 +124,7 @@ const data = {
       ),
     },
     {
-      title: "Ventas",
+      title: "Pedidos",
       url: "/sales",
       icon: () => (
         <Image
