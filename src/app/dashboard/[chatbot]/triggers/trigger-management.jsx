@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 
 const MAX_KEYWORDS_LENGTH = 360;
-const MAX_CONTENT_LENGTH = 500;
+const MAX_MESSAGE_LENGTH = 500;
 
 const randomId = () =>
   typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -39,16 +39,22 @@ const randomId = () =>
 const normalizeTrigger = (entry) => {
   if (!entry) return null;
 
-  // Los datos vienen directamente en el entry, no en attributes
+  // Extraer los mensajes de la relación trigger_contents
+  const triggerContents = entry.trigger_contents || [];
+  const messages = triggerContents.map((tc) => ({
+    id: tc.id || tc.documentId,
+    message: tc.message || "",
+  }));
+
   return {
     id: String(entry.documentId ?? entry.id ?? randomId()),
     documentId: entry.documentId ? String(entry.documentId) : null,
     name: entry.name ?? "",
     keywords: entry.keywords ?? "",
     keywords_ai: entry.keywords_ai ?? "",
-    content: entry.content ?? "",
     available: entry.available ?? false,
     id_ads: entry.id_ads ?? null,
+    messages: messages, // 👈 Array de mensajes de la relación
   };
 };
 
@@ -57,18 +63,16 @@ export default function TriggerManagement({
   token,
   chatbotId,
 }) {
-  console.log("Initial triggers:", initialTriggers);
   const [triggers, setTriggers] = useState(
     Array.isArray(initialTriggers)
       ? initialTriggers.map(normalizeTrigger).filter(Boolean)
       : []
   );
-  console.log("Normalized triggers:", triggers);
   const [form, setForm] = useState({
     name: "",
     keywords: "",
     keywords_ai: "",
-    content: "",
+    message: "", // 👈 Cambio de 'content' a 'message'
     available: true,
     id_ads: "",
   });
@@ -94,11 +98,11 @@ export default function TriggerManagement({
       nextErrors.keywords = `Maximo ${MAX_KEYWORDS_LENGTH} caracteres permitidos.`;
     }
 
-    if (!form.content.trim()) {
-      nextErrors.content =
-        "Especifica el contenido o respuesta que se ejecutara.";
-    } else if (form.content.length > MAX_CONTENT_LENGTH) {
-      nextErrors.content = `Maximo ${MAX_CONTENT_LENGTH} caracteres permitidos.`;
+    if (!form.message.trim()) {
+      nextErrors.message =
+        "Especifica el mensaje de respuesta que se ejecutara.";
+    } else if (form.message.length > MAX_MESSAGE_LENGTH) {
+      nextErrors.message = `Maximo ${MAX_MESSAGE_LENGTH} caracteres permitidos.`;
     }
 
     return nextErrors;
@@ -121,40 +125,79 @@ export default function TriggerManagement({
     setStatus({ loading: true, error: null });
 
     try {
-      const payload = {
+      // Paso 1: Crear el trigger
+      const triggerPayload = {
         data: {
           name: form.name.trim(),
           keywords: form.keywords.trim(),
           keywords_ai: form.keywords_ai.trim() || form.keywords.trim(),
-          content: form.content.trim(),
           available: Boolean(form.available),
           id_ads: form.id_ads.trim() || null,
         },
       };
 
       if (chatbotId) {
-        payload.data.chatbot = { connect: [{ documentId: chatbotId }] };
+        triggerPayload.data.chatbot = { connect: [{ documentId: chatbotId }] };
       }
 
-      const response = await fetch(buildStrapiUrl(`/api/triggers`), {
+      const triggerResponse = await fetch(buildStrapiUrl(`/api/triggers`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(triggerPayload),
       });
 
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
+      const triggerBody = await triggerResponse.json().catch(() => ({}));
+      if (!triggerResponse.ok) {
         const message =
-          body?.error?.message ||
+          triggerBody?.error?.message ||
           "No se pudo crear el disparador. Intenta nuevamente.";
         setStatus({ loading: false, error: message });
         return;
       }
 
-      const normalized = normalizeTrigger(body?.data ?? body);
+      const createdTrigger = triggerBody?.data ?? triggerBody;
+      const triggerDocId = createdTrigger.documentId || createdTrigger.id;
+
+      // Paso 2: Crear el trigger_content relacionado
+      const contentPayload = {
+        data: {
+          message: form.message.trim(),
+          trigger: { connect: [{ documentId: triggerDocId }] },
+        },
+      };
+
+      const contentResponse = await fetch(
+        buildStrapiUrl(`/api/trigger-contents`),
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(contentPayload),
+        }
+      );
+
+      const contentBody = await contentResponse.json().catch(() => ({}));
+      if (!contentResponse.ok) {
+        console.error("Error creando trigger_content:", contentBody);
+        // No bloqueamos el flujo, pero mostramos advertencia
+        toast.warning(
+          "Disparador creado pero hubo un error al guardar el mensaje."
+        );
+      }
+
+      // Normalizar con el mensaje incluido
+      const normalized = normalizeTrigger({
+        ...createdTrigger,
+        trigger_contents: contentResponse.ok
+          ? [contentBody?.data ?? contentBody]
+          : [],
+      });
+
       if (normalized) {
         setTriggers((previous) => [normalized, ...previous]);
       }
@@ -164,12 +207,13 @@ export default function TriggerManagement({
         name: "",
         keywords: "",
         keywords_ai: "",
-        content: "",
+        message: "",
         available: true,
         id_ads: "",
       });
       setStatus({ loading: false, error: null });
     } catch (error) {
+      console.error("Error en submit:", error);
       setStatus({
         loading: false,
         error: "Error de red al crear el disparador.",
@@ -295,34 +339,34 @@ export default function TriggerManagement({
                   </FieldContent>
                 </Field>
 
-                <Field data-invalid={errors.content ? true : undefined}>
-                  <FieldLabel htmlFor="trigger-content">
-                    Contenido de respuesta
+                <Field data-invalid={errors.message ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-message">
+                    Mensaje de respuesta
                   </FieldLabel>
                   <FieldContent>
                     <Textarea
-                      id="trigger-content"
+                      id="trigger-message"
                       rows={4}
-                      maxLength={MAX_CONTENT_LENGTH}
-                      placeholder="Define el mensaje o accion que debe ejecutarse."
-                      value={form.content}
+                      maxLength={MAX_MESSAGE_LENGTH}
+                      placeholder="Define el mensaje que se enviara cuando se active el disparador."
+                      value={form.message}
                       onChange={(event) =>
                         setForm((previous) => ({
                           ...previous,
-                          content: event.target.value,
+                          message: event.target.value,
                         }))
                       }
                     />
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <FieldDescription className="text-xs">
-                        El contenido que se enviara cuando se active el
-                        disparador.
+                        El mensaje que se enviara cuando se detecten las
+                        palabras clave.
                       </FieldDescription>
                       <span>
-                        {form.content.length}/{MAX_CONTENT_LENGTH}
+                        {form.message.length}/{MAX_MESSAGE_LENGTH}
                       </span>
                     </div>
-                    <FieldError>{errors.content}</FieldError>
+                    <FieldError>{errors.message}</FieldError>
                   </FieldContent>
                 </Field>
               </FieldGroup>
@@ -435,11 +479,31 @@ export default function TriggerManagement({
                           {trigger.keywords_ai}
                         </div>
                       )}
-                    <div className="rounded-md border border-primary/10 bg-primary/5 px-3 py-2 text-xs text-primary-foreground/80 dark:text-primary-foreground/60">
-                      <span className="font-medium text-foreground">
-                        Respuesta:
-                      </span>{" "}
-                      {trigger.content || "Sin contenido configurado."}
+
+                    {/* 👇 Mostrar mensajes de la relación */}
+                    <div className="space-y-2">
+                      {trigger.messages && trigger.messages.length > 0 ? (
+                        trigger.messages.map((msg, idx) => (
+                          <div
+                            key={msg.id || idx}
+                            className="rounded-md border border-primary/10 bg-primary/5 px-3 py-2 text-xs text-primary-foreground/80 dark:text-primary-foreground/60"
+                          >
+                            <span className="font-medium text-foreground">
+                              Mensaje{" "}
+                              {trigger.messages.length > 1
+                                ? `${idx + 1}:`
+                                : ":"}
+                            </span>{" "}
+                            <span className="text-foreground">
+                              {msg.message || "Sin mensaje configurado."}
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="rounded-md border border-muted-foreground/10 bg-muted/5 px-3 py-2 text-xs text-muted-foreground">
+                          Sin mensajes configurados.
+                        </div>
+                      )}
                     </div>
                   </div>
                 );

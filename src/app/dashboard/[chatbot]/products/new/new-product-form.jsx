@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import { buildStrapiUrl } from "@/lib/strapi"
-import { Button } from "@/components/ui/button"
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { buildStrapiUrl } from "@/lib/strapi";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,7 +12,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
 import {
   Field,
   FieldContent,
@@ -23,28 +23,28 @@ import {
   FieldLegend,
   FieldSeparator,
   FieldSet,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import CardUpload from "@/components/card-upload"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import CardUpload from "@/components/card-upload";
 
-const SHORT_DESCRIPTION_LIMIT = 500
-const LONG_DESCRIPTION_LIMIT = 500
+const SHORT_DESCRIPTION_LIMIT = 500;
+const LONG_DESCRIPTION_LIMIT = 500;
 
 export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
-  const router = useRouter()
+  const router = useRouter();
   const [form, setForm] = useState({
     name: "",
     price: "",
     available: true,
     description_wsp: "",
     description_complete: "",
-  })
-  const [errors, setErrors] = useState({})
-  const [uploadItems, setUploadItems] = useState([])
-  const [uploadKey, setUploadKey] = useState(() => Date.now())
-  const [status, setStatus] = useState({ loading: false, error: null })
+  });
+  const [errors, setErrors] = useState({});
+  const [uploadItems, setUploadItems] = useState([]);
+  const [uploadKey, setUploadKey] = useState(() => Date.now());
+  const [status, setStatus] = useState({ loading: false, error: null });
 
   const resetForm = () => {
     setForm({
@@ -53,57 +53,57 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       available: true,
       description_wsp: "",
       description_complete: "",
-    })
-    setErrors({})
-    setUploadItems([])
-    setUploadKey(Date.now())
-  }
+    });
+    setErrors({});
+    setUploadItems([]);
+    setUploadKey(Date.now());
+  };
 
   const validateForm = () => {
-    const nextErrors = {}
+    const nextErrors = {};
 
     if (!form.name.trim()) {
-      nextErrors.name = "Ingresa el nombre del producto."
+      nextErrors.name = "Ingresa el nombre del producto.";
     }
 
-    const priceNum = Number(form.price)
+    const priceNum = Number(form.price);
     if (form.price === "") {
-      nextErrors.price = "Define un precio para el producto."
+      nextErrors.price = "Define un precio para el producto.";
     } else if (Number.isNaN(priceNum)) {
-      nextErrors.price = "Ingresa un valor numerico valido."
+      nextErrors.price = "Ingresa un valor numerico valido.";
     } else if (priceNum < 0) {
-      nextErrors.price = "El precio no puede ser negativo."
+      nextErrors.price = "El precio no puede ser negativo.";
     }
 
     if (form.description_wsp.length > SHORT_DESCRIPTION_LIMIT) {
-      nextErrors.description_wsp = `Maximo ${SHORT_DESCRIPTION_LIMIT} caracteres permitidos.`
+      nextErrors.description_wsp = `Maximo ${SHORT_DESCRIPTION_LIMIT} caracteres permitidos.`;
     }
 
     if (form.description_complete.length > LONG_DESCRIPTION_LIMIT) {
-      nextErrors.description_complete = `Maximo ${LONG_DESCRIPTION_LIMIT} caracteres permitidos.`
+      nextErrors.description_complete = `Maximo ${LONG_DESCRIPTION_LIMIT} caracteres permitidos.`;
     }
 
-    return nextErrors
-  }
+    return nextErrors;
+  };
 
   const handleSubmit = async (event) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const validation = validateForm()
+    const validation = validateForm();
     if (Object.keys(validation).length > 0) {
-      setErrors(validation)
+      setErrors(validation);
       setStatus({
         loading: false,
         error: "Revisa los campos marcados para continuar con la creacion.",
-      })
-      return
+      });
+      return;
     }
 
-    setErrors({})
-    setStatus({ loading: true, error: null })
+    setErrors({});
+    setStatus({ loading: true, error: null });
 
     try {
-      const priceNum = Number(form.price)
+      const priceNum = Number(form.price);
       const payload = {
         data: {
           name: form.name.trim(),
@@ -112,21 +112,21 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
         },
-      }
+      };
 
       if (chatbotId) {
         payload.data.chatbot = {
           connect: [{ documentId: chatbotId }],
-        }
+        };
       }
 
       const newFiles = (uploadItems || [])
         .map((item) => item?.file)
-        .filter((file) => typeof File !== "undefined" && file instanceof File)
+        .filter((file) => typeof File !== "undefined" && file instanceof File);
 
       if (newFiles.length > 0) {
-        const fd = new FormData()
-        newFiles.forEach((file) => fd.append("files", file))
+        const fd = new FormData();
+        newFiles.forEach((file) => fd.append("files", file));
 
         const uploadRes = await fetch(buildStrapiUrl(`/api/upload`), {
           method: "POST",
@@ -134,23 +134,23 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: fd,
-        })
+        });
 
-        const uploaded = await uploadRes.json().catch(() => [])
+        const uploaded = await uploadRes.json().catch(() => []);
         if (!uploadRes.ok) {
           const message = Array.isArray(uploaded)
             ? "No se pudieron subir las imagenes."
-            : uploaded?.error?.message || "No se pudieron subir las imagenes."
-          setStatus({ loading: false, error: message })
-          return
+            : uploaded?.error?.message || "No se pudieron subir las imagenes.";
+          setStatus({ loading: false, error: message });
+          return;
         }
 
         const uploadedMediaIds = (Array.isArray(uploaded) ? uploaded : [])
           .map((entry) => entry?.id)
-          .filter(Boolean)
+          .filter(Boolean);
 
         if (uploadedMediaIds.length > 0) {
-          payload.data.media = uploadedMediaIds
+          payload.data.media = uploadedMediaIds;
         }
       }
 
@@ -161,36 +161,40 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
-      })
+      });
 
-      const body = await response.json().catch(() => ({}))
+      const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        const message = body?.error?.message || "No se pudo crear el producto."
-        setStatus({ loading: false, error: message })
-        return
+        const message = body?.error?.message || "No se pudo crear el producto.";
+        setStatus({ loading: false, error: message });
+        return;
       }
 
-      toast.success("Producto creado correctamente.")
-      setStatus({ loading: false, error: null })
-      resetForm()
+      toast.success("Producto creado correctamente.");
+      setStatus({ loading: false, error: null });
+      resetForm();
 
-      const segment = chatbotSlug || chatbotId
-      router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
+      const segment = chatbotSlug || chatbotId;
+      router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
     } catch (error) {
-      setStatus({ loading: false, error: "Error de red al crear el producto." })
+      setStatus({
+        loading: false,
+        error: "Error de red al crear el producto.",
+      });
     }
-  }
+  };
 
   const handleUploadChange = useCallback((items) => {
-    setUploadItems(items)
-  }, [])
+    setUploadItems(items);
+  }, []);
 
   return (
     <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
       <CardHeader className="gap-1">
         <CardTitle className="text-xl">Nuevo producto</CardTitle>
         <CardDescription>
-          Organiza la informacion en secciones claras y anade recursos visuales antes de publicar.
+          Organiza la informacion en secciones claras y anade recursos visuales
+          antes de publicar.
         </CardDescription>
       </CardHeader>
 
@@ -201,20 +205,26 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
               <FieldLegend>Detalles principales</FieldLegend>
               <div className="grid gap-6 md:grid-cols-2">
                 <Field data-invalid={errors.name ? true : undefined}>
-                  <FieldLabel htmlFor="product-name">Nombre del producto</FieldLabel>
+                  <FieldLabel htmlFor="product-name">
+                    Nombre del producto
+                  </FieldLabel>
                   <FieldContent>
                     <Input
                       id="product-name"
                       placeholder="Ej. Camiseta premium verano"
                       value={form.name}
                       onChange={(event) =>
-                        setForm((previous) => ({ ...previous, name: event.target.value }))
+                        setForm((previous) => ({
+                          ...previous,
+                          name: event.target.value,
+                        }))
                       }
                       required
                       autoComplete="off"
                     />
                     <FieldDescription>
-                      Este nombre sera visible en catalogos, respuestas automatizadas y reportes.
+                      Este nombre sera visible en catalogos, respuestas
+                      automatizadas y reportes.
                     </FieldDescription>
                     <FieldError>{errors.name}</FieldError>
                   </FieldContent>
@@ -232,35 +242,45 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                       placeholder="0.00"
                       value={form.price}
                       onChange={(event) =>
-                        setForm((previous) => ({ ...previous, price: event.target.value }))
+                        setForm((previous) => ({
+                          ...previous,
+                          price: event.target.value,
+                        }))
                       }
                       required
                     />
                     <FieldDescription>
-                      Indica el precio final mostrado al cliente. Puedes incluir impuestos si aplica.
+                      Indica el precio final mostrado al cliente. Puedes incluir
+                      impuestos si aplica.
                     </FieldDescription>
                     <FieldError>{errors.price}</FieldError>
                   </FieldContent>
                 </Field>
               </div>
 
-              <Field orientation="responsive">
-                <FieldLabel htmlFor="product-available">Disponibilidad</FieldLabel>
+              <Field>
+                <FieldLabel>Disponibilidad</FieldLabel>
                 <FieldContent>
                   <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/20 bg-background px-4 py-3 md:flex-row md:items-center md:gap-4">
                     <Switch
                       id="product-available"
                       checked={!!form.available}
                       onCheckedChange={(value) =>
-                        setForm((previous) => ({ ...previous, available: !!value }))
+                        setForm((previous) => ({
+                          ...previous,
+                          available: !!value,
+                        }))
                       }
                     />
                     <div className="space-y-1">
                       <p className="text-sm font-medium">
-                        {form.available ? "Producto visible" : "Producto oculto"}
+                        {form.available
+                          ? "Producto visible"
+                          : "Producto oculto"}
                       </p>
                       <FieldDescription className="text-xs md:text-sm">
-                        Controla si el producto aparece en catalogos y respuestas automaticas sin eliminarlo.
+                        Controla si el producto aparece en catalogos y
+                        respuestas automaticas sin eliminarlo.
                       </FieldDescription>
                     </div>
                   </div>
@@ -303,7 +323,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                   </FieldContent>
                 </Field>
 
-                <Field data-invalid={errors.description_complete ? true : undefined}>
+                <Field
+                  data-invalid={errors.description_complete ? true : undefined}
+                >
                   <FieldLabel htmlFor="product-description-complete">
                     Descripcion extendida
                   </FieldLabel>
@@ -326,7 +348,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                         Ideal para catalogos completos o fichas tecnicas.
                       </FieldDescription>
                       <span>
-                        {form.description_complete.length}/{LONG_DESCRIPTION_LIMIT}
+                        {form.description_complete.length}/
+                        {LONG_DESCRIPTION_LIMIT}
                       </span>
                     </div>
                     <FieldError>{errors.description_complete}</FieldError>
@@ -343,8 +366,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                 <FieldLabel>Imagenes y videos</FieldLabel>
                 <FieldContent>
                   <FieldDescription>
-                    Arrastra tus archivos o seleccionalos desde tu equipo. Acepta JPG, PNG y MP4
-                    (hasta 50&nbsp;MB por archivo).
+                    Arrastra tus archivos o seleccionalos desde tu equipo.
+                    Acepta JPG, PNG y MP4 (hasta 50&nbsp;MB por archivo).
                   </FieldDescription>
                   <CardUpload
                     key={uploadKey}
@@ -380,8 +403,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
               type="button"
               variant="outline"
               onClick={() => {
-                const segment = chatbotSlug || chatbotId
-                router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
+                const segment = chatbotSlug || chatbotId;
+                router.push(
+                  `/dashboard/${encodeURIComponent(segment)}/products`
+                );
               }}
               className="w-full md:w-auto"
               disabled={status.loading}
@@ -399,5 +424,5 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         </CardFooter>
       </form>
     </Card>
-  )
+  );
 }

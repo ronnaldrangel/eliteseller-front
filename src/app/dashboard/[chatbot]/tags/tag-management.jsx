@@ -320,7 +320,7 @@ export default function TagManagement({
                         color: "#ffffff",
                         borderColor: tag.color,
                       }}
-                      className="font-medium"
+                      className="font-medium text-foreground"
                     >
                       {tag.name || "Sin nombre"}
                     </Badge>

@@ -29,7 +29,7 @@ export default async function TagsPage({ params }) {
   }
 
   const qs = new URLSearchParams()
-  qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId)
+  qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
 
   const url = buildStrapiUrl(`/api/tags?${qs.toString()}`)
 
@@ -45,7 +45,7 @@ export default async function TagsPage({ params }) {
       },
       cache: "no-store",
     })
-
+    console.log("Fetched Url:", url);
     if (!res.ok) {
       const details = await res.json().catch(() => ({}))
       loadError =

@@ -29,8 +29,8 @@ export default async function TriggersPage({ params }) {
   }
 
   const qs = new URLSearchParams();
+  qs.set("populate", "*");
   qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
-  qs.set("populate", "trigger_contents");
 
 
   const url = buildStrapiUrl(`/api/triggers?${qs.toString()}`);
@@ -47,7 +47,7 @@ export default async function TriggersPage({ params }) {
       },
       cache: "no-store",
     });
-
+    console.log("Authorization token:", session.strapiToken);
     if (!res.ok) {
       const details = await res.json().catch(() => ({}));
       loadError =
