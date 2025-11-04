@@ -11,7 +11,7 @@ import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { CheckCircle2Icon } from "lucide-react"
 
-export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) {
+export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }) {
   const base = initialData?.attributes || initialData || {}
 
   const [form, setForm] = useState({
@@ -64,7 +64,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
         available_emojis: form.available_emojis === "" ? null : form.available_emojis,
       }
 
-      const res = await fetch(buildStrapiUrl(`/api/chatbots/${chatbotId}`), {
+      const res = await fetch(buildStrapiUrl(`/api/chatbots/${chatbotSlug}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

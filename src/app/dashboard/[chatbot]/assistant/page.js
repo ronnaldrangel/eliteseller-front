@@ -159,7 +159,7 @@ export default async function AppsPage({ params }) {
                   <div className="my-2">
                     <ChatbotEditForm
                       initialData={chatbots[0]?.attributes || chatbots[0] || {}}
-                      chatbotId={chatbots[0]?.documentId || documentId}
+                      chatbotSlug={chatbots[0]?.slug || chatbotSlug}
                       token={session.strapiToken}
                     />
                   </div>
