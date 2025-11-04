@@ -480,17 +480,23 @@ export default function TagManagement({
       </Dialog>
 
       <div className="grid gap-6 pb-6">
-        <Card className="bg-background/80">
+        {/* El overflow aquí es para el responsive */}
+        <Card className="bg-background/80 overflow-x-auto">
           <CardContent>
-            {/* Tabla responsive con scroll horizontal */}
-            <div className="w-full overflow-x-auto">
-              <Table>
+            {/* <div className="overflow-x-auto"> */}
+              <Table className="min-w-max">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Descripcion</TableHead>
-                    <TableHead>Color</TableHead>
-                    <TableHead className="w-32">Acciones</TableHead>
+                    <TableHead className="min-w-[180px]">
+                      Nombre
+                    </TableHead>
+                    <TableHead className="min-w-[360px]">Descripcion</TableHead>
+                    <TableHead className="min-w-[140px]">
+                      Color
+                    </TableHead>
+                    <TableHead className="min-w-[180px]">
+                      Acciones
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -521,7 +527,12 @@ export default function TagManagement({
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {tag.description ? (
-                            tag.description
+                            <div
+                              className="truncate max-w-xs"
+                              title={tag.description}
+                            >
+                              {tag.description}
+                            </div>
                           ) : (
                             <span className="text-xs">
                               Sin descripcion asignada.
@@ -571,7 +582,7 @@ export default function TagManagement({
                   </TableCaption>
                 )}
               </Table>
-            </div>
+            {/* </div> */}
           </CardContent>
         </Card>
 
