@@ -25,35 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-// Eliminado: constantes usadas solo en el formulario de creación.
-
-const randomId = () =>
-  typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-    ? crypto.randomUUID()
-    : Math.random().toString(36).slice(2);
-
-const normalizeTrigger = (entry) => {
-  if (!entry) return null;
-
-  // Extraer los mensajes de la relación trigger_contents
-  const triggerContents = entry.trigger_contents || [];
-  const messages = triggerContents.map((tc) => ({
-    id: tc.id || tc.documentId,
-    message: tc.message || "",
-  }));
-
-  return {
-    id: String(entry.documentId ?? entry.id ?? randomId()),
-    documentId: entry.documentId ? String(entry.documentId) : null,
-    name: entry.name ?? "",
-    keywords: entry.keywords ?? "",
-    keywords_ai: entry.keywords_ai ?? "",
-    available: entry.available ?? false,
-    id_ads: entry.id_ads ?? null,
-    messages: messages, // 👈 Array de mensajes de la relación
-  };
-};
+import { normalizeTriggerEntry } from "./trigger-normalizer";
 
 export default function TriggerManagement({
   initialTriggers = [],
@@ -63,21 +35,17 @@ export default function TriggerManagement({
 }) {
   const [triggers, setTriggers] = useState(
     Array.isArray(initialTriggers)
-      ? initialTriggers.map(normalizeTrigger).filter(Boolean)
+      ? initialTriggers.map(normalizeTriggerEntry).filter(Boolean)
       : []
   );
-  // Eliminado: estado del formulario y errores, ya que la creación ocurre en la página /triggers/new.
 
   useEffect(() => {
     if (!Array.isArray(initialTriggers)) return;
-    setTriggers(initialTriggers.map(normalizeTrigger).filter(Boolean));
+    setTriggers(initialTriggers.map(normalizeTriggerEntry).filter(Boolean));
   }, [initialTriggers]);
-
-  // Eliminado: lógica de creación; ahora solo se lista.
 
   return (
     <div className="grid gap-6 pb-6">
-
       <Card className="bg-background/80">
         <CardContent>
           <div className="w-full overflow-x-auto md:overflow-visible">
@@ -99,7 +67,7 @@ export default function TriggerManagement({
                   </TableRow>
                 ) : (
                   triggers.map((trigger) => (
-                    <TableRow key={trigger.id}>
+                    <TableRow key={trigger.key}>
                       <TableCell>
                         <div className="max-w-[280px] truncate" title={trigger.name || "Sin nombre"}>
                           {trigger.name || "Sin nombre"}
@@ -120,9 +88,23 @@ export default function TriggerManagement({
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Button asChild variant="outline" size="sm">
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            disabled={!(trigger.documentId || trigger.id)}
+                          >
                             <Link
-                              href={`/dashboard/${encodeURIComponent(chatbotSlug ?? chatbotId)}/triggers/${encodeURIComponent(trigger.documentId || trigger.id)}/edit`}
+                              href={
+                                trigger.documentId || trigger.id
+                                  ? `/dashboard/${encodeURIComponent(
+                                      chatbotSlug ?? chatbotId
+                                    )}/triggers/${encodeURIComponent(
+                                      trigger.documentId || trigger.id
+                                    )}/edit`
+                                  : "#"
+                              }
+                              aria-disabled={!(trigger.documentId || trigger.id)}
                               className="whitespace-nowrap"
                             >
                               Editar
@@ -141,13 +123,17 @@ export default function TriggerManagement({
                                 return;
                               }
                               const confirmed = window.confirm(
-                                `¿Eliminar el disparador "${trigger.name || "Sin nombre"}"?`
+                                `Eliminar el disparador "${trigger.name || "Sin nombre"}"?`
                               );
                               if (!confirmed) return;
 
                               const deleteId = trigger.documentId || trigger.id;
+                              if (!deleteId) {
+                                toast.error("No se pudo determinar el identificador del disparador.");
+                                return;
+                              }
                               const prev = [...triggers];
-                              setTriggers((list) => list.filter((t) => t.id !== trigger.id));
+                              setTriggers((list) => list.filter((t) => t.key !== trigger.key));
                               try {
                                 const res = await fetch(
                                   buildStrapiUrl(`/api/triggers/${deleteId}`),
@@ -195,3 +181,4 @@ export default function TriggerManagement({
     </div>
   );
 }
+

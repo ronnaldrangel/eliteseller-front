@@ -3,6 +3,7 @@ import { buildStrapiUrl } from "@/lib/strapi";
 import { redirect } from "next/navigation";
 import NewTriggerForm from "../../new/new-trigger-form.jsx";
 import { getChatbotBySlug } from "@/lib/utils/chatbot-utils";
+import { normalizeTriggerEntry } from "../../trigger-normalizer";
 
 export default async function EditTriggerPage({ params }) {
   const session = await auth();
@@ -56,7 +57,9 @@ export default async function EditTriggerPage({ params }) {
     // Ignorar y redirigir si falla.
   }
 
-  if (!entry) {
+  const trigger = normalizeTriggerEntry(entry);
+
+  if (!trigger) {
     redirect(`/dashboard/${encodeURIComponent(chatbotSlug)}/triggers`);
   }
 
@@ -76,7 +79,7 @@ export default async function EditTriggerPage({ params }) {
           token={session.strapiToken}
           chatbotId={chatbot.documentId}
           chatbotSlug={chatbotSlug}
-          initialTrigger={entry}
+          initialTrigger={trigger}
           mode="edit"
         />
       </div>

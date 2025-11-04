@@ -32,15 +32,21 @@ const MAX_MESSAGE_LENGTH = 500;
 
 export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialTrigger = null, mode = "create" }) {
   const router = useRouter();
+  const isEditMode = mode === "edit";
   const initialMessage =
     initialTrigger?.trigger_contents?.[0]?.message ??
     initialTrigger?.messages?.[0]?.message ??
     "";
   const initialKeywordsString = (initialTrigger?.keywords ?? "").trim();
-  const initialKeywordsList = useMemo(
-    () => initialKeywordsString.split(/[\,\s]+/).filter(Boolean),
-    [initialKeywordsString]
-  );
+  const initialKeywordsList = useMemo(() => {
+    if (
+      Array.isArray(initialTrigger?.keywordsList) &&
+      initialTrigger.keywordsList.length > 0
+    ) {
+      return initialTrigger.keywordsList;
+    }
+    return initialKeywordsString.split(/[\,\s]+/).filter(Boolean);
+  }, [initialKeywordsString, initialTrigger?.keywordsList]);
   const [form, setForm] = useState({
     name: initialTrigger?.name ?? "",
     keywords: initialKeywordsString,
@@ -51,7 +57,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
   });
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, error: null });
-  const [keywordsList, setKeywordsList] = useState(initialKeywordsList);
+  const [keywordsList, setKeywordsList] = useState(() => [...initialKeywordsList]);
   const [keywordInput, setKeywordInput] = useState("");
 
   const keywordsJoined = useMemo(() => keywordsList.join(","), [keywordsList]);
@@ -99,7 +105,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
     try {
       const joined = keywordsJoined;
       const joinedAi = form.keywords_ai.trim() || joined;
-      if (mode === "edit" && initialTrigger) {
+      if (isEditMode && initialTrigger) {
         // Actualizar el trigger existente
         const triggerDocId = initialTrigger.documentId || initialTrigger.id;
         const triggerPayload = {
@@ -265,10 +271,18 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
       console.error("Error en submit:", error);
       setStatus({
         loading: false,
-        error: mode === "edit" ? "Error de red al actualizar el disparador." : "Error de red al crear el disparador.",
+        error: isEditMode ? "Error de red al actualizar el disparador." : "Error de red al crear el disparador.",
       });
     }
   };
+
+  const submitLabel = status.loading
+    ? isEditMode
+      ? "Actualizando..."
+      : "Creando..."
+    : isEditMode
+    ? "Guardar cambios"
+    : "Crear disparador";
 
   return (
     <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
@@ -303,7 +317,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                 <FieldContent>
                   <Input
                     id="trigger-id-ads"
-                    placeholder="ID de anuncio o campaña"
+                    placeholder="ID de anuncio o campana"
                     value={form.id_ads}
                     onChange={(event) =>
                       setForm((previous) => ({
@@ -313,7 +327,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                     }
                   />
                   <FieldDescription>
-                    Vincula este disparador con un anuncio o campaña especifica.
+                    Vincula este disparador con un anuncio o campana especifica.
                   </FieldDescription>
                 </FieldContent>
               </Field>
@@ -341,7 +355,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                             className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
                             aria-label={`Quitar palabra ${kw}`}
                           >
-                            ×
+                            x
                           </button>
                         </span>
                       ))}
@@ -379,7 +393,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                     />
                     <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                       <FieldDescription className="text-xs">
-                        Palabras separadas por espacio. Se enviarán separadas por coma.
+                        Palabras separadas por espacio. Se enviaran separadas por coma.
                       </FieldDescription>
                       <span>
                         {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
@@ -499,7 +513,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
               className="w-full md:w-auto"
               disabled={status.loading || !token || !chatbotId}
             >
-              {status.loading ? "Creando..." : "Crear disparador"}
+              {submitLabel}
             </Button>
           </div>
         </CardFooter>
