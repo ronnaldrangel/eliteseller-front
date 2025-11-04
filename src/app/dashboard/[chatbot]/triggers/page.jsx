@@ -1,6 +1,8 @@
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 import { getChatbotBySlug } from "@/lib/utils/chatbot-utils";
 import TriggerManagement from "./trigger-management";
@@ -65,12 +67,22 @@ export default async function TriggersPage({ params }) {
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
       <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold">Disparadores</h1>
-          <p className="text-sm text-muted-foreground">
-            Configura automatizaciones que respondan a eventos clave de tu
-            operacion.
-          </p>
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-2xl font-semibold">Disparadores</h1>
+            <p className="text-sm text-muted-foreground">
+              Configura automatizaciones que respondan a eventos clave de tu
+              operacion.
+            </p>
+          </div>
+          <Button asChild className="w-full md:w-auto">
+            <Link
+              href={`/dashboard/${encodeURIComponent(chatbotSlug)}/triggers/new`}
+              className="whitespace-nowrap"
+            >
+              Crear disparador
+            </Link>
+          </Button>
         </div>
 
         {loadError && (
@@ -83,6 +95,7 @@ export default async function TriggersPage({ params }) {
           initialTriggers={triggers}
           token={session.strapiToken}
           chatbotId={chatbot.documentId}
+          chatbotSlug={chatbotSlug}
         />
       </div>
     </div>

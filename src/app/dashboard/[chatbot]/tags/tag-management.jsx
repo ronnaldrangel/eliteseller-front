@@ -5,6 +5,34 @@ import { toast } from "sonner"
 
 import { buildStrapiUrl } from "@/lib/strapi"
 import { Button } from "@/components/ui/button"
+import { Trash2Icon } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableCaption,
+} from "@/components/ui/table"
 import {
   Card,
   CardContent,
@@ -29,6 +57,15 @@ import { Badge } from "@/components/ui/badge"
 
 const MAX_DESCRIPTION_LENGTH = 240
 const DEFAULT_COLOR = "#2563eb"
+const TAG_NAME_PATTERN = /^[a-z0-9-]+$/
+
+const sanitizeTagName = (value) =>
+  String(value || "")
+    .toLowerCase()
+    .replace(/\s+/g, "-") // sin espacios, usar guion
+    .replace(/[^a-z0-9-]/g, "") // solo minusculas, numeros y guiones
+    .replace(/-+/g, "-") // deduplicar guiones
+    .replace(/^-+|-+$/g, "") // sin guiones al inicio/fin
 
 const randomId = () =>
   typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -76,6 +113,14 @@ export default function TagManagement({
   })
   const [errors, setErrors] = useState({})
   const [status, setStatus] = useState({ loading: false, error: null })
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState(null)
+  const [editForm, setEditForm] = useState({ name: "", color: DEFAULT_COLOR, description: "" })
+  const [editErrors, setEditErrors] = useState({})
+  const [editStatus, setEditStatus] = useState({ loading: false, error: null })
+  const [toDelete, setToDelete] = useState(null)
+  const [deleteStatus, setDeleteStatus] = useState({ loading: false, error: null })
 
   useEffect(() => {
     if (!Array.isArray(initialTags)) return
@@ -90,18 +135,30 @@ export default function TagManagement({
     return DEFAULT_COLOR
   }, [form.color])
 
-  const validate = () => {
+  const editColorPreview = useMemo(() => {
+    const candidate = editForm.color?.trim()
+    if (isHexColor(candidate)) {
+      return candidate
+    }
+    return DEFAULT_COLOR
+  }, [editForm.color])
+
+  const validate = (fields) => {
     const nextErrors = {}
 
-    if (!form.name.trim()) {
+    if (!fields.name?.trim()) {
       nextErrors.name = "El nombre de la etiqueta es obligatorio."
     }
 
-    if (form.color && !isHexColor(form.color.trim())) {
+    if (fields.name && !TAG_NAME_PATTERN.test(fields.name.trim())) {
+      nextErrors.name = "Solo numeros, minusculas y guiones (-), sin espacios."
+    }
+
+    if (fields.color && !isHexColor(fields.color.trim())) {
       nextErrors.color = "Usa un color en formato hexadecimal (ej. #2563eb)."
     }
 
-    if (form.description.length > MAX_DESCRIPTION_LENGTH) {
+    if ((fields.description || "").length > MAX_DESCRIPTION_LENGTH) {
       nextErrors.description = `Maximo ${MAX_DESCRIPTION_LENGTH} caracteres permitidos.`
     }
 
@@ -111,7 +168,7 @@ export default function TagManagement({
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const validation = validate()
+    const validation = validate(form)
     if (Object.keys(validation).length > 0) {
       setErrors(validation)
       setStatus({
@@ -163,6 +220,7 @@ export default function TagManagement({
       toast.success("Etiqueta creada correctamente.")
       setForm({ name: "", color: DEFAULT_COLOR, description: "" })
       setStatus({ loading: false, error: null })
+      setCreateOpen(false)
     } catch (error) {
       setStatus({
         loading: false,
@@ -171,50 +229,386 @@ export default function TagManagement({
     }
   }
 
+  const openEdit = (tag) => {
+    const normalized = normalizeTag(tag)
+    setEditTarget(normalized)
+    setEditForm({
+      name: normalized?.name || "",
+      color: normalized?.color || DEFAULT_COLOR,
+      description: normalized?.description || "",
+    })
+    setEditErrors({})
+    setEditStatus({ loading: false, error: null })
+    setEditOpen(true)
+  }
+
+  const handleUpdate = async (event) => {
+    event.preventDefault()
+    if (!editTarget) return
+
+    const validation = validate(editForm)
+    if (Object.keys(validation).length > 0) {
+      setEditErrors(validation)
+      setEditStatus({
+        loading: false,
+        error: "Revisa los campos marcados antes de actualizar la etiqueta.",
+      })
+      return
+    }
+
+    setEditErrors({})
+    setEditStatus({ loading: true, error: null })
+
+    try {
+      const docId = editTarget.documentId || editTarget.id
+      const response = await fetch(buildStrapiUrl(`/api/tags/${encodeURIComponent(docId)}`), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          data: {
+            name: editForm.name.trim(),
+            color: editForm.color?.trim() || DEFAULT_COLOR,
+            description: editForm.description?.trim() || "",
+          },
+        }),
+      })
+
+      const body = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        const message =
+          body?.error?.message ||
+          "No se pudo actualizar la etiqueta. Intenta nuevamente."
+        setEditStatus({ loading: false, error: message })
+        return
+      }
+
+      const updated = normalizeTag(body?.data ?? body)
+      const docIdStr = String(editTarget.documentId || editTarget.id)
+      setTags((previous) =>
+        previous.map((t) =>
+          String(t.documentId || t.id) === docIdStr
+            ? { ...t, name: updated.name, color: updated.color, description: updated.description }
+            : t
+        )
+      )
+
+      toast.success("Etiqueta actualizada correctamente.")
+      setEditStatus({ loading: false, error: null })
+      setEditOpen(false)
+      setEditTarget(null)
+    } catch (error) {
+      setEditStatus({
+        loading: false,
+        error: "Error de red al actualizar la etiqueta.",
+      })
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!toDelete) return
+    setDeleteStatus({ loading: true, error: null })
+    try {
+      const docId = toDelete.documentId || toDelete.id
+      const res = await fetch(
+        buildStrapiUrl(`/api/tags/${encodeURIComponent(docId)}`),
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      )
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        setDeleteStatus({
+          loading: false,
+          error:
+            body?.error?.message || "No se pudo eliminar la etiqueta.",
+        })
+        return
+      }
+      setTags((prev) =>
+        prev.filter(
+          (t) => String(t.documentId || t.id) !== String(docId)
+        )
+      )
+      toast.success("Etiqueta eliminada correctamente.")
+      setDeleteStatus({ loading: false, error: null })
+      setToDelete(null)
+    } catch (e) {
+      setDeleteStatus({
+        loading: false,
+        error: "Error de red al eliminar la etiqueta.",
+      })
+    }
+  }
+
   return (
     <div className="grid gap-6 pb-6">
-      <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
-        <CardHeader className="gap-1">
-          <CardTitle className="text-xl">Nueva etiqueta</CardTitle>
-          <CardDescription>
-            Clasifica tus conversaciones y productos con etiquetas personalizadas.
-          </CardDescription>
-        </CardHeader>
-
-        <form onSubmit={handleSubmit} className="contents">
-          <CardContent className="space-y-6">
-            <FieldSet>
-              <FieldGroup className="gap-6">
-                <Field data-invalid={errors.name ? true : undefined}>
-                  <FieldLabel htmlFor="tag-name">Nombre</FieldLabel>
-                  <FieldContent>
+      <div className="flex items-center justify-end">
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogTrigger asChild>
+            <Button className="w-full sm:w-auto" disabled={!token || !chatbotId}>
+              Nueva etiqueta
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nueva etiqueta</DialogTitle>
+              <DialogDescription>
+                Clasifica tus conversaciones y productos con etiquetas personalizadas.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <FieldSet>
+                <FieldGroup className="gap-6">
+                  <Field data-invalid={errors.name ? true : undefined}>
+                    <FieldLabel htmlFor="tag-name">Nombre</FieldLabel>
+                    <FieldContent>
                     <Input
                       id="tag-name"
-                      placeholder="Ej. Cliente VIP"
+                      placeholder="Ej. cliente-vip"
                       value={form.name}
                       onChange={(event) =>
                         setForm((previous) => ({
                           ...previous,
-                          name: event.target.value,
+                          name: sanitizeTagName(event.target.value),
+                        }))
+                      }
+                      pattern="[a-z0-9-]+"
+                      title="Usa solo numeros, minusculas y guiones (-), sin espacios"
+                      inputMode="text"
+                    />
+                    <FieldDescription>
+                      Usa solo numeros, minusculas y guiones (-), sin espacios.
+                    </FieldDescription>
+                      <FieldError>{errors.name}</FieldError>
+                    </FieldContent>
+                  </Field>
+
+                  <Field data-invalid={errors.color ? true : undefined}>
+                    <FieldLabel htmlFor="tag-color">Color</FieldLabel>
+                    <FieldContent>
+                      <div className="flex items-center gap-3">
+                        <Input
+                          id="tag-color"
+                          value={form.color}
+                          onChange={(event) =>
+                            setForm((previous) => ({
+                              ...previous,
+                              color: event.target.value,
+                            }))
+                          }
+                          placeholder="#2563eb"
+                          className="font-mono"
+                        />
+                        <input
+                          type="color"
+                          aria-label="Seleccionar color"
+                          value={colorPreview}
+                          onChange={(event) =>
+                            setForm((previous) => ({
+                              ...previous,
+                              color: event.target.value,
+                            }))
+                          }
+                          className="h-10 w-12 cursor-pointer rounded-md border border-muted-foreground/30 bg-background p-1"
+                        />
+                      </div>
+                      <FieldDescription>
+                        Elige un color que facilite la identificacion visual en listas.
+                      </FieldDescription>
+                      <FieldError>{errors.color}</FieldError>
+                    </FieldContent>
+                  </Field>
+                </FieldGroup>
+
+                <Field data-invalid={errors.description ? true : undefined}>
+                  <FieldLabel htmlFor="tag-description">Descripcion</FieldLabel>
+                  <FieldContent>
+                    <Textarea
+                      id="tag-description"
+                      rows={3}
+                      maxLength={MAX_DESCRIPTION_LENGTH}
+                      placeholder="Describe en que casos usaras esta etiqueta."
+                      value={form.description}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          description: event.target.value,
                         }))
                       }
                     />
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <FieldDescription className="text-xs">
+                        Opcional. Maximo {MAX_DESCRIPTION_LENGTH} caracteres.
+                      </FieldDescription>
+                      <span>
+                        {form.description.length}/{MAX_DESCRIPTION_LENGTH}
+                      </span>
+                    </div>
+                    <FieldError>{errors.description}</FieldError>
+                  </FieldContent>
+                </Field>
+              </FieldSet>
+
+              {status.error && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {status.error}
+                </div>
+              )}
+
+              <DialogFooter>
+                <div className="text-xs text-muted-foreground md:text-sm mr-auto">
+                  Las etiquetas se sincronizan automaticamente con tu chatbot.
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto"
+                  disabled={status.loading || !token || !chatbotId}
+                >
+                  {status.loading ? "Guardando..." : "Crear etiqueta"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card className="bg-background/80">
+        <CardContent>
+          {/* Tabla responsive con scroll horizontal */}
+          <div className="w-full overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Descripcion</TableHead>
+                  <TableHead>Color</TableHead>
+                  <TableHead className="w-32">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tags.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-20 text-center text-muted-foreground">
+                      Aun no tienes etiquetas. Crea la primera para organizar tus contactos y ventas.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  tags.map((tag) => (
+                    <TableRow key={tag.id}>
+                      <TableCell>
+                        <Badge
+                          style={{
+                            backgroundColor: tag.color,
+                            color: "#ffffff",
+                            borderColor: tag.color,
+                          }}
+                          className="font-medium text-foreground"
+                        >
+                          {tag.name || "Sin nombre"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {tag.description ? tag.description : <span className="text-xs">Sin descripcion asignada.</span>}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          aria-hidden
+                          className="size-6 rounded-full border border-muted-foreground/20 inline-block align-middle"
+                          style={{ backgroundColor: tag.color }}
+                        />
+                        <span className="ml-2 font-mono text-xs text-muted-foreground">
+                          {tag.color}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openEdit(tag)}
+                            disabled={!token || !chatbotId}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => setToDelete(tag)}
+                            disabled={!token || !chatbotId}
+                            aria-label="Eliminar etiqueta"
+                            title="Eliminar etiqueta"
+                          >
+                            <Trash2Icon className="size-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+              {tags.length > 0 && (
+                <TableCaption className="text-xs">
+                  Las etiquetas se sincronizan automaticamente con tu chatbot.
+                </TableCaption>
+              )}
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Modal de edicion */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar etiqueta</DialogTitle>
+            <DialogDescription>
+              Actualiza el nombre, color y descripcion de la etiqueta seleccionada.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUpdate} className="space-y-6">
+            <FieldSet>
+              <FieldGroup className="gap-6">
+                <Field data-invalid={editErrors.name ? true : undefined}>
+                  <FieldLabel htmlFor="edit-tag-name">Nombre</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id="edit-tag-name"
+                      placeholder="Ej. cliente-vip"
+                      value={editForm.name}
+                      onChange={(event) =>
+                        setEditForm((previous) => ({
+                          ...previous,
+                          name: sanitizeTagName(event.target.value),
+                        }))
+                      }
+                      pattern="[a-z0-9-]+"
+                      title="Usa solo numeros, minusculas y guiones (-), sin espacios"
+                      inputMode="text"
+                    />
                     <FieldDescription>
-                      Usa un nombre breve y facil de identificar.
+                      Usa solo numeros, minusculas y guiones (-), sin espacios.
                     </FieldDescription>
-                    <FieldError>{errors.name}</FieldError>
+                    <FieldError>{editErrors.name}</FieldError>
                   </FieldContent>
                 </Field>
 
-                <Field data-invalid={errors.color ? true : undefined}>
-                  <FieldLabel htmlFor="tag-color">Color</FieldLabel>
+                <Field data-invalid={editErrors.color ? true : undefined}>
+                  <FieldLabel htmlFor="edit-tag-color">Color</FieldLabel>
                   <FieldContent>
                     <div className="flex items-center gap-3">
                       <Input
-                        id="tag-color"
-                        value={form.color}
+                        id="edit-tag-color"
+                        value={editForm.color}
                         onChange={(event) =>
-                          setForm((previous) => ({
+                          setEditForm((previous) => ({
                             ...previous,
                             color: event.target.value,
                           }))
@@ -225,9 +619,9 @@ export default function TagManagement({
                       <input
                         type="color"
                         aria-label="Seleccionar color"
-                        value={colorPreview}
+                        value={editColorPreview}
                         onChange={(event) =>
-                          setForm((previous) => ({
+                          setEditForm((previous) => ({
                             ...previous,
                             color: event.target.value,
                           }))
@@ -238,22 +632,22 @@ export default function TagManagement({
                     <FieldDescription>
                       Elige un color que facilite la identificacion visual en listas.
                     </FieldDescription>
-                    <FieldError>{errors.color}</FieldError>
+                    <FieldError>{editErrors.color}</FieldError>
                   </FieldContent>
                 </Field>
               </FieldGroup>
 
-              <Field data-invalid={errors.description ? true : undefined}>
-                <FieldLabel htmlFor="tag-description">Descripcion</FieldLabel>
+              <Field data-invalid={editErrors.description ? true : undefined}>
+                <FieldLabel htmlFor="edit-tag-description">Descripcion</FieldLabel>
                 <FieldContent>
                   <Textarea
-                    id="tag-description"
+                    id="edit-tag-description"
                     rows={3}
                     maxLength={MAX_DESCRIPTION_LENGTH}
                     placeholder="Describe en que casos usaras esta etiqueta."
-                    value={form.description}
+                    value={editForm.description}
                     onChange={(event) =>
-                      setForm((previous) => ({
+                      setEditForm((previous) => ({
                         ...previous,
                         description: event.target.value,
                       }))
@@ -264,87 +658,71 @@ export default function TagManagement({
                       Opcional. Maximo {MAX_DESCRIPTION_LENGTH} caracteres.
                     </FieldDescription>
                     <span>
-                      {form.description.length}/{MAX_DESCRIPTION_LENGTH}
+                      {editForm.description.length}/{MAX_DESCRIPTION_LENGTH}
                     </span>
                   </div>
-                  <FieldError>{errors.description}</FieldError>
+                  <FieldError>{editErrors.description}</FieldError>
                 </FieldContent>
               </Field>
             </FieldSet>
 
-            {status.error && (
+            {editStatus.error && (
               <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {status.error}
+                {editStatus.error}
               </div>
             )}
-          </CardContent>
 
-          <CardFooter className="flex flex-col gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
-            <div className="text-xs text-muted-foreground md:text-sm">
-              Las etiquetas se sincronizan automaticamente con tu chatbot.
-            </div>
-            <Button
-              type="submit"
-              className="w-full md:w-auto"
-              disabled={status.loading || !token || !chatbotId}
+            <DialogFooter>
+              <div className="text-xs text-muted-foreground md:text-sm mr-auto">
+                Las etiquetas se sincronizan automaticamente con tu chatbot.
+              </div>
+              <Button
+                type="submit"
+                className="w-full sm:w-auto"
+                disabled={editStatus.loading || !token || !chatbotId}
+              >
+                {editStatus.loading ? "Guardando..." : "Guardar cambios"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmacion de borrado */}
+      <AlertDialog
+        open={!!toDelete}
+        onOpenChange={(open) => (open ? null : setToDelete(null))}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar etiqueta</AlertDialogTitle>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              ¿Seguro que deseas eliminar la etiqueta
+              {" "}
+              <span className="font-medium">"{toDelete?.name}"</span>?
+              Esta accion no se puede deshacer.
+            </p>
+            {deleteStatus.error && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {deleteStatus.error}
+              </div>
+            )}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setToDelete(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteStatus.loading || !token || !chatbotId}
             >
-              {status.loading ? "Guardando..." : "Crear etiqueta"}
-            </Button>
-          </CardFooter>
-        </form>
-      </Card>
-
-      <Card className="bg-background/80">
-        <CardHeader className="gap-1">
-          <CardTitle className="text-lg">Etiquetas registradas</CardTitle>
-          <CardDescription>
-            Visualiza las etiquetas disponibles y como se presentaran en la interfaz.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {tags.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 px-4 py-6 text-center text-sm text-muted-foreground">
-              Aun no tienes etiquetas. Crea la primera para organizar tus contactos y ventas.
-            </div>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {tags.map((tag) => (
-                <div
-                  key={tag.id}
-                  className="rounded-lg border border-muted-foreground/20 bg-muted/10 p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <Badge
-                      style={{
-                        backgroundColor: tag.color,
-                        color: "#ffffff",
-                        borderColor: tag.color,
-                      }}
-                      className="font-medium text-foreground"
-                    >
-                      {tag.name || "Sin nombre"}
-                    </Badge>
-                    <span
-                      aria-hidden
-                      className="size-8 rounded-full border border-muted-foreground/20"
-                      style={{ backgroundColor: tag.color }}
-                    />
-                  </div>
-                  {tag.description ? (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      {tag.description}
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-xs text-muted-foreground">
-                      Sin descripcion asignada.
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+              {deleteStatus.loading ? "Eliminando..." : "Eliminar"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -72,7 +72,7 @@ const data = {
       ),
     },
     {
-      title: "Chats (CRM)",
+      title: "Chats",
       url: "/chats",
       icon: () => (
         <Image
