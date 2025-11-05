@@ -3,16 +3,10 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { PlusIcon, Trash2Icon } from "lucide-react";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   Field,
   FieldContent,
@@ -30,29 +24,48 @@ import { Switch } from "@/components/ui/switch";
 const MAX_KEYWORDS_LENGTH = 360;
 const MAX_MESSAGE_LENGTH = 500;
 
-export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialTrigger = null, mode = "create" }) {
+export default function NewTriggerForm({
+  token,
+  chatbotId,
+  chatbotSlug,
+  initialTrigger = null,
+  mode = "create",
+}) {
   const router = useRouter();
-  const initialMessage =
-    initialTrigger?.trigger_contents?.[0]?.message ??
-    initialTrigger?.messages?.[0]?.message ??
-    "";
+
+  // Cargar mensajes existentes
+  const initialMessages = useMemo(() => {
+    const contents =
+      initialTrigger?.trigger_contents || initialTrigger?.messages || [];
+    return contents.map((tc, index) => ({
+      id: tc.id || tc.documentId || `temp-${index}`,
+      documentId: tc.documentId || tc.id || null,
+      message: tc.message || "",
+      isExisting: true,
+    }));
+  }, [initialTrigger]);
+
   const initialKeywordsString = (initialTrigger?.keywords ?? "").trim();
   const initialKeywordsList = useMemo(
     () => initialKeywordsString.split(/[\,\s]+/).filter(Boolean),
     [initialKeywordsString]
   );
+
   const [form, setForm] = useState({
     name: initialTrigger?.name ?? "",
-    keywords: initialKeywordsString,
     keywords_ai: initialTrigger?.keywords_ai ?? "",
-    message: initialMessage ?? "",
     available: initialTrigger?.available ?? true,
     id_ads: initialTrigger?.id_ads ?? "",
   });
+
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, error: null });
   const [keywordsList, setKeywordsList] = useState(initialKeywordsList);
   const [keywordInput, setKeywordInput] = useState("");
+  const [messages, setMessages] = useState(
+    initialMessages.length > 0 ? initialMessages : []
+  );
+  const [newMessage, setNewMessage] = useState("");
 
   const keywordsJoined = useMemo(() => keywordsList.join(","), [keywordsList]);
 
@@ -70,14 +83,50 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
       nextErrors.keywords = `Maximo ${MAX_KEYWORDS_LENGTH} caracteres permitidos.`;
     }
 
-    if (!form.message.trim()) {
-      nextErrors.message =
-        "Especifica el mensaje de respuesta que se ejecutara.";
-    } else if (form.message.length > MAX_MESSAGE_LENGTH) {
-      nextErrors.message = `Maximo ${MAX_MESSAGE_LENGTH} caracteres permitidos.`;
+    if (messages.length === 0) {
+      nextErrors.messages = "Agrega al menos un mensaje de respuesta.";
+    }
+
+    // Validar cada mensaje
+    const hasInvalidMessage = messages.some(
+      (msg) => !msg.message.trim() || msg.message.length > MAX_MESSAGE_LENGTH
+    );
+    if (hasInvalidMessage) {
+      nextErrors.messages = `Todos los mensajes deben tener contenido y maximo ${MAX_MESSAGE_LENGTH} caracteres.`;
     }
 
     return nextErrors;
+  };
+
+  const handleAddMessage = () => {
+    if (!newMessage.trim()) return;
+    if (newMessage.length > MAX_MESSAGE_LENGTH) {
+      toast.error(
+        `El mensaje debe tener maximo ${MAX_MESSAGE_LENGTH} caracteres.`
+      );
+      return;
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `temp-${Date.now()}`,
+        documentId: null,
+        message: newMessage.trim(),
+        isExisting: false,
+      },
+    ]);
+    setNewMessage("");
+  };
+
+  const handleRemoveMessage = (index) => {
+    setMessages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateMessage = (index, value) => {
+    setMessages((prev) =>
+      prev.map((msg, i) => (i === index ? { ...msg, message: value } : msg))
+    );
   };
 
   const handleSubmit = async (event) => {
@@ -99,6 +148,7 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
     try {
       const joined = keywordsJoined;
       const joinedAi = form.keywords_ai.trim() || joined;
+
       if (mode === "edit" && initialTrigger) {
         // Actualizar el trigger existente
         const triggerDocId = initialTrigger.documentId || initialTrigger.id;
@@ -133,62 +183,85 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
           return;
         }
 
-        // Actualizar o crear el contenido relacionado
-        const existingContentId =
-          initialTrigger?.trigger_contents?.[0]?.documentId ||
-          initialTrigger?.trigger_contents?.[0]?.id ||
-          initialTrigger?.messages?.[0]?.id || null;
+        // Gestionar los mensajes: actualizar existentes y crear nuevos
+        let hasErrors = false;
 
-        if (existingContentId) {
-          const contentPayload = { data: { message: form.message.trim() } };
-          const contentRes = await fetch(
-            buildStrapiUrl(`/api/trigger-contents/${existingContentId}`),
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              },
-              body: JSON.stringify(contentPayload),
-            }
-          );
-          // No bloquear por error en contenido
-          if (!contentRes.ok) {
-            const body = await contentRes.json().catch(() => ({}));
-            console.error("Error actualizando contenido:", body);
-            toast.warning(
-              "Disparador actualizado pero hubo un error al guardar el mensaje."
+        for (const msg of messages) {
+          if (msg.isExisting && msg.documentId) {
+            // Actualizar mensaje existente
+            const contentPayload = { data: { message: msg.message.trim() } };
+            const contentRes = await fetch(
+              buildStrapiUrl(`/api/trigger-contents/${msg.documentId}`),
+              {
+                method: "PUT",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(contentPayload),
+              }
             );
-          }
-        } else {
-          // Crear contenido si no existe
-          const contentPayload = {
-            data: {
-              message: form.message.trim(),
-              trigger: { connect: [{ documentId: triggerDocId }] },
-            },
-          };
-          const contentRes = await fetch(
-            buildStrapiUrl(`/api/trigger-contents`),
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              },
-              body: JSON.stringify(contentPayload),
+
+            if (!contentRes.ok) {
+              const body = await contentRes.json().catch(() => ({}));
+              console.error("Error actualizando contenido:", body);
+              hasErrors = true;
             }
-          );
-          if (!contentRes.ok) {
-            const body = await contentRes.json().catch(() => ({}));
-            console.error("Error creando contenido:", body);
-            toast.warning(
-              "Disparador actualizado pero hubo un error al guardar el mensaje."
+          } else {
+            // Crear nuevo mensaje
+            const contentPayload = {
+              data: {
+                message: msg.message.trim(),
+                trigger: { connect: [{ documentId: triggerDocId }] },
+              },
+            };
+            const contentRes = await fetch(
+              buildStrapiUrl(`/api/trigger-contents`),
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify(contentPayload),
+              }
             );
+
+            if (!contentRes.ok) {
+              const body = await contentRes.json().catch(() => ({}));
+              console.error("Error creando contenido:", body);
+              hasErrors = true;
+            }
           }
         }
 
-        toast.success("Disparador actualizado correctamente.");
+        // Eliminar mensajes que ya no están en la lista
+        const existingIds = messages
+          .filter((m) => m.isExisting && m.documentId)
+          .map((m) => m.documentId);
+        const originalIds = initialMessages
+          .map((m) => m.documentId)
+          .filter(Boolean);
+        const toDelete = originalIds.filter((id) => !existingIds.includes(id));
+
+        for (const docId of toDelete) {
+          await fetch(buildStrapiUrl(`/api/trigger-contents/${docId}`), {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+          }).catch((err) => console.error("Error eliminando contenido:", err));
+        }
+
+        if (hasErrors) {
+          toast.warning(
+            "Disparador actualizado pero hubo errores al guardar algunos mensajes."
+          );
+        } else {
+          toast.success("Disparador actualizado correctamente.");
+        }
+
         setStatus({ loading: false, error: null });
       } else {
         // Crear nuevo trigger
@@ -203,7 +276,9 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
         };
 
         if (chatbotId) {
-          triggerPayload.data.chatbot = { connect: [{ documentId: chatbotId }] };
+          triggerPayload.data.chatbot = {
+            connect: [{ documentId: chatbotId }],
+          };
         }
 
         const triggerResponse = await fetch(buildStrapiUrl(`/api/triggers`), {
@@ -227,35 +302,43 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
         const createdTrigger = triggerBody?.data ?? triggerBody;
         const triggerDocId = createdTrigger.documentId || createdTrigger.id;
 
-        // Paso 2: Crear el trigger_content relacionado
-        const contentPayload = {
-          data: {
-            message: form.message.trim(),
-            trigger: { connect: [{ documentId: triggerDocId }] },
-          },
-        };
-
-        const contentResponse = await fetch(
-          buildStrapiUrl(`/api/trigger-contents`),
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // Crear todos los mensajes
+        let hasErrors = false;
+        for (const msg of messages) {
+          const contentPayload = {
+            data: {
+              message: msg.message.trim(),
+              trigger: { connect: [{ documentId: triggerDocId }] },
             },
-            body: JSON.stringify(contentPayload),
-          }
-        );
+          };
 
-        const contentBody = await contentResponse.json().catch(() => ({}));
-        if (!contentResponse.ok) {
-          console.error("Error creando trigger_content:", contentBody);
-          toast.warning(
-            "Disparador creado pero hubo un error al guardar el mensaje."
+          const contentResponse = await fetch(
+            buildStrapiUrl(`/api/trigger-contents`),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify(contentPayload),
+            }
           );
+
+          if (!contentResponse.ok) {
+            const body = await contentResponse.json().catch(() => ({}));
+            console.error("Error creando trigger_content:", body);
+            hasErrors = true;
+          }
         }
 
-        toast.success("Disparador creado correctamente.");
+        if (hasErrors) {
+          toast.warning(
+            "Disparador creado pero hubo errores al guardar algunos mensajes."
+          );
+        } else {
+          toast.success("Disparador creado correctamente.");
+        }
+
         setStatus({ loading: false, error: null });
       }
 
@@ -265,14 +348,16 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
       console.error("Error en submit:", error);
       setStatus({
         loading: false,
-        error: mode === "edit" ? "Error de red al actualizar el disparador." : "Error de red al crear el disparador.",
+        error:
+          mode === "edit"
+            ? "Error de red al actualizar el disparador."
+            : "Error de red al crear el disparador.",
       });
     }
   };
 
   return (
     <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
-
       <form onSubmit={handleSubmit} className="contents">
         <CardContent className="space-y-6">
           <FieldSet className="gap-6">
@@ -292,14 +377,17 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                     }
                   />
                   <FieldDescription>
-                    Sera visible dentro del panel para identificar el disparador.
+                    Sera visible dentro del panel para identificar el
+                    disparador.
                   </FieldDescription>
                   <FieldError>{errors.name}</FieldError>
                 </FieldContent>
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="trigger-id-ads">ID Ads (opcional)</FieldLabel>
+                <FieldLabel htmlFor="trigger-id-ads">
+                  ID Ads (opcional)
+                </FieldLabel>
                 <FieldContent>
                   <Input
                     id="trigger-id-ads"
@@ -323,7 +411,9 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
 
             <FieldGroup className="gap-6">
               <Field data-invalid={errors.keywords ? true : undefined}>
-                <FieldLabel htmlFor="trigger-keywords">Palabras clave</FieldLabel>
+                <FieldLabel htmlFor="trigger-keywords">
+                  Palabras clave
+                </FieldLabel>
                 <FieldContent>
                   <div className="rounded-lg border border-muted-foreground/20 bg-background px-3 py-2">
                     <div className="flex flex-wrap gap-2">
@@ -336,7 +426,9 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                           <button
                             type="button"
                             onClick={() =>
-                              setKeywordsList((prev) => prev.filter((_, i) => i !== index))
+                              setKeywordsList((prev) =>
+                                prev.filter((_, i) => i !== index)
+                              )
                             }
                             className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
                             aria-label={`Quitar palabra ${kw}`}
@@ -361,7 +453,8 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                         }
                       }}
                       onKeyDown={(e) => {
-                        const isSeparator = e.key === " " || e.key === "Enter" || e.key === ",";
+                        const isSeparator =
+                          e.key === " " || e.key === "Enter" || e.key === ",";
                         if (isSeparator) {
                           e.preventDefault();
                           const next = keywordInput.trim();
@@ -371,7 +464,10 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                             );
                             setKeywordInput("");
                           }
-                        } else if (e.key === "Backspace" && keywordInput.length === 0) {
+                        } else if (
+                          e.key === "Backspace" &&
+                          keywordInput.length === 0
+                        ) {
                           setKeywordsList((prev) => prev.slice(0, -1));
                         }
                       }}
@@ -379,7 +475,8 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                     />
                     <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                       <FieldDescription className="text-xs">
-                        Palabras separadas por espacio. Se enviarán separadas por coma.
+                        Palabras separadas por espacio. Se enviarán separadas
+                        por coma.
                       </FieldDescription>
                       <span>
                         {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
@@ -391,7 +488,9 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="trigger-keywords-ai">Palabras clave IA (opcional)</FieldLabel>
+                <FieldLabel htmlFor="trigger-keywords-ai">
+                  Palabras clave IA (opcional)
+                </FieldLabel>
                 <FieldContent>
                   <Textarea
                     id="trigger-keywords-ai"
@@ -412,31 +511,90 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                 </FieldContent>
               </Field>
 
-              <Field data-invalid={errors.message ? true : undefined}>
-                <FieldLabel htmlFor="trigger-message">Mensaje de respuesta</FieldLabel>
+              <Field data-invalid={errors.messages ? true : undefined}>
+                <FieldLabel htmlFor="trigger-messages">
+                  Mensajes de respuesta
+                </FieldLabel>
                 <FieldContent>
-                  <Textarea
-                    id="trigger-message"
-                    rows={4}
-                    maxLength={MAX_MESSAGE_LENGTH}
-                    placeholder="Define el mensaje que se enviara cuando se active el disparador."
-                    value={form.message}
-                    onChange={(event) =>
-                      setForm((previous) => ({
-                        ...previous,
-                        message: event.target.value,
-                      }))
-                    }
-                  />
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <div className="space-y-3">
+                    {/* Lista de mensajes existentes */}
+                    {messages.map((msg, index) => (
+                      <div
+                        key={msg.id}
+                        className="rounded-lg border border-muted-foreground/20 bg-background p-3"
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1">
+                            <Textarea
+                              rows={3}
+                              maxLength={MAX_MESSAGE_LENGTH}
+                              placeholder="Escribe el mensaje de respuesta"
+                              value={msg.message}
+                              onChange={(e) =>
+                                handleUpdateMessage(index, e.target.value)
+                              }
+                              className="resize-none"
+                            />
+                            <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Mensaje {index + 1}</span>
+                              <span>
+                                {msg.message.length}/{MAX_MESSAGE_LENGTH}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveMessage(index)}
+                            className="flex-shrink-0"
+                            aria-label="Eliminar mensaje"
+                          >
+                            <Trash2Icon className="size-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Campo para agregar nuevo mensaje */}
+                    <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
+                      <Textarea
+                        id="trigger-messages"
+                        rows={3}
+                        maxLength={MAX_MESSAGE_LENGTH}
+                        placeholder="Escribe un nuevo mensaje y presiona Agregar"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && e.ctrlKey) {
+                            e.preventDefault();
+                            handleAddMessage();
+                          }
+                        }}
+                        className="resize-none"
+                      />
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-muted-foreground">
+                          {newMessage.length}/{MAX_MESSAGE_LENGTH}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleAddMessage}
+                          disabled={!newMessage.trim()}
+                        >
+                          <PlusIcon className="size-4 mr-2" />
+                          Agregar mensaje
+                        </Button>
+                      </div>
+                    </div>
+
                     <FieldDescription className="text-xs">
-                      El mensaje que se enviara cuando se detecten las palabras clave.
+                      Puedes agregar varios mensajes. Se enviará uno aleatorio
+                      cuando se detecten las palabras clave.
                     </FieldDescription>
-                    <span>
-                      {form.message.length}/{MAX_MESSAGE_LENGTH}
-                    </span>
+                    <FieldError>{errors.messages}</FieldError>
                   </div>
-                  <FieldError>{errors.message}</FieldError>
                 </FieldContent>
               </Field>
             </FieldGroup>
@@ -459,10 +617,13 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
                   />
                   <div className="space-y-1">
                     <p className="text-sm font-medium">
-                      {form.available ? "Disparador disponible" : "Disparador desactivado"}
+                      {form.available
+                        ? "Disparador disponible"
+                        : "Disparador desactivado"}
                     </p>
                     <FieldDescription className="text-xs md:text-sm">
-                      Desactivalo temporalmente cuando quieras pausar la automatizacion.
+                      Desactivalo temporalmente cuando quieras pausar la
+                      automatizacion.
                     </FieldDescription>
                   </div>
                 </div>
@@ -479,7 +640,11 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
 
         <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
           <div className="text-xs text-muted-foreground md:text-sm">
-            Cuando se detecten las palabras clave, se ejecutara la respuesta configurada.
+            {messages.length > 0
+              ? `${messages.length} mensaje${
+                  messages.length > 1 ? "s" : ""
+                } configurado${messages.length > 1 ? "s" : ""}.`
+              : "Agrega al menos un mensaje de respuesta."}
           </div>
           <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
             <Button
@@ -487,7 +652,9 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
               variant="outline"
               onClick={() => {
                 const segment = chatbotSlug || chatbotId;
-                router.push(`/dashboard/${encodeURIComponent(segment)}/triggers`);
+                router.push(
+                  `/dashboard/${encodeURIComponent(segment)}/triggers`
+                );
               }}
               className="w-full md:w-auto"
               disabled={status.loading}
@@ -499,7 +666,13 @@ export default function NewTriggerForm({ token, chatbotId, chatbotSlug, initialT
               className="w-full md:w-auto"
               disabled={status.loading || !token || !chatbotId}
             >
-              {status.loading ? "Creando..." : "Crear disparador"}
+              {status.loading
+                ? mode === "edit"
+                  ? "Actualizando..."
+                  : "Creando..."
+                : mode === "edit"
+                ? "Actualizar disparador"
+                : "Crear disparador"}
             </Button>
           </div>
         </CardFooter>
