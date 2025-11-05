@@ -1,19 +1,19 @@
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { redirect } from "next/navigation";
-import NewTriggerForm from "../../new/new-trigger-form.jsx";
 import { getChatbotBySlug } from "@/lib/utils/chatbot-utils";
+import NewTriggerForm from "../../new/new-trigger-form";
 
 export default async function EditTriggerPage({ params }) {
   const session = await auth();
   const { chatbot: chatbotParam, triggerId } = await params;
   const chatbotSlug = String(chatbotParam || "");
-  const triggerParam = String(triggerId || "");
+  const triggerDocId = String(triggerId || "");
 
   if (!session) {
     redirect(
       `/auth/login?callbackUrl=${encodeURIComponent(
-        `/dashboard/${chatbotSlug}/triggers/${triggerParam}/edit`
+        `/dashboard/${chatbotSlug}/triggers/${triggerDocId}/edit`
       )}`
     );
   }
@@ -28,16 +28,16 @@ export default async function EditTriggerPage({ params }) {
     redirect("/select");
   }
 
-  // Buscar el disparador por id o documentId y vinculado al chatbot actual
+  // Cargar el trigger con sus mensajes relacionados
   const qs = new URLSearchParams();
-  qs.set("populate", "*");
-  qs.set("filters[$and][0][$or][0][documentId][$eq]", triggerParam);
-  qs.set("filters[$and][0][$or][1][id][$eq]", triggerParam);
-  qs.set("filters[$and][1][chatbot][documentId][$eq]", chatbot.documentId);
+  qs.set("populate[trigger_contents][fields][0]", "message");
+  qs.set("populate[trigger_contents][fields][1]", "documentId");
 
-  const url = buildStrapiUrl(`/api/triggers?${qs.toString()}`);
+  const url = buildStrapiUrl(`/api/triggers/${triggerDocId}?${qs.toString()}`);
 
-  let entry = null;
+  let trigger = null;
+  let loadError = null;
+
   try {
     const res = await fetch(url, {
       method: "GET",
@@ -47,27 +47,49 @@ export default async function EditTriggerPage({ params }) {
       },
       cache: "no-store",
     });
-    if (res.ok) {
+
+    if (!res.ok) {
+      const details = await res.json().catch(() => ({}));
+      loadError =
+        details?.error?.message ||
+        `No se pudo cargar el disparador (status ${res.status}).`;
+    } else {
       const data = await res.json();
-      const list = Array.isArray(data) ? data : data?.data || [];
-      entry = list?.[0] || null;
+      trigger = data?.data || data;
     }
   } catch (error) {
-    // Ignorar y redirigir si falla.
+    loadError = "Error al conectar con Strapi. Verifica tu conexion.";
   }
 
-  if (!entry) {
-    redirect(`/dashboard/${encodeURIComponent(chatbotSlug)}/triggers`);
+  if (loadError || !trigger) {
+    return (
+      <div className="flex flex-1 flex-col px-4 lg:px-6">
+        <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-2xl font-semibold">Editar disparador</h1>
+              <p className="text-sm text-muted-foreground">
+                Modifica la configuracion de tu disparador automatico.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {loadError || "No se encontro el disparador."}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex items-center justify-between py-4 md:py-6">
-          <div>
+      <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-2">
             <h1 className="text-2xl font-semibold">Editar disparador</h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              Actualiza los campos del disparador seleccionado.
+            <p className="text-sm text-muted-foreground">
+              Modifica la configuracion de tu disparador automatico.
             </p>
           </div>
         </div>
@@ -75,8 +97,8 @@ export default async function EditTriggerPage({ params }) {
         <NewTriggerForm
           token={session.strapiToken}
           chatbotId={chatbot.documentId}
-          chatbotSlug={chatbotSlug}
-          initialTrigger={entry}
+          chatbotSlug={chatbot.slug}
+          initialTrigger={trigger}
           mode="edit"
         />
       </div>

@@ -16,17 +16,8 @@ import {
   TableRow,
   TableCaption,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-// Eliminado: constantes usadas solo en el formulario de creación.
 
 const randomId = () =>
   typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -51,7 +42,7 @@ const normalizeTrigger = (entry) => {
     keywords_ai: entry.keywords_ai ?? "",
     available: entry.available ?? false,
     id_ads: entry.id_ads ?? null,
-    messages: messages, // 👈 Array de mensajes de la relación
+    messages: messages,
   };
 };
 
@@ -66,20 +57,57 @@ export default function TriggerManagement({
       ? initialTriggers.map(normalizeTrigger).filter(Boolean)
       : []
   );
-  // Eliminado: estado del formulario y errores, ya que la creación ocurre en la página /triggers/new.
 
   useEffect(() => {
     if (!Array.isArray(initialTriggers)) return;
     setTriggers(initialTriggers.map(normalizeTrigger).filter(Boolean));
   }, [initialTriggers]);
 
-  // Eliminado: lógica de creación; ahora solo se lista.
+  const handleDelete = async (trigger) => {
+    if (!token) {
+      toast.error("Sesion no valida para eliminar.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `¿Eliminar el disparador "${trigger.name || "Sin nombre"}"?`
+    );
+    if (!confirmed) return;
+
+    const deleteId = trigger.documentId || trigger.id;
+    const prev = [...triggers];
+    setTriggers((list) => list.filter((t) => t.id !== trigger.id));
+
+    try {
+      const res = await fetch(buildStrapiUrl(`/api/triggers/${deleteId}`), {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const details = await res.json().catch(() => ({}));
+        const message =
+          details?.error?.message || "No se pudo eliminar el disparador.";
+        setTriggers(prev);
+        toast.error(message);
+      } else {
+        toast.success("Disparador eliminado.");
+      }
+    } catch (error) {
+      console.error("Error eliminando trigger:", error);
+      setTriggers(prev);
+      toast.error("Error de red al eliminar el disparador.");
+    }
+  };
 
   return (
     <div className="grid gap-6 pb-6">
       <Card className="bg-background/80 overflow-x-auto">
         <CardContent>
-          <Table className="min-w-full">
+          <Table className="min-w-max">
             <TableHeader>
               <TableRow>
                 <TableHead className="min-w-[200px]">Nombre</TableHead>

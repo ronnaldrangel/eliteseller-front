@@ -204,7 +204,7 @@ export default function NewTriggerForm({
 
             if (!contentRes.ok) {
               const body = await contentRes.json().catch(() => ({}));
-              console.error("Error actualizando contenido:", body);
+              console.error("Error actualizando contenido:", contentRes);
               hasErrors = true;
             }
           } else {
