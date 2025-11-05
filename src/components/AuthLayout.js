@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { useTheme } from 'next-themes'
-import { ModeToggle } from './mode-toggle'
-import LanguageSelector from './language-selector'
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useTheme } from "next-themes";
+import { ModeToggle } from "./mode-toggle";
+import LanguageSelector from "./language-selector";
 
 const AuthLayout = ({ children }) => {
-  const [mounted, setMounted] = useState(false)
-  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false);
+  const { theme } = useTheme();
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-  
+    setMounted(true);
+  }, []);
+
   return (
     <div className="h-screen bg-background">
       {/* Selectores de tema e idioma en la esquina superior derecha */}
@@ -23,29 +23,29 @@ const AuthLayout = ({ children }) => {
         <ModeToggle />
       </div>
 
-      {/* Logo en la esquina superior izquierda */}
-      <div className="absolute top-4 left-4 z-10">
-        <Link href="/" className="block">
-          {mounted ? (
-            <Image
-              src={theme === "dark" ? "/images/logo-white.png" : "/images/logo-black.png"}
-              alt="Logo"
-              width={140}
-              height={24}
-              priority
-              className="h-10 w-auto"
-            />
-          ) : (
-            <div className="h-8 w-24 bg-muted rounded animate-pulse"></div>
-          )}
-        </Link>
-      </div>
-
       <div className="flex min-h-full flex-1">
         {/* Lado izquierdo - Formulario */}
         <div className="flex flex-1 w-full lg:w-1/2 flex-col justify-center px-8 pt-12 pb-2 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-background">
-          <div className="mx-auto w-full max-w-sm lg:w-96">
+          <div className="mx-auto w-full max-w-sm lg:w-96 space-y-4">
             {/* Contenido principal */}
+            <Link href="/" className="block">
+              {mounted ? (
+                <Image
+                  src={
+                    theme === "dark"
+                      ? "/images/logo-white.png"
+                      : "/images/logo-black.png"
+                  }
+                  alt="Logo"
+                  width={140}
+                  height={24}
+                  priority
+                  className="h-10 w-auto"
+                />
+              ) : (
+                <div className="h-8 w-24 bg-muted rounded animate-pulse"></div>
+              )}
+            </Link>
             <main>{children}</main>
             {/* Aviso legal dentro del contenedor, más abajo */}
             {/* <p className="mt-16 text-xs text-muted-foreground text-center leading-snug">
@@ -68,7 +68,7 @@ const AuthLayout = ({ children }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AuthLayout
+export default AuthLayout;
