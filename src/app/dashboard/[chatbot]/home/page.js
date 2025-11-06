@@ -1,309 +1,86 @@
-"use client"
+import { auth } from "@/lib/auth";
+import { buildStrapiUrl } from "@/lib/strapi";
+import { redirect } from "next/navigation";
+import { getChatbotBySlug } from "@/lib/utils/chatbot-utils";
+import DocsPageClient from "./docsPageClient";
 
-import { useEffect, useMemo, useState } from "react"
-import { useParams } from "next/navigation"
+export default async function DashboardPage({ params }) {
+  const session = await auth();
+  const { chatbot: chatbotParam } = await params;
+  const chatbotSlug = String(chatbotParam || "");
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { ArrowRight } from "lucide-react"
+  if (!session) {
+    redirect(
+      `/auth/login?callbackUrl=${encodeURIComponent(`/dashboard/${chatbotSlug}`)}`
+    );
+  }
 
-const NEWS_ITEMS = [
-  {
-    id: 1,
-    title: "Automatiza tus canales digitales",
-    description:
-      "Descubre como sincronizar tus campanas multicanal en minutos con los nuevos asistentes inteligentes.",
-    cta: "Ver guia paso a paso",
-    href: "#",
-    image:
-      "https://images.pexels.com/photos/3183179/pexels-photo-3183179.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    imageAlt: "Equipo trabajando con graficas en laptops",
-  },
-  {
-    id: 2,
-    title: "Historias de vendedores exitosos",
-    description:
-      "Aprende las tacticas que utilizan otras marcas para convertir conversaciones en ventas recurrentes.",
-    cta: "Leer caso de estudio",
-    href: "#",
-    image:
-      "https://images.pexels.com/photos/3184643/pexels-photo-3184643.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    imageAlt: "Presentacion de marketing frente a una pizarra",
-  },
-  {
-    id: 3,
-    title: "Novedades de integraciones",
-    description:
-      "Integra EliteSeller con tu CRM favorito y dispara acciones automatizadas en cada etapa del embudo.",
-    cta: "Explorar integraciones",
-    href: "#",
-    image:
-      "https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg?auto=compress&cs=tinysrgb&w=1600",
-    imageAlt: "Panel de control analizando metricas de ventas",
-  },
-]
+  const chatbot = await getChatbotBySlug(
+    chatbotSlug,
+    session.strapiToken,
+    session.user.strapiUserId
+  );
+  if (!chatbot) redirect("/select");
 
-const STAT_ITEMS = [
-  {
-    key: "activeChats",
-    label: "Chats activos",
-    helper: "Ultimas 24 horas",
-  },
-  {
-    key: "newLeads",
-    label: "Nuevos leads",
-    helper: "Ultimos 7 dias",
-  },
-  {
-    key: "conversionRate",
-    label: "Tasa de conversion",
-    helper: "Respecto al total de leads",
-  },
-  {
-    key: "averageResponse",
-    label: "Promedio de respuesta",
-    helper: "Ultimos 30 dias",
-  },
-  {
-    key: "closedSales",
-    label: "Ventas cerradas",
-    helper: "Marcadas como venta",
-  },
-  {
-    key: "activeCampaigns",
-    label: "Campanas activas",
-    helper: "Triggers disponibles",
-  },
-]
+  const qs = new URLSearchParams();
+  qs.set("filters[type][$eq]", "news");
+  qs.set("sort", "createdAt:desc");
+  qs.set("fields[0]", "title");
+  qs.set("fields[1]", "description");
+  qs.set("fields[2]", "cta");
+  qs.set("fields[3]", "href");
+  qs.set("fields[4]", "imageAlt");
+  qs.set("populate[image][fields][0]", "url");
+  qs.set("populate[image][fields][1]", "name");
 
-const INITIAL_STATS = {
-  activeChats: null,
-  newLeads: null,
-  conversionRate: null,
-  averageResponseLabel: null,
-  closedSales: null,
-  activeCampaigns: null,
-}
+  const url = buildStrapiUrl(`/api/cards?${qs.toString()}`);
 
-export default function DocsPage() {
-  const params = useParams()
-  const chatbotSegmentParam = params?.chatbot
-  const chatbotSegment = useMemo(() => {
-    if (!chatbotSegmentParam) return undefined
-    return Array.isArray(chatbotSegmentParam)
-      ? chatbotSegmentParam[0]
-      : String(chatbotSegmentParam)
-  }, [chatbotSegmentParam])
+  const toAbsUrl = (u) => (!u ? "" : u.startsWith("http") ? u : buildStrapiUrl(u));
 
-  const [activeSlide, setActiveSlide] = useState(0)
-  const [statsData, setStatsData] = useState(() => ({ ...INITIAL_STATS }))
-  const [statsLoading, setStatsLoading] = useState(true)
-  const [statsError, setStatsError] = useState(null)
+  let cards = [];
+  let cardsError = null;
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % NEWS_ITEMS.length)
-    }, 6000)
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.strapiToken}`,
+      },
+      cache: "no-store",
+    });
 
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function loadStats() {
-      setStatsLoading(true)
-      setStatsError(null)
-      try {
-        const qs = chatbotSegment
-          ? `?chatbot=${encodeURIComponent(chatbotSegment)}`
-          : ""
-        const response = await fetch(`/api/dashboard/stats${qs}`, {
-          signal: controller.signal,
-          cache: "no-store",
-        })
-
-
-
-        const payload = await response.json()
-        const stats = payload?.data?.stats ?? {}
-
-        setStatsData({
-          activeChats:
-            typeof stats.activeChats === "number" ? stats.activeChats : null,
-          newLeads:
-            typeof stats.newLeads === "number" ? stats.newLeads : null,
-          conversionRate:
-            typeof stats.conversionRate === "number"
-              ? stats.conversionRate
-              : null,
-          averageResponseLabel:
-            typeof stats.averageResponseLabel === "string"
-              ? stats.averageResponseLabel
-              : null,
-          closedSales:
-            typeof stats.closedSales === "number" ? stats.closedSales : null,
-          activeCampaigns:
-            typeof stats.activeCampaigns === "number"
-              ? stats.activeCampaigns
-              : null,
-        })
-      } catch (error) {
-        const isAbortError =
-          error?.name === "AbortError" ||
-          (typeof DOMException !== "undefined" &&
-            error instanceof DOMException &&
-            error.name === "AbortError")
-
-        if (!isAbortError) {
-          console.error("Failed to load dashboard stats", error)
-          setStatsError("No se pudieron cargar las estadisticas.")
-          setStatsData({ ...INITIAL_STATS })
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setStatsLoading(false)
-        }
-      }
+    if (!res.ok) {
+      const details = await res.json().catch(() => ({}));
+      cardsError =
+        details?.error?.message ||
+        `No se pudieron cargar las cards (status ${res.status})`;
+    } else {
+      const data = await res.json();
+      const nodes = Array.isArray(data) ? data : data?.data || [];
+      cards = nodes.map((n) => {
+        const a = n?.attributes || {};
+        const img = n?.image || {};
+        return {
+          id: n?.id,
+          title: n?.title || "",
+          description: n?.description || "",
+          cta: n?.cta || "",
+          href: n?.href || "#",
+          image: toAbsUrl(img?.url),
+          imageAlt: n?.imageAlt || "",
+        };
+      });
     }
-
-    loadStats()
-
-    return () => controller.abort()
-  }, [chatbotSegment])
-
-  const activeNews = NEWS_ITEMS[activeSlide]
+  } catch {
+    cardsError = "Error al conectar. Verifica tu conexión.";
+  }
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
-        <div className="space-y-6 px-4 lg:px-6">
-          <Card className="border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background">
-            <CardHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between p-8">
-              <div className="flex-1 space-y-6">
-                <CardTitle className="text-4xl lg:text-5xl font-extrabold tracking-tight">
-                  Bienvenido a EliteSeller!
-                </CardTitle>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Activa tus campañas, revisa los chats pendientes y mantente al tanto de nuestras actualizaciones
-                  para seguir escalando tus ventas.
-                </p>
-              </div>
-              <div className="w-full lg:w-1/2 lg:min-w-[600px]">
-                <div className="aspect-video overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
-                  <iframe
-                    src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1"
-                    title="Bienvenida a EliteSeller"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full"
-                  />
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
-
-          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <Card>
-              <CardHeader>
-                <CardTitle>Estadisticas rapidas</CardTitle>
-                <CardDescription>Resumen de tus metricas mas recientes.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {statsError ? (
-                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                    {statsError}
-                  </div>
-                ) : null}
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {STAT_ITEMS.map((item) => {
-                    let displayValue = "--"
-
-                    if (item.key === "conversionRate") {
-                      const value = statsData.conversionRate
-                      if (value !== null && value !== undefined) {
-                        displayValue = `${value.toFixed(1)}%`
-                      }
-                    } else if (item.key === "averageResponse") {
-                      if (statsData.averageResponseLabel) {
-                        displayValue = statsData.averageResponseLabel
-                      }
-                    } else {
-                      const rawValue = statsData[item.key]
-                      if (typeof rawValue === "number") {
-                        displayValue = rawValue.toLocaleString("es-ES")
-                      }
-                    }
-
-                    return (
-                      <div
-                        key={item.key}
-                        className={`rounded-lg border bg-muted/30 p-4 ${
-                          statsLoading ? "animate-pulse" : ""
-                        }`}
-                      >
-                        <p className="text-sm text-muted-foreground">{item.label}</p>
-                        <p className="mt-2 text-2xl font-semibold">{displayValue}</p>
-                        <p className="mt-1 text-xs text-muted-foreground">{item.helper}</p>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle>Novedades</CardTitle>
-                  <CardDescription>Explora los anuncios destacados de esta semana.</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="overflow-hidden rounded-lg border">
-                  <div className="relative h-48 w-full">
-                    <img
-                      src={activeNews.image}
-                      alt={activeNews.imageAlt}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-base font-semibold">{activeNews.title}</h3>
-                  <p className="text-sm text-muted-foreground">{activeNews.description}</p>
-                  <a
-                    href={activeNews.href}
-                    className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
-                  >
-                    {activeNews.cta}
-                    <ArrowRight className="ml-1 h-4 w-4" />
-                  </a>
-                </div>
-                <div className="flex items-center justify-center gap-2">
-                  {NEWS_ITEMS.map((item, index) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => setActiveSlide(index)}
-                      className={`h-2.5 w-2.5 rounded-full ${
-                        index === activeSlide ? "bg-primary" : "bg-muted-foreground/30"
-                      }`}
-                      aria-label={`Ir a la novedad ${item.title}`}
-                    />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+    <DocsPageClient
+      initialNewsItems={cards}
+      newsError={cardsError}
+    />
+  );
 }
+
