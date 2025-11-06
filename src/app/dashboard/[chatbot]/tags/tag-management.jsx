@@ -484,7 +484,7 @@ export default function TagManagement({
         <Card className="bg-background/80 overflow-x-auto">
           <CardContent>
             {/* <div className="overflow-x-auto"> */}
-              <Table className="min-w-max">
+              <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-[180px]">

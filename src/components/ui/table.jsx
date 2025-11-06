@@ -12,7 +12,7 @@ function Table({ className, ...props }) {
     >
       <table
         data-slot="table"
-        className={cn("min-w-max caption-bottom text-sm", className)}
+        className={cn("w-full caption-bottom text-sm", className)}
         {...props}
       />
     </div>
