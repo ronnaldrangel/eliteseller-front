@@ -65,15 +65,10 @@ export default async function ChatsPage({ params }) {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
 
-        <div className="flex flex-col">
-
-
-          <div className="relative w-full h-[calc(100vh)]">
-            <IframeWithPreloader
-              src={loginUrl || "https://crm.eliteseller.app/"}
-              title="Chats embebidos"
-              className="w-full h-full"
-            />
+        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          <div className="px-4 lg:px-6">
+            <h1 className="text-2xl font-semibold">Chats</h1>
+            <p className="text-sm text-muted-foreground mt-2">Tus conversaciones y asistentes.</p>
           </div>
 
           <div className="px-4 lg:px-6">
@@ -88,6 +83,14 @@ export default async function ChatsPage({ params }) {
               </Link>
             </Button>
 
+            <div className="relative w-full h-[calc(100vh-8rem)] bg-background rounded-md border">
+              <IframeWithPreloader
+                src={loginUrl || "https://crm.eliteseller.app/"}
+                title="Chats embebidos"
+                className="w-full h-full"
+              />
+            </div>
+
             {/* <div className="rounded-lg border bg-muted/20 p-4 mt-4">
                   <h3 className="mb-2 text-sm font-medium">Payload del GET /api/users/me</h3>
                   {channelError ? (
@@ -96,6 +99,7 @@ export default async function ChatsPage({ params }) {
                     <pre className="text-xs whitespace-pre-wrap break-words">{channelRawPayload ? JSON.stringify(channelRawPayload, null, 2) : 'Sin contenido'}</pre>
                   )}
                 </div> */}
+
 
           </div>
 
