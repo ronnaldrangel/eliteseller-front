@@ -89,14 +89,14 @@ export default async function ChatsPage({ params }) {
                     <pre className="text-xs whitespace-pre-wrap break-words">{channelRawPayload ? JSON.stringify(channelRawPayload, null, 2) : 'Sin contenido'}</pre>
                   )}
                 </div> */}
-
-                {/* <div className="rounded-lg border bg-muted/20 mt-4">
+                
+                <div className="relative w-full h-[calc(100vh-8rem)] bg-background rounded-md border">
                     <IframeWithPreloader
                       src={loginUrl || "https://crm.eliteseller.app/"}
                       title="Chats embebidos"
                       className="w-full h-full"
                     />
-                </div> */}
+                </div>
                 
               </div>
             </div>

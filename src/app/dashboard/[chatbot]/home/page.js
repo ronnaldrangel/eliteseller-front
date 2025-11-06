@@ -182,26 +182,20 @@ export default function DocsPage() {
   return (
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
-        <div className="px-4 lg:px-6">
-          <h1 className="text-2xl font-semibold">Home</h1>
-          <p className="mt-2 text-sm text-muted-foreground">Pagina de inicio</p>
-        </div>
-
         <div className="space-y-6 px-4 lg:px-6">
-          <Card className="border-primary/10 bg-gradient-to-r from-primary/5 via-background to-background">
-            <CardHeader className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-              <div className="flex-1 space-y-3">
-                <CardTitle className="text-2xl">Bienvenido a EliteSeller!</CardTitle>
-                <CardDescription>
-                  Un vistazo rapido a tus resultados de hoy y a las novedades del equipo.
-                </CardDescription>
-                <p className="text-sm text-muted-foreground">
-                  Activa tus campanas, revisa los chats pendientes y mantente al tanto de nuestras actualizaciones
+          <Card className="border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background">
+            <CardHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between p-8">
+              <div className="flex-1 space-y-6">
+                <CardTitle className="text-4xl lg:text-5xl font-extrabold tracking-tight">
+                  Bienvenido a EliteSeller!
+                </CardTitle>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Activa tus campañas, revisa los chats pendientes y mantente al tanto de nuestras actualizaciones
                   para seguir escalando tus ventas.
                 </p>
               </div>
-              <div className="w-full lg:w-auto lg:min-w-[550px] lg:max-w-lg">
-                <div className="aspect-video overflow-hidden rounded-lg border shadow-sm">
+              <div className="w-full lg:w-1/2 lg:min-w-[600px]">
+                <div className="aspect-video overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
                   <iframe
                     src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1"
                     title="Bienvenida a EliteSeller"
