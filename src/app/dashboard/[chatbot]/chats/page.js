@@ -19,7 +19,7 @@ export default function ChatsPage({ params }) {
             />
           </div>
 
-          <div className="px-4 lg:px-6">
+          <div className="p-4">
             <Button asChild>
               <Link href="/api/crm/login?redirect=1" target="_blank" rel="noopener noreferrer">
                 Accede a tus chats
