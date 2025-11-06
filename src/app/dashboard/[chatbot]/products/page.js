@@ -68,21 +68,23 @@ export default async function ProductsPage({ params }) {
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
       <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex items-center justify-between py-4 md:py-6">
+        <div className="py-4 md:py-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Productos registrados</h1>
             <p className="text-sm text-muted-foreground mt-2">
               Visualiza, edita y gestiona todos los productos de tu tienda.
             </p>
           </div>
-          <Button asChild>
-            <Link
-              href={`/dashboard/${chatbotSlug}/products/new`}
-              className="whitespace-nowrap"
-            >
-              Crear producto
-            </Link>
-          </Button>
+          <div className="w-full md:w-auto">
+            <Button asChild className="w-full md:w-auto">
+              <Link
+                href={`/dashboard/${chatbotSlug}/products/new`}
+                className="whitespace-nowrap"
+              >
+                Crear producto
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="pb-6">
