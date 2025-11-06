@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { PlusIcon, Trash2Icon } from "lucide-react";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Field,
   FieldContent,
@@ -359,6 +359,32 @@ export default function NewTriggerForm({
   return (
     <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
       <form onSubmit={handleSubmit} className="contents">
+        <CardHeader className="flex items-start justify-between">
+          <div>
+            <CardTitle>
+              {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
+            </CardTitle>
+            <CardDescription>
+              Define el nombre, palabras clave y mensajes de respuesta.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              id="trigger-available"
+              checked={!!form.available}
+              onCheckedChange={(value) =>
+                setForm((previous) => ({
+                  ...previous,
+                  available: !!value,
+                }))
+              }
+              aria-label="Estado activo"
+            />
+            <span className="text-sm text-muted-foreground">
+              {form.available ? "Activo" : "Inactivo"}
+            </span>
+          </div>
+        </CardHeader>
         <CardContent className="space-y-6">
           <FieldSet className="gap-6">
             <FieldGroup className="gap-6">
@@ -391,7 +417,7 @@ export default function NewTriggerForm({
                 <FieldContent>
                   <Input
                     id="trigger-id-ads"
-                    placeholder="ID de anuncio o campana"
+                    placeholder="Ej. 023232323232121"
                     value={form.id_ads}
                     onChange={(event) =>
                       setForm((previous) => ({
@@ -407,15 +433,13 @@ export default function NewTriggerForm({
               </Field>
             </FieldGroup>
 
-            <FieldSeparator />
-
             <FieldGroup className="gap-6">
               <Field data-invalid={errors.keywords ? true : undefined}>
                 <FieldLabel htmlFor="trigger-keywords">
                   Palabras clave
                 </FieldLabel>
                 <FieldContent>
-                  <div className="rounded-lg border border-muted-foreground/20 bg-background px-3 py-2">
+                  <div>
                     <div className="flex flex-wrap gap-2">
                       {keywordsList.map((kw, index) => (
                         <span
@@ -440,7 +464,7 @@ export default function NewTriggerForm({
                     </div>
                     <Input
                       id="trigger-keywords"
-                      placeholder="Escribe una palabra y presiona espacio"
+                      placeholder="Escribe una palabra y presiona enter"
                       value={keywordInput}
                       onChange={(e) => setKeywordInput(e.target.value)}
                       onBlur={() => {
@@ -474,10 +498,6 @@ export default function NewTriggerForm({
                       className="mt-2"
                     />
                     <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <FieldDescription className="text-xs">
-                        Palabras separadas por espacio. Se enviarán separadas
-                        por coma.
-                      </FieldDescription>
                       <span>
                         {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
                       </span>
@@ -521,7 +541,7 @@ export default function NewTriggerForm({
                     {messages.map((msg, index) => (
                       <div
                         key={msg.id}
-                        className="rounded-lg border border-muted-foreground/20 bg-background p-3"
+                        // className="rounded-lg border border-muted-foreground/20 bg-background p-3"
                       >
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
@@ -557,7 +577,8 @@ export default function NewTriggerForm({
                     ))}
 
                     {/* Campo para agregar nuevo mensaje */}
-                    <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
+                    <div>
+                    {/* <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3"> */}
                       <Textarea
                         id="trigger-messages"
                         rows={3}
@@ -589,46 +610,13 @@ export default function NewTriggerForm({
                       </div>
                     </div>
 
-                    <FieldDescription className="text-xs">
-                      Puedes agregar varios mensajes. Se enviará uno aleatorio
-                      cuando se detecten las palabras clave.
-                    </FieldDescription>
                     <FieldError>{errors.messages}</FieldError>
                   </div>
                 </FieldContent>
               </Field>
             </FieldGroup>
 
-            <FieldSeparator />
-
-            <Field orientation="responsive">
-              <FieldLabel htmlFor="trigger-available">Estado</FieldLabel>
-              <FieldContent>
-                <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/20 bg-background px-4 py-3 md:flex-row md:items-center md:gap-4">
-                  <Switch
-                    id="trigger-available"
-                    checked={!!form.available}
-                    onCheckedChange={(value) =>
-                      setForm((previous) => ({
-                        ...previous,
-                        available: !!value,
-                      }))
-                    }
-                  />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">
-                      {form.available
-                        ? "Disparador disponible"
-                        : "Disparador desactivado"}
-                    </p>
-                    <FieldDescription className="text-xs md:text-sm">
-                      Desactivalo temporalmente cuando quieras pausar la
-                      automatizacion.
-                    </FieldDescription>
-                  </div>
-                </div>
-              </FieldContent>
-            </Field>
+            
           </FieldSet>
 
           {status.error && (

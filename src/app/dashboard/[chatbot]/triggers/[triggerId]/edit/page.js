@@ -85,14 +85,6 @@ export default async function EditTriggerPage({ params }) {
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
       <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold">Editar disparador</h1>
-            <p className="text-sm text-muted-foreground">
-              Modifica la configuracion de tu disparador automatico.
-            </p>
-          </div>
-        </div>
 
         <NewTriggerForm
           token={session.strapiToken}

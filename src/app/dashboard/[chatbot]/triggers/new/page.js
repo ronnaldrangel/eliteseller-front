@@ -28,15 +28,7 @@ export default async function NewTriggerPage({ params }) {
 
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
-      <div className="@container/main mx-auto w-full max-w-7xl flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
-        <div className="flex items-center justify-between py-4 md:py-6">
-          <div>
-            <h1 className="text-2xl font-semibold">Crear disparador</h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              Rellena los campos para registrar un nuevo disparador.
-            </p>
-          </div>
-        </div>
+      <div className="@container/main mx-auto w-full flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
 
         <NewTriggerForm
           token={session.strapiToken}
