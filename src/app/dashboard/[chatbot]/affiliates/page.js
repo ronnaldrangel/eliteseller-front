@@ -1,24 +1,92 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { SiteHeader } from "@/components/site-header"
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+"use client";
 
-export default function AffiliatesPage() {
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+
+// Personalizar las imágenes por paso
+const STEP_IMAGES = [
+  "/images/bot.webp",
+  "/images/bot.webp",
+  "/images/bot.webp",
+];
+
+const STEPS = [
+  {
+    title: "Invita a tu audiencia",
+    desc: "Comparte tu enlace de referencia único y deja que tus amigos o audiencia se unan al mundo y confiabilidad de Wazend API.",
+  },
+  {
+    title: "Tus amigos/audiencia aceptan",
+    desc: "Ellos se registran, comienzan a usar Wazend API y experimentan nuestra magia.",
+  },
+  {
+    title: "Recibe tu pago",
+    desc: "Cuando realizan un pago verificado, ganas 30% fácil y rápido.",
+  },
+];
+
+export default function AffiliatePage() {
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="px-4 lg:px-6">
-            <h1 className="text-2xl font-semibold">Afiliados</h1>
-            <p className="text-sm text-muted-foreground mt-2">Programa de afiliados y recompensas.</p>
-          </div>
-        </div>
+    <div className="flex flex-1 flex-col px-4 lg:px-6 py-4 md:py-6 gap-6">
+      <Card className="border-primary/10">
+        <CardHeader className="gap-2">
+          <CardTitle className="text-xl md:text-2xl">
+            Tu enlace de afiliado
+          </CardTitle>
+          <CardDescription className="max-w-3xl">
+            Necesitas activar el afiliado para obtener tu enlace de referencia
+            único, que te permite invitar a nuevos usuarios y ganar recompensas.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button
+            asChild
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            <a href="#" aria-label="Activar Afiliado">
+              Activar Afiliado
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
 
-        <div className="px-4 lg:px-6">
-          <div className="rounded-lg border bg-muted/20 p-4">
-            <p className="text-sm text-muted-foreground">Información e inscripción próximamente.</p>
+      <Card className="border-muted">
+        <CardContent className="p-6 md:p-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 items-start">
+            {STEPS.map((step, idx) => (
+              <div
+                key={step.title}
+                className="flex flex-col items-center text-center gap-4"
+              >
+                <div className="w-40 h-40 md:w-44 md:h-44">
+                  <img
+                    src={STEP_IMAGES[idx]}
+                    alt={`Paso ${idx + 1}`}
+                    className="h-full w-full object-contain"
+                    loading="lazy"
+                  />
+                </div>
+
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border bg-background text-sm font-semibold text-muted-foreground">
+                  {idx + 1}
+                </div>
+
+                <h3 className="text-lg font-semibold">{step.title}</h3>
+                <p className="text-sm text-muted-foreground max-w-[28rem]">
+                  {step.desc}
+                </p>
+              </div>
+            ))}
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }

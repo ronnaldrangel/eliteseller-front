@@ -29,7 +29,7 @@ const AuthLayout = ({ children }) => {
         <div className="flex flex-1 w-full lg:w-1/2 flex-col justify-center px-8 pt-12 pb-2 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-background">
           <div className="mx-auto w-full max-w-sm lg:w-96 space-y-4">
             {/* Contenido principal */}
-            <Link href="https://eliteseller.app/" className="block pb-4">
+            <Link href="https://eliteseller.app/" target="_blank" className="block pb-4">
               {mounted ? (
                 <Image
                   src={
