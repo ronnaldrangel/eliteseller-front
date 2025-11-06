@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, X as CloseIcon } from "lucide-react";
 
 const STAT_ITEMS = [
   { key: "activeChats", label: "Chats activos", helper: "Ultimas 24 horas" },
@@ -66,6 +66,29 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
   const [statsData, setStatsData] = useState({ ...INITIAL_STATS });
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(null);
+
+  // Cerrado de la sección de bienvenida gaaaa
+  const [showWelcome, setShowWelcome] = useState(true);
+  const WELCOME_CACHE_KEY = useMemo(
+    () => `welcomeCard:${chatbotSegment || "global"}:v1`,
+    [chatbotSegment]
+  );
+
+  useEffect(() => {
+    try {
+      const dismissed = localStorage.getItem(WELCOME_CACHE_KEY) === "1";
+      if (dismissed) setShowWelcome(false);
+    } catch {
+      // si localStorage falla (modo privado, etc.), ignoramos
+    }
+  }, [WELCOME_CACHE_KEY]);
+
+  const handleCloseWelcome = () => {
+    try {
+      localStorage.setItem(WELCOME_CACHE_KEY, "1");
+    } catch {}
+    setShowWelcome(false);
+  };
 
   // Auto-advance del carrusel
   useEffect(() => {
@@ -141,31 +164,42 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
         <div className="space-y-6 px-4 lg:px-6">
-          <Card className="border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background">
-            <CardHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between p-8">
-              <div className="flex-1 space-y-6">
-                <CardTitle className="text-4xl lg:text-5xl font-extrabold tracking-tight">
-                  Bienvenido a EliteSeller!
-                </CardTitle>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  Activa tus campañas, revisa los chats pendientes y mantente al
-                  tanto de nuestras actualizaciones para seguir escalando tus
-                  ventas.
-                </p>
-              </div>
-              <div className="w-full lg:w-1/2 lg:min-w-[600px]">
-                <div className="aspect-video overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
-                  <iframe
-                    src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1"
-                    title="Bienvenida a EliteSeller"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    className="h-full w-full"
-                  />
+          {showWelcome && (
+            <Card className="relative border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background">
+              <button
+                type="button"
+                onClick={handleCloseWelcome}
+                aria-label="Cerrar bienvenida"
+                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md border bg-background/60 hover:bg-background transition"
+              >
+                <CloseIcon className="h-4 w-4" />
+              </button>
+
+              <CardHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between p-8">
+                <div className="flex-1 space-y-6">
+                  <CardTitle className="text-4xl lg:text-5xl font-extrabold tracking-tight">
+                    Bienvenido a EliteSeller!
+                  </CardTitle>
+                  <p className="text-lg text-muted-foreground leading-relaxed">
+                    Activa tus campañas, revisa los chats pendientes y mantente
+                    al tanto de nuestras actualizaciones para seguir escalando
+                    tus ventas.
+                  </p>
                 </div>
-              </div>
-            </CardHeader>
-          </Card>
+                <div className="w-full lg:w-1/2 lg:min-w-[600px]">
+                  <div className="aspect-video overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
+                    <iframe
+                      src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1"
+                      title="Bienvenida a EliteSeller"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="h-full w-full"
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+            </Card>
+          )}
 
           <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
             {/* --- Tarjeta de estadísticas (tu render actual) --- */}
