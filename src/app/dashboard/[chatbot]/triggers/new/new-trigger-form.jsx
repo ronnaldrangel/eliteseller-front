@@ -507,7 +507,9 @@ export default function NewTriggerForm({
                 </FieldContent>
               </Field>
 
-              <Field>
+              {/* Palabras clave IA han sido comentadas por ahoraaa  */}
+
+              {/* <Field>
                 <FieldLabel htmlFor="trigger-keywords-ai">
                   Palabras clave IA (opcional)
                 </FieldLabel>
@@ -529,7 +531,7 @@ export default function NewTriggerForm({
                     Si esta vacio, se usaran las palabras clave principales.
                   </FieldDescription>
                 </FieldContent>
-              </Field>
+              </Field> */}
 
               <Field data-invalid={errors.messages ? true : undefined}>
                 <FieldLabel htmlFor="trigger-messages">
