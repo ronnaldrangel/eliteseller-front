@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -356,14 +356,6 @@ export default function NewTriggerForm({
     }
   };
 
-  const submitLabel = status.loading
-    ? isEditMode
-      ? "Actualizando..."
-      : "Creando..."
-    : isEditMode
-    ? "Guardar cambios"
-    : "Crear disparador";
-
   return (
     <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
       <form onSubmit={handleSubmit} className="contents">
@@ -688,3 +680,4 @@ export default function NewTriggerForm({
     </Card>
   );
 }
+

@@ -54,13 +54,13 @@ export default function TriggerManagement({
 }) {
   const [triggers, setTriggers] = useState(
     Array.isArray(initialTriggers)
-      ? initialTriggers.map(normalizeTriggerEntry).filter(Boolean)
+      ? initialTriggers.map(normalizeTrigger).filter(Boolean)
       : []
   );
 
   useEffect(() => {
     if (!Array.isArray(initialTriggers)) return;
-    setTriggers(initialTriggers.map(normalizeTriggerEntry).filter(Boolean));
+    setTriggers(initialTriggers.map(normalizeTrigger).filter(Boolean));
   }, [initialTriggers]);
 
   const handleDelete = async (trigger) => {
