@@ -46,7 +46,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
-const MAX_DESCRIPTION_LENGTH = 240;
+const MAX_DESCRIPTION_LENGTH = 100;
 const DEFAULT_COLOR = "#2563eb";
 const TAG_NAME_PATTERN = /^[a-z0-9-]+$/;
 
@@ -358,12 +358,12 @@ export default function TagManagement({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Nueva etiqueta</DialogTitle>
-            <DialogDescription>
+            {/* <DialogDescription>
               Clasifica tus conversaciones y productos con etiquetas
               personalizadas.
-            </DialogDescription>
+            </DialogDescription> */}
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6 mt-4">
             <FieldSet>
               <FieldGroup className="gap-6">
                 <Field data-invalid={errors.name ? true : undefined}>
@@ -446,7 +446,7 @@ export default function TagManagement({
                   />
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <FieldDescription className="text-xs">
-                      Opcional. Maximo {MAX_DESCRIPTION_LENGTH} caracteres.
+                      Maximo {MAX_DESCRIPTION_LENGTH} caracteres.
                     </FieldDescription>
                     <span>
                       {form.description.length}/{MAX_DESCRIPTION_LENGTH}
@@ -464,12 +464,9 @@ export default function TagManagement({
             )}
 
             <DialogFooter>
-              <div className="text-xs text-muted-foreground md:text-sm mr-auto">
-                Las etiquetas se sincronizan automaticamente con tu chatbot.
-              </div>
               <Button
                 type="submit"
-                className="w-full sm:w-auto"
+                className="w-full"
                 disabled={status.loading || !token || !chatbotId}
               >
                 {status.loading ? "Guardando..." : "Crear etiqueta"}

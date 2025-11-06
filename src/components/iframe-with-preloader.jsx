@@ -17,7 +17,7 @@ export default function IframeWithPreloader({ src, title, className, ...props })
   return (
     <div className="relative w-full h-full">
       {isLoading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/50 rounded-md">
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Spinner className="size-8 text-muted-foreground" />
             <div className="text-sm text-muted-foreground">Cargando chats...</div>

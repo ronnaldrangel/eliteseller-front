@@ -19,6 +19,105 @@ export default async function PlansPage() {
   const hotmartHref = email ? `${hotmartBase}${hotmartBase.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}` : hotmartBase
   const hotmartPremiumBase = 'https://pay.hotmart.com/U102463815A?off=sybe6vzp'
   const hotmartPremiumHref = email ? `${hotmartPremiumBase}${hotmartPremiumBase.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}` : hotmartPremiumBase
+
+  const plans = [
+    {
+      title: 'Básico',
+      price: '29$',
+      priceClass: 'text-3xl font-bold',
+      perText: 'al mes',
+      beforePrice: '58$/mes',
+      features: [
+        'Todas las funciones incluidas',
+        '1 número de WhatsApp',
+        'Sin miembros del equipo',
+        'Soporte por WhatsApp',
+      ],
+      href: hotmartHref,
+      delay: '0ms',
+      highlight: false,
+      featureIconColor: 'text-green-600',
+    },
+    {
+      title: 'Premium',
+      price: '49$',
+      priceClass: 'text-4xl font-extrabold',
+      perText: 'al mes',
+      beforePrice: '98$/mes',
+      features: [
+        'Todas las funciones incluidas',
+        '1 número de WhatsApp',
+        'Hasta 3 miembros del equipo',
+        'Flujos automatizados ilimitados',
+        'Reportes avanzados',
+        'Soporte por WhatsApp',
+      ],
+      href: hotmartPremiumHref,
+      delay: '150ms',
+      highlight: true,
+      badgeText: 'Mejor opción',
+      featureIconColor: 'text-cyan-600',
+    },
+    {
+      title: 'Empresarial',
+      price: 'Precio a medida',
+      priceClass: 'text-3xl font-bold',
+      perText: '',
+      beforePrice: '',
+      features: [
+        'Todas las funciones incluidas',
+        'Multiples número de WhatsApp',
+        'Ilimitados miembros del equipo',
+        'Flujos automatizados ilimitados',
+        'Reportes avanzados y analytics',
+        'Soporte 24/7 dedicado',
+        'Integraciones personalizadas',
+      ],
+      href: 'https://www.instagram.com/elitecode.es/',
+      delay: '300ms',
+      highlight: false,
+      featureIconColor: 'text-green-600',
+    },
+  ]
+
+  const PlanCard = ({ title, price, priceClass, perText, beforePrice, features, href, delay, highlight, badgeText, featureIconColor }) => {
+    const highlightClasses = highlight
+      ? 'relative ring-opacity-70 shadow-xl bg-gradient-to-b from-[rgba(84,162,177,0.12)] dark:from-[rgba(84,162,177,0.12)] hover:shadow-2xl'
+      : 'hover:shadow-lg'
+
+    return (
+      <Card style={{ animationDelay: delay, animationFillMode: 'both' }} className={`animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out transition-shadow h-full flex flex-col ${highlightClasses}`}>
+        {highlight && (
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 shadow">
+            {badgeText || 'Mejor opción'}
+          </div>
+        )}
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>
+            <span className={`${priceClass} text-foreground`}>{price}</span>
+            {perText && <span className="ml-1">{perText}</span>}
+          </CardDescription>
+          {beforePrice && (
+            <div className="mt-1 text-xs"><span className="text-muted-foreground">Antes: </span><span className="line-through opacity-70">{beforePrice}</span></div>
+          )}
+        </CardHeader>
+        <CardContent className="pt-2 flex flex-col flex-1">
+          <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+            {features.map((f, i) => (
+              <li key={i} className="flex items-center gap-2">
+                <Check className={`h-4 w-4 ${featureIconColor}`} />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
+            <a href={href}>Empieza ahora</a>
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
   return (
 
     <div className="min-h-screen w-full">
@@ -59,73 +158,9 @@ export default async function PlansPage() {
         <CountdownOffer days={7} color="#ef4444" />
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <Card style={{ animationDelay: "0ms", animationFillMode: "both" }} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out hover:shadow-lg transition-shadow h-full flex flex-col">
-            <CardHeader>
-              <CardTitle>Básico</CardTitle>
-              <CardDescription>
-                <span className="text-3xl font-bold text-foreground">29$</span>
-                <span className="ml-1">al mes</span>
-              </CardDescription>
-              <div className="mt-1 text-xs"><span className="text-muted-foreground">Antes: </span><span className="line-through opacity-70">58$/mes</span></div>
-            </CardHeader>
-            <CardContent className="pt-2 flex flex-col flex-1">
-              <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Todas las funciones incluidas</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>1 número de WhatsApp</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Sin miembros del equipo</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Soporte por WhatsApp</span></li>
-              </ul>
-              <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
-                 <a href={hotmartHref}>Empieza ahora</a>
-               </Button>
-            </CardContent>
-          </Card>
-          <Card style={{ animationDelay: "150ms", animationFillMode: "both" }} className="relative animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out ring-2 ring-[#54a2b1] ring-opacity-70 dark:ring-[#54a2b1] shadow-xl bg-gradient-to-b from-[rgba(84,162,177,0.12)] dark:from-[rgba(84,162,177,0.12)] hover:shadow-2xl transition-shadow h-full flex flex-col">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#54a2b1] text-white text-xs font-semibold px-3 py-1 shadow">Mejor opción</div>
-            <CardHeader>
-              <CardTitle>Premium</CardTitle>
-              <CardDescription>
-                <span className="text-4xl font-extrabold text-foreground">49$</span>
-                <span className="ml-1">al mes</span>
-              </CardDescription>
-              <div className="mt-1 text-xs"><span className="text-muted-foreground">Antes: </span><span className="line-through opacity-70">98$/mes</span></div>
-            </CardHeader>
-            <CardContent className="pt-2 flex flex-col flex-1">
-              <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-600" /><span>Todas las funciones incluidas</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-600" /><span>1 número de WhatsApp</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-600" /><span>Hasta 3 miembros del equipo</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-600" /><span>Flujos automatizados ilimitados</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-600" /><span>Reportes avanzados</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-cyan-600" /><span>Soporte por WhatsApp</span></li>
-              </ul>
-              <Button size="lg" className="w-full mt-auto h-12 text-base bg-[#54a2b1] hover:bg-[#4b93a1] text-white" asChild>
-                 <a href={hotmartPremiumHref}>Empieza ahora</a>
-               </Button>
-            </CardContent>
-          </Card>
-          <Card style={{ animationDelay: "300ms", animationFillMode: "both" }} className="animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out hover:shadow-lg transition-shadow h-full flex flex-col">
-            <CardHeader>
-              <CardTitle>Personalizado</CardTitle>
-              <CardDescription>
-                <span className="text-3xl font-bold text-foreground">Precio a medida</span>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-2 flex flex-col flex-1">
-              <ul className="space-y-2 text-sm text-muted-foreground mb-6">
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Todas las funciones incluidas</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Multiples número de WhatsApp</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Ilimitados miembros del equipo</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Flujos automatizados ilimitados</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Reportes avanzados y analytics</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Soporte 24/7 dedicado</span></li>
-                <li className="flex items-center gap-2"><Check className="h-4 w-4 text-green-600" /><span>Integraciones personalizadas</span></li>
-              </ul>
-              <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
-                <a href="https://www.instagram.com/elitecode.es/">Empieza ahora</a>
-              </Button>
-            </CardContent>
-          </Card>
+          {plans.map((p) => (
+            <PlanCard key={p.title} {...p} />
+          ))}
         </div>
 
       </div>

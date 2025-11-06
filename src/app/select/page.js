@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import SelectUserAvatarMenu from "@/components/select-user-avatar-menu";
 import { PlusIcon } from "lucide-react";
+import { buildChatbotIdentifiers } from "@/lib/utils/chatbot-route";
 
 export default async function SelectPage() {
   const session = await auth();
@@ -40,7 +41,6 @@ export default async function SelectPage() {
         `No se pudo cargar tus chatbots (status ${res.status})`;
     } else {
       const data = await res.json();
-      console.log("Fetched chatbots data:", data);
       chatbots = Array.isArray(data) ? data : data?.data || [];
     }
   } catch (e) {
@@ -60,22 +60,20 @@ export default async function SelectPage() {
   const cards = Array.isArray(chatbots)
     ? chatbots.map((item) => {
         const attrs = item?.attributes || {};
-        const routeId = String(item?.documentId ?? item?.id ?? "");
-        const displayId =
-          typeof item?.id !== "undefined" && item?.id !== null
-            ? String(item.id)
-            : "";
-        const name =
-          attrs.chatbot_name ||
-          item?.chatbot_name ||
-          attrs.name ||
-          attrs.title ||
-          // attrs.slug ||
-          `Chatbot #${displayId || routeId}`;
-        const slug = item.slug || "";
+        const meta = buildChatbotIdentifiers(
+          item,
+          session?.user?.strapiUserId || ""
+        );
         const description = attrs.description || "";
         const custom = !!(attrs.custom ?? item?.custom ?? false);
-        return { routeId, displayId, name, slug, description, custom };
+        return {
+          documentId: meta.documentId,
+          displayId: meta.id,
+          name: meta.name,
+          routeSegment: meta.routeSegment,
+          description,
+          custom,
+        };
       })
     : [];
 
@@ -139,8 +137,8 @@ export default async function SelectPage() {
                 <>
                   {cards.map((c) => (
                     <Link
-                      key={c.routeId}
-                      href={`/dashboard/${encodeURIComponent(c.slug)}/home`}
+                      key={c.routeSegment}
+                      href={`/dashboard/${encodeURIComponent(c.routeSegment)}/home`}
                       className="group relative rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
                       aria-label={`Entrar a ${c.name}`}
                     >

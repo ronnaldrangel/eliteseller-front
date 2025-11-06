@@ -18,17 +18,18 @@ const AuthLayout = ({ children }) => {
   return (
     <div className="h-screen bg-background">
       {/* Selectores de tema e idioma en la esquina superior derecha */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+
+      {/* <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
         <LanguageSelector />
         <ModeToggle />
-      </div>
+      </div> */}
 
       <div className="flex min-h-full flex-1">
         {/* Lado izquierdo - Formulario */}
         <div className="flex flex-1 w-full lg:w-1/2 flex-col justify-center px-8 pt-12 pb-2 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-background">
           <div className="mx-auto w-full max-w-sm lg:w-96 space-y-4">
             {/* Contenido principal */}
-            <Link href="https://eliteseller.app/" className="block">
+            <Link href="https://eliteseller.app/" className="block pb-4">
               {mounted ? (
                 <Image
                   src={

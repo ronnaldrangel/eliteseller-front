@@ -207,9 +207,19 @@ export function AppSidebar({
   chatbotSlug,
   ...props
 }) {
+  const [mounted, setMounted] = React.useState(false)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const { data: session } = useSession()
   // const { selectedChatbotId } = useChatbot()
   const slug = chatbotSlug || null
+
+  if (!mounted) {
+    return null;
+  }
 
   // const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
   const withChatbotSegment = (path) => {

@@ -1,65 +1,72 @@
 // lib/chatbot-utils.js
-import { buildStrapiUrl } from "@/lib/strapi";
+import { buildStrapiUrl } from "@/lib/strapi"
+import {
+  buildChatbotIdentifiers,
+  matchesChatbotRouteSegment,
+} from "@/lib/utils/chatbot-route"
 
 /**
- * Obtiene el documentId de un chatbot por su slug
- * @param {string} slug - El slug del chatbot
- * @param {string} token - Token de autenticación de Strapi
- * @param {string} userId - ID del usuario (opcional, para validar permisos)
- * @returns {Promise<string|null>} - El documentId del chatbot o null si no se encuentra
+ * Fetches a chatbot using the safe route segment.
+ * Returns null when the segment does not belong to the current user.
  */
-// src/lib/utils/chatbot-utils.js
-export async function getChatbotBySlug(slug, token, userId = null) {
-  if (!slug || !token) return null;
+export async function getChatbotBySlug(segment, token, userId = null) {
+  if (!segment || !token) return null
 
-  const filters = [`filters[slug][$eq]=${encodeURIComponent(slug)}`];
+  const params = new URLSearchParams()
+  params.set("fields[0]", "documentId")
+  params.set("fields[1]", "id")
+  params.set("fields[2]", "slug")
+  params.set("fields[3]", "chatbot_name")
+
   if (userId) {
-    filters.push(`filters[users_permissions_user][id][$eq]=${encodeURIComponent(userId)}`);
+    params.set("filters[users_permissions_user][id][$eq]", userId)
+  } else {
+    params.set("filters[slug][$eq]", segment)
   }
 
-  const res = await fetch(
-    buildStrapiUrl(
-      `/api/chatbots?${filters.join('&')}` +
-        `&fields[0]=documentId&fields[1]=id&fields[2]=slug&fields[3]=chatbot_name`
-    ),
-    {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      cache: 'no-store',
-    }
-  );
+  const res = await fetch(buildStrapiUrl(`/api/chatbots?${params.toString()}`), {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  })
 
-  if (!res.ok) return null;
+  if (!res.ok) return null
 
-  const payload = await res.json();
+  const payload = await res.json()
   const items = Array.isArray(payload)
     ? payload
     : Array.isArray(payload?.data)
     ? payload.data
     : payload?.data
     ? [payload.data]
-    : [];
+    : []
 
-  const first = items[0];
-  if (!first) return null;
+  if (!items.length) return null
 
-  const attrs = first.attributes ?? first;
-  const documentId =
-    first.documentId ??
-    attrs.documentId ??
-    first.id ??
-    attrs.id;
+  const match =
+    (userId &&
+      items.find((item) =>
+        matchesChatbotRouteSegment(segment, item, userId)
+      )) ||
+    items.find((item) => {
+      const meta = buildChatbotIdentifiers(item, userId || "")
+      return meta.slug && meta.slug === segment
+    })
 
-  if (!documentId) return null;
+  if (!match) return null
+
+  const meta = buildChatbotIdentifiers(match, userId || "")
+
+  if (!meta.documentId) return null
 
   return {
-    documentId: String(documentId),
-    id: String(first.id ?? attrs.id ?? documentId),
-    slug: attrs.slug ?? first.slug ?? slug,
-    name: attrs.chatbot_name ?? first.chatbot_name ?? slug,
-  };
+    documentId: meta.documentId,
+    id: meta.id || meta.documentId,
+    slug: meta.slug || meta.documentId,
+    routeSegment: meta.routeSegment,
+    name: meta.name || meta.routeSegment,
+  }
 }
-

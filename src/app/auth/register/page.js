@@ -356,7 +356,7 @@ export default function RegisterPage() {
               <Link href="/privacy" className="underline underline-offset-4">Política de privacidad</Link>.
             </p> */}
 
-            <FieldSeparator>O continúa con</FieldSeparator>
+            {/* <FieldSeparator>O continúa con</FieldSeparator>
 
             <Field>
             <Button
@@ -374,7 +374,8 @@ export default function RegisterPage() {
               </svg>
               Continuar con Google
             </Button>
-            </Field>
+            </Field> */}
+            
           </FieldGroup>
           </form>
 

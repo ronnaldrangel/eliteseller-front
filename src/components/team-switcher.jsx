@@ -4,9 +4,14 @@ import * as React from "react";
 import { ChevronsUpDown, Plus, BotIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
+import useSWR from "swr";
+
 import { useChatbot } from "@/contexts/chatbot-context";
 import { buildStrapiUrl } from "@/lib/strapi";
-import useSWR from "swr";
+import {
+  buildChatbotIdentifiers,
+  matchesChatbotRouteSegment,
+} from "@/lib/utils/chatbot-route";
 
 import {
   DropdownMenu,
@@ -33,7 +38,7 @@ export function TeamSwitcher({
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
-  const { chatbots, setChatbots, selectedChatbotId, setSelectedChatbotId } =
+  const { chatbots, setChatbots, selectedChatbot, setSelectedChatbot } =
     useChatbot();
 
   const userId = session?.user?.strapiUserId;
@@ -47,87 +52,134 @@ export function TeamSwitcher({
         )
       : null;
 
-  const { data: chatbotsData, error, isLoading } = useSWR(chatbotsUrl);
+  const { data: chatbotsData, isLoading } = useSWR(chatbotsUrl);
+
+  const decorateChatbots = React.useCallback(
+    (items) =>
+      items.map((item) => ({
+        ...item,
+        __meta: buildChatbotIdentifiers(item, userId),
+      })),
+    [userId]
+  );
 
   React.useEffect(() => {
     if (!chatbotsData) return;
+
     const items = Array.isArray(chatbotsData)
       ? chatbotsData
       : chatbotsData?.data || [];
-    setChatbots(items);
-    if (chatbotSlug && items.length > 0) {
-      const found = items.find((cb) => cb.slug === chatbotSlug);
-      if (found) {
-        const foundId = String(found?.documentId ?? found?.id ?? "");
-        if (foundId) setSelectedChatbotId(foundId);
-      }
-    } else if (!selectedChatbotId && items.length > 0) {
-      // Fallback: seleccionar el primero si no hay ninguno seleccionado
-      const first = items[0];
-      const firstDocId = String(first?.documentId ?? first?.id ?? "");
-      if (firstDocId) setSelectedChatbotId(firstDocId);
-    }
-  }, [chatbotsData, chatbotSlug]);
+    const decorated = decorateChatbots(items);
+    setChatbots(decorated);
 
-  const teams = chatbots.map((cb) => {
-    const routeId = String(cb?.documentId ?? cb?.id ?? "");
-    const displayId = String(cb?.id ?? cb?.documentId ?? "");
-    const name =
-      cb?.chatbot_name || cb?.name || cb?.title || `Chatbot ${displayId}`;
-    const slug = cb?.slug || routeId;
-    return {
-      id: routeId,
-      displayId,
-      name,
-      slug,
-      logo: BotIcon,
-      plan: "Chatbot",
+    const ensureSelectionFromEntry = (entry) => {
+      if (!entry?.__meta) return;
+      const meta = entry.__meta;
+      if (selectedChatbot?.routeSegment === meta.routeSegment) return;
+      setSelectedChatbot({
+        documentId: meta.documentId,
+        slug: meta.slug,
+        routeSegment: meta.routeSegment,
+        name: meta.name,
+      });
     };
-  });
 
-  const activeTeam = (() => {
-    // Buscar por slug primero si existe
     if (chatbotSlug) {
-      const bySlug = teams.find((t) => t.slug === chatbotSlug);
+      const match = decorated.find((cb) =>
+        matchesChatbotRouteSegment(chatbotSlug, cb, userId)
+      );
+      if (match) {
+        ensureSelectionFromEntry(match);
+        return;
+      }
+    }
+
+    if (!selectedChatbot?.routeSegment && decorated.length > 0) {
+      ensureSelectionFromEntry(decorated[0]);
+    }
+  }, [chatbotsData, chatbotSlug, decorateChatbots, selectedChatbot, setChatbots, setSelectedChatbot, userId]);
+
+  const teams = React.useMemo(() => {
+    return chatbots.map((cb) => {
+      const meta = cb.__meta ?? buildChatbotIdentifiers(cb, userId);
+      return {
+        id: meta.documentId,
+        displayId: meta.id,
+        name: meta.name,
+        slug: meta.routeSegment,
+        routeSegment: meta.routeSegment,
+        actualSlug: meta.slug,
+        logo: BotIcon,
+        plan: "Chatbot",
+      };
+    });
+  }, [chatbots, userId]);
+
+  const activeTeam = React.useMemo(() => {
+    if (chatbotSlug) {
+      const bySlug = teams.find((t) => t.routeSegment === chatbotSlug);
       if (bySlug) return bySlug;
     }
-    // Fallback: buscar por ID
-    const byId = teams.find((t) => String(t.id) === String(selectedChatbotId));
-    return byId || teams[0];
-  })();
 
-  // Sincronizar el contexto cuando cambia el slug en la URL
-  React.useEffect(() => {
-    if (!pathname || !chatbotSlug) return;
-    if (activeTeam && activeTeam.slug === chatbotSlug) {
-      const teamId = String(activeTeam.id);
-      if (String(selectedChatbotId) !== teamId) {
-        setSelectedChatbotId(teamId);
-      }
+    if (selectedChatbot?.routeSegment) {
+      const bySelected = teams.find(
+        (t) => t.routeSegment === selectedChatbot.routeSegment
+      );
+      if (bySelected) return bySelected;
     }
-  }, [pathname, chatbotSlug, activeTeam]);
 
-  // Inicializa el contexto desde el segmento dinámico si existe
+    return teams[0];
+  }, [teams, chatbotSlug, selectedChatbot?.routeSegment]);
+
+  // Si el slug de la URL no pertenece al usuario redirigimos a la selección.
   React.useEffect(() => {
-    if (!pathname) return;
-    const parts = pathname.split("/");
-    const idx = parts.indexOf("dashboard");
-    const idFromPath = idx !== -1 ? parts[idx + 1] : null;
-    if (idFromPath && String(idFromPath) !== String(selectedChatbotId)) {
-      setSelectedChatbotId(String(idFromPath));
+    if (!chatbotSlug || isLoading) return;
+    if (!teams || teams.length === 0) return;
+    const isValid = teams.some((team) => team.routeSegment === chatbotSlug);
+    if (!isValid) {
+      router.replace("/select");
     }
-  }, [pathname]);
+  }, [chatbotSlug, isLoading, teams, router]);
+
+  // Mantener el contexto sincronizado con la URL activa
+  React.useEffect(() => {
+    if (!pathname || !chatbotSlug || !activeTeam) return;
+    if (activeTeam.routeSegment !== chatbotSlug) return;
+
+    if (selectedChatbot?.routeSegment !== activeTeam.routeSegment) {
+      setSelectedChatbot({
+        documentId: activeTeam.id,
+        slug: activeTeam.actualSlug,
+        routeSegment: activeTeam.routeSegment,
+        name: activeTeam.name,
+      });
+    }
+  }, [
+    pathname,
+    chatbotSlug,
+    activeTeam,
+    selectedChatbot?.routeSegment,
+    setSelectedChatbot,
+  ]);
 
   const handleSelect = (team) => {
-    setSelectedChatbotId(team.id);
+    if (!team) return;
+
+    setSelectedChatbot({
+      documentId: team.id,
+      slug: team.actualSlug,
+      routeSegment: team.routeSegment,
+      name: team.name,
+    });
+
     const parts = (pathname || "").split("/");
     const idx = parts.indexOf("dashboard");
-    if (idx !== -1) {
-      parts[idx + 1] = team.slug;
-      const dest = parts.join("/") || `/dashboard/${team.slug}`;
+    if (idx !== -1 && idx + 1 < parts.length) {
+      parts[idx + 1] = team.routeSegment;
+      const dest = parts.join("/") || `/dashboard/${team.routeSegment}`;
       router.replace(dest);
     } else {
-      router.push(`/dashboard/${team.slug}/home`);
+      router.push(`/dashboard/${team.routeSegment}/home`);
     }
   };
 
@@ -146,62 +198,6 @@ export function TeamSwitcher({
     );
   }
 
-  // return (
-  //   <SidebarMenu>
-  //     <SidebarMenuItem>
-  //       <DropdownMenu>
-  //         <DropdownMenuTrigger asChild>
-  //           <SidebarMenuButton
-  //             size="lg"
-  //             className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-  //           >
-  //             <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-  //               <activeTeam.logo className="size-4" />
-  //             </div>
-  //             <div className="grid flex-1 text-left text-sm leading-tight">
-  //               <span className="truncate font-medium">{activeTeam?.name || "EliteSellers"}</span>
-  //               <span className="truncate text-xs">{`ID: ${activeTeam?.displayId || ''}`}</span>
-  //             </div>
-  //             <ChevronsUpDown className="ml-auto" />
-  //           </SidebarMenuButton>
-  //         </DropdownMenuTrigger>
-  //         <DropdownMenuContent
-  //           className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-  //           align="start"
-  //           side={isMobile ? "bottom" : "right"}
-  //           sideOffset={4}
-  //         >
-  //           <DropdownMenuLabel className="text-muted-foreground text-xs">
-  //             Chatbots
-  //           </DropdownMenuLabel>
-  //           {teams.map((team, index) => (
-  //             <DropdownMenuItem
-  //               key={`${team.name}-${team.id ?? index}`}
-  //               onClick={() => handleSelect(String(team.id))}
-  //               className="gap-2 p-2"
-  //             >
-  //               <div className="flex size-6 items-center justify-center rounded-md border">
-  //                 <team.logo className="size-3.5 shrink-0" />
-  //               </div>
-  //               {team.name}
-  //               <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-  //             </DropdownMenuItem>
-  //           ))}
-  //           <DropdownMenuSeparator />
-  //           <DropdownMenuItem
-  //             className="gap-2 p-2"
-  //             onClick={() => router.push('/plans')}
-  //           >
-  //             <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
-  //               <Plus className="size-4" />
-  //             </div>
-  //             <div className="text-muted-foreground font-medium">{addLabel}</div>
-  //           </DropdownMenuItem>
-  //         </DropdownMenuContent>
-  //       </DropdownMenu>
-  //     </SidebarMenuItem>
-  //   </SidebarMenu>
-  // )
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -216,10 +212,10 @@ export function TeamSwitcher({
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">
-                  {activeTeam?.name || "EliteSellers"}
+                  {activeTeam?.name || "EliteSeller"}
                 </span>
               </div>
-              <ChevronsUpDown className="ml-auto" />
+              <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
@@ -233,7 +229,7 @@ export function TeamSwitcher({
             </DropdownMenuLabel>
             {teams.map((team, index) => (
               <DropdownMenuItem
-                key={`${team.slug}-${team.id ?? index}`}
+                key={`${team.routeSegment}-${team.id ?? index}`}
                 onClick={() => handleSelect(team)}
                 className="gap-2 p-2"
               >
@@ -241,20 +237,24 @@ export function TeamSwitcher({
                   <team.logo className="size-3.5 shrink-0" />
                 </div>
                 {team.name}
-                <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
+                <DropdownMenuShortcut>Ctrl+{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               className="gap-2 p-2"
-              onClick={() => router.push("/plans")}
+              onClick={() => {
+                if (typeof onAdd === "function") {
+                  onAdd();
+                } else {
+                  router.push("/plans");
+                }
+              }}
             >
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />
               </div>
-              <div className="text-muted-foreground font-medium">
-                {addLabel}
-              </div>
+              <div className="text-muted-foreground font-medium">{addLabel}</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
