@@ -3,10 +3,17 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { PlusIcon, Trash2Icon } from "lucide-react";
+import { Paperclip, PlusIcon, Trash2Icon } from "lucide-react";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Field,
   FieldContent,
@@ -24,6 +31,9 @@ import { Switch } from "@/components/ui/switch";
 const MAX_KEYWORDS_LENGTH = 360;
 const MAX_MESSAGE_LENGTH = 500;
 
+const ACCEPT =
+  "image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 export default function NewTriggerForm({
   token,
   chatbotId,
@@ -37,12 +47,24 @@ export default function NewTriggerForm({
   const initialMessages = useMemo(() => {
     const contents =
       initialTrigger?.trigger_contents || initialTrigger?.messages || [];
-    return contents.map((tc, index) => ({
-      id: tc.id || tc.documentId || `temp-${index}`,
-      documentId: tc.documentId || tc.id || null,
-      message: tc.message || "",
-      isExisting: true,
-    }));
+    return contents.map((tc, index) => {
+      const attrs = tc.attributes || tc; // por si viene normalizado
+      const mediaNodes = attrs?.messageMedia?.data || [];
+      const existingMedia = mediaNodes.map((m) => ({
+        id: m.id,
+        name: m.attributes?.name || `file-${m.id}`,
+        url: m.attributes?.url,
+        size: m.attributes?.size,
+      }));
+      return {
+        id: tc.id || tc.documentId || `temp-${index}`,
+        documentId: tc.documentId || tc.id || null,
+        message: attrs?.message || tc.message || "",
+        isExisting: true,
+        mediaExisting: existingMedia,
+        mediaNew: [],
+      };
+    });
   }, [initialTrigger]);
 
   const initialKeywordsString = (initialTrigger?.keywords ?? "").trim();
@@ -60,12 +82,15 @@ export default function NewTriggerForm({
 
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState({ loading: false, error: null });
-  const [keywordsList, setKeywordsList] = useState(() => [...initialKeywordsList]);
+  const [keywordsList, setKeywordsList] = useState(() => [
+    ...initialKeywordsList,
+  ]);
   const [keywordInput, setKeywordInput] = useState("");
   const [messages, setMessages] = useState(
     initialMessages.length > 0 ? initialMessages : []
   );
   const [newMessage, setNewMessage] = useState("");
+  const [newMediaFiles, setNewMediaFiles] = useState([]);
 
   const keywordsJoined = useMemo(() => keywordsList.join(","), [keywordsList]);
 
@@ -88,19 +113,46 @@ export default function NewTriggerForm({
     }
 
     // Validar cada mensaje
-    const hasInvalidMessage = messages.some(
-      (msg) => !msg.message.trim() || msg.message.length > MAX_MESSAGE_LENGTH
-    );
-    if (hasInvalidMessage) {
-      nextErrors.messages = `Todos los mensajes deben tener contenido y maximo ${MAX_MESSAGE_LENGTH} caracteres.`;
+    const hasInvalid = messages.some((msg) => {
+      const hasText = !!msg.message?.trim();
+      const hasMedia =
+        (msg.mediaExisting && msg.mediaExisting.length > 0) ||
+        (msg.mediaNew && msg.mediaNew.length > 0);
+      const textTooLong = (msg.message || "").length > MAX_MESSAGE_LENGTH;
+      return (!hasText && !hasMedia) || textTooLong;
+    });
+    if (hasInvalid) {
+      nextErrors.messages = `Cada respuesta debe tener texto y/o multimedia. El texto no debe exceder ${MAX_MESSAGE_LENGTH} caracteres.`;
     }
 
     return nextErrors;
   };
 
+  async function uploadFiles(files = []) {
+    if (!files.length) return [];
+    const formData = new FormData();
+    files.forEach((f) => formData.append("files", f));
+    const res = await fetch(buildStrapiUrl("/api/upload"), {
+      method: "POST",
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || "Fallo subiendo archivos");
+    }
+    const data = await res.json();
+    return (Array.isArray(data) ? data : []).map((asset) => asset.id);
+  }
+
   const handleAddMessage = () => {
-    if (!newMessage.trim()) return;
-    if (newMessage.length > MAX_MESSAGE_LENGTH) {
+    const hasText = !!newMessage.trim();
+    const hasMedia = newMediaFiles.length > 0;
+    if (!hasText && !hasMedia) return;
+
+    if (hasText && newMessage.length > MAX_MESSAGE_LENGTH) {
       toast.error(
         `El mensaje debe tener maximo ${MAX_MESSAGE_LENGTH} caracteres.`
       );
@@ -114,9 +166,12 @@ export default function NewTriggerForm({
         documentId: null,
         message: newMessage.trim(),
         isExisting: false,
+        mediaExisting: [],
+        mediaNew: [...newMediaFiles],
       },
     ]);
     setNewMessage("");
+    setNewMediaFiles([]);
   };
 
   const handleRemoveMessage = (index) => {
@@ -127,6 +182,41 @@ export default function NewTriggerForm({
     setMessages((prev) =>
       prev.map((msg, i) => (i === index ? { ...msg, message: value } : msg))
     );
+  };
+
+  const handleAddMediaToMessage = (index, fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    setMessages((prev) =>
+      prev.map((msg, i) =>
+        i === index
+          ? { ...msg, mediaNew: [...(msg.mediaNew || []), ...files] }
+          : msg
+      )
+    );
+  };
+
+  const handleRemoveMedia = (index, type, idx) => {
+    setMessages((prev) =>
+      prev.map((msg, i) => {
+        if (i !== index) return msg;
+        if (type === "new") {
+          const list = [...(msg.mediaNew || [])];
+          list.splice(idx, 1);
+          return { ...msg, mediaNew: list };
+        } else {
+          const list = [...(msg.mediaExisting || [])];
+          list.splice(idx, 1);
+          return { ...msg, mediaExisting: list };
+        }
+      })
+    );
+  };
+
+  const handleAddMediaToNew = (fileList) => {
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    setNewMediaFiles((prev) => [...prev, ...files]);
   };
 
   const handleSubmit = async (event) => {
@@ -187,9 +277,28 @@ export default function NewTriggerForm({
         let hasErrors = false;
 
         for (const msg of messages) {
+          // 1) Subir archivos nuevos de este mensaje
+          let uploadedIds = [];
+          try {
+            uploadedIds = await uploadFiles(msg.mediaNew || []);
+          } catch (e) {
+            console.error("Upload fallido:", e);
+            hasErrors = true;
+          }
+
+          // 2) Armar IDs finales (existentes + nuevos)
+          const existingIds = (msg.mediaExisting || []).map((m) => m.id);
+          const allMediaIds = [...existingIds, ...uploadedIds];
+
           if (msg.isExisting && msg.documentId) {
-            // Actualizar mensaje existente
-            const contentPayload = { data: { message: msg.message.trim() } };
+            // PUT contenido existente
+            const contentPayload = {
+              data: {
+                message: (msg.message || "").trim(),
+                // Para media en Strapi (media field): se asigna array de IDs
+                messageMedia: allMediaIds,
+              },
+            };
             const contentRes = await fetch(
               buildStrapiUrl(`/api/trigger-contents/${msg.documentId}`),
               {
@@ -201,17 +310,17 @@ export default function NewTriggerForm({
                 body: JSON.stringify(contentPayload),
               }
             );
-
             if (!contentRes.ok) {
               const body = await contentRes.json().catch(() => ({}));
-              console.error("Error actualizando contenido:", contentRes);
+              console.error("Error actualizando contenido:", body);
               hasErrors = true;
             }
           } else {
-            // Crear nuevo mensaje
+            // POST nuevo contenido
             const contentPayload = {
               data: {
-                message: msg.message.trim(),
+                message: (msg.message || "").trim(),
+                messageMedia: allMediaIds,
                 trigger: { connect: [{ documentId: triggerDocId }] },
               },
             };
@@ -226,7 +335,6 @@ export default function NewTriggerForm({
                 body: JSON.stringify(contentPayload),
               }
             );
-
             if (!contentRes.ok) {
               const body = await contentRes.json().catch(() => ({}));
               console.error("Error creando contenido:", body);
@@ -302,12 +410,22 @@ export default function NewTriggerForm({
         const createdTrigger = triggerBody?.data ?? triggerBody;
         const triggerDocId = createdTrigger.documentId || createdTrigger.id;
 
-        // Crear todos los mensajes
         let hasErrors = false;
         for (const msg of messages) {
+          let uploadedIds = [];
+          try {
+            uploadedIds = await uploadFiles(msg.mediaNew || []);
+          } catch (e) {
+            console.error("Upload fallido:", e);
+            hasErrors = true;
+          }
+          const existingIds = (msg.mediaExisting || []).map((m) => m.id);
+          const allMediaIds = [...existingIds, ...uploadedIds];
+
           const contentPayload = {
             data: {
-              message: msg.message.trim(),
+              message: (msg.message || "").trim(),
+              messageMedia: allMediaIds,
               trigger: { connect: [{ documentId: triggerDocId }] },
             },
           };
@@ -331,13 +449,9 @@ export default function NewTriggerForm({
           }
         }
 
-        if (hasErrors) {
-          toast.warning(
-            "Disparador creado pero hubo errores al guardar algunos mensajes."
-          );
-        } else {
-          toast.success("Disparador creado correctamente.");
-        }
+        if (hasErrors)
+          toast.warning("Disparador creado con algunos errores en multimedia.");
+        else toast.success("Disparador creado correctamente.");
 
         setStatus({ loading: false, error: null });
       }
@@ -534,23 +648,21 @@ export default function NewTriggerForm({
               </Field> */}
 
               <Field data-invalid={errors.messages ? true : undefined}>
-                <FieldLabel htmlFor="trigger-messages">
-                  Mensajes de respuesta
-                </FieldLabel>
+                <FieldLabel>Mensajes de respuesta</FieldLabel>
                 <FieldContent>
-                  <div className="space-y-3">
-                    {/* Lista de mensajes existentes */}
+                  <div className="space-y-4">
+                    {/* lista */}
                     {messages.map((msg, index) => (
                       <div
                         key={msg.id}
-                        // className="rounded-lg border border-muted-foreground/20 bg-background p-3"
+                        className="rounded-lg border border-muted-foreground/20 bg-background p-3"
                       >
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
                             <Textarea
                               rows={3}
                               maxLength={MAX_MESSAGE_LENGTH}
-                              placeholder="Escribe el mensaje de respuesta"
+                              placeholder="Escribe el mensaje de respuesta (opcional si adjuntas archivos)"
                               value={msg.message}
                               onChange={(e) =>
                                 handleUpdateMessage(index, e.target.value)
@@ -560,10 +672,80 @@ export default function NewTriggerForm({
                             <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                               <span>Mensaje {index + 1}</span>
                               <span>
-                                {msg.message.length}/{MAX_MESSAGE_LENGTH}
+                                {(msg.message || "").length}/
+                                {MAX_MESSAGE_LENGTH}
                               </span>
                             </div>
+
+                            {/* NUEVO: adjuntos existentes */}
+                            {msg.mediaExisting?.length ? (
+                              <div className="mt-2 space-y-1">
+                                {msg.mediaExisting.map((m, i) => (
+                                  <div
+                                    key={`ex-${i}`}
+                                    className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
+                                  >
+                                    <span className="truncate">{m.name}</span>
+                                    <button
+                                      type="button"
+                                      className="text-muted-foreground hover:text-foreground"
+                                      onClick={() =>
+                                        handleRemoveMedia(index, "existing", i)
+                                      }
+                                    >
+                                      Quitar
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+
+                            {/* NUEVO: adjuntos por subir */}
+                            {msg.mediaNew?.length ? (
+                              <div className="mt-2 space-y-1">
+                                {msg.mediaNew.map((f, i) => (
+                                  <div
+                                    key={`new-${i}`}
+                                    className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
+                                  >
+                                    <span className="truncate">
+                                      {f.name} ({Math.round(f.size / 1024)} KB)
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className="text-muted-foreground hover:text-foreground"
+                                      onClick={() =>
+                                        handleRemoveMedia(index, "new", i)
+                                      }
+                                    >
+                                      Quitar
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : null}
+
+                            {/* Botón/archivo para añadir multimedia a este mensaje */}
+                            <div className="mt-2">
+                              <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
+                                <Paperclip className="h-4 w-4" />
+                                <span>Añadir multimedia</span>
+                                <input
+                                  type="file"
+                                  accept={ACCEPT}
+                                  multiple
+                                  className="hidden"
+                                  onChange={(e) =>
+                                    handleAddMediaToMessage(
+                                      index,
+                                      e.target.files
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
                           </div>
+
                           <Button
                             type="button"
                             variant="ghost"
@@ -578,14 +760,12 @@ export default function NewTriggerForm({
                       </div>
                     ))}
 
-                    {/* Campo para agregar nuevo mensaje */}
-                    <div>
-                    {/* <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3"> */}
+                    {/* NUEVO: campo para crear NUEVO mensaje + adjuntos */}
+                    <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
                       <Textarea
-                        id="trigger-messages"
                         rows={3}
                         maxLength={MAX_MESSAGE_LENGTH}
-                        placeholder="Escribe un nuevo mensaje y presiona Agregar"
+                        placeholder="Escribe un nuevo mensaje y/o adjunta archivos"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => {
@@ -600,16 +780,60 @@ export default function NewTriggerForm({
                         <span className="text-xs text-muted-foreground">
                           {newMessage.length}/{MAX_MESSAGE_LENGTH}
                         </span>
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={handleAddMessage}
-                          disabled={!newMessage.trim()}
-                        >
-                          <PlusIcon className="size-4 mr-2" />
-                          Agregar mensaje
-                        </Button>
+                        <div className="flex items-center gap-3">
+                          <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
+                            <Paperclip className="h-4 w-4" />
+                            <span>Añadir multimedia</span>
+                            <input
+                              type="file"
+                              accept={ACCEPT}
+                              multiple
+                              className="hidden"
+                              onChange={(e) =>
+                                handleAddMediaToNew(e.target.files)
+                              }
+                            />
+                          </label>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={handleAddMessage}
+                            disabled={
+                              !newMessage.trim() && newMediaFiles.length === 0
+                            }
+                          >
+                            <PlusIcon className="size-4 mr-2" />
+                            Agregar
+                          </Button>
+                        </div>
                       </div>
+
+                      {/* lista de adjuntos del NUEVO mensaje */}
+                      {newMediaFiles.length ? (
+                        <div className="mt-2 space-y-1">
+                          {newMediaFiles.map((f, i) => (
+                            <div
+                              key={`nm-${i}`}
+                              className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
+                            >
+                              <span className="truncate">
+                                {f.name} ({Math.round(f.size / 1024)} KB)
+                              </span>
+                              <button
+                                type="button"
+                                className="text-muted-foreground hover:text-foreground"
+                                onClick={() =>
+                                  setNewMediaFiles((prev) =>
+                                    prev.filter((_, idx) => idx !== i)
+                                  )
+                                }
+                              >
+                                Quitar
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
 
                     <FieldError>{errors.messages}</FieldError>
@@ -617,8 +841,6 @@ export default function NewTriggerForm({
                 </FieldContent>
               </Field>
             </FieldGroup>
-
-            
           </FieldSet>
 
           {status.error && (
@@ -670,4 +892,3 @@ export default function NewTriggerForm({
     </Card>
   );
 }
-
