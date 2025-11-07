@@ -31,7 +31,7 @@ export default async function HelpPage({ params }) {
   qs.set("populate[image][fields][0]", "url");
   qs.set("populate[image][fields][1]", "name");
 
-  const url = buildStrapiUrl(`/api/cards?${qs.toString()}`);
+  const url = buildStrapiUrl(`/api/supports?${qs.toString()}`);
   
   const toAbsUrl = (u) => (!u ? "" : u.startsWith("http") ? u : buildStrapiUrl(u));
 

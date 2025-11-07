@@ -10,47 +10,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  ExternalLink,
-  LifeBuoy,
-  BookOpen,
-  PlayCircle,
-  LinkIcon,
-} from "lucide-react";
+import { ExternalLink, LifeBuoy } from "lucide-react";
 
-function inferCategory(item) {
-  const text = `${item?.title ?? ""} ${item?.cta ?? ""}`.toLowerCase();
-  if (text.includes("video") || text.includes("tutorial")) return "Tutorial";
-  if (text.includes("integración") || text.includes("integracion"))
-    return "Integración";
-  if (text.includes("api")) return "API";
-  if (
-    text.includes("config") ||
-    text.includes("configuración") ||
-    text.includes("configuracion")
-  )
-    return "Configuración";
-  if (text.includes("erro") || text.includes("fall"))
-    return "Solución de problemas";
-  return "Guía";
-}
-
-const categoryIcon = (cat) => {
-  switch (cat) {
-    case "Tutorial":
-      return <PlayCircle className="h-4 w-4" />;
-    case "Integración":
-      return <LinkIcon className="h-4 w-4" />;
-    case "API":
-      return <BookOpen className="h-4 w-4" />;
-    case "Configuración":
-      return <LifeBuoy className="h-4 w-4" />;
-    case "Solución de problemas":
-      return <LifeBuoy className="h-4 w-4" />;
-    default:
-      return <BookOpen className="h-4 w-4" />;
-  }
-};
 
 export default function HelpClient({ initialNewsItems = [], helpError }) {
   const params = useParams();
@@ -67,15 +28,8 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
     ? initialNewsItems
     : [];
 
-  // Enriquecemos con categoría inferida
-  const prepared = useMemo(
-    () =>
-      initialHelpItems.map((it) => ({
-        ...it,
-        category: inferCategory(it),
-      })),
-    [initialHelpItems]
-  );
+  // Lista de items sin categorías
+  const items = initialHelpItems;
 
   // Se elimina buscador y tabs de categorías; se muestran todas las cards.
 
@@ -92,7 +46,7 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
           </div>
         </div>
 
-        {/* Buscador y tabs eliminados */}
+        {/* Buscador y tabs eliminados; sin categorías */}
 
         {/* Errores */}
         {helpError ? (
@@ -103,7 +57,7 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
 
         {/* Grid de cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
-          {prepared.map((item) => (
+          {items.map((item) => (
             <Card
               key={item.id}
               className="group overflow-hidden transition hover:shadow-lg h-full flex flex-col"
@@ -147,7 +101,7 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
         </div>
 
         {/* Empty state */}
-        {!helpError && prepared.length === 0 ? (
+        {!helpError && items.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-lg border bg-muted/30 p-8 text-center">
             <LifeBuoy className="mb-2 h-6 w-6 text-muted-foreground" />
             <p className="font-medium">No encontramos resultados</p>
