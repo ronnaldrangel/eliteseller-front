@@ -69,7 +69,7 @@ export default async function TriggersPage({ params }) {
       <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold">Disparadores</h1>
+            <h1 className="text-2xl font-semibold">Disparadores Inteligentes</h1>
             <p className="text-sm text-muted-foreground">
               Configura automatizaciones que respondan a eventos clave de tu
               operacion.

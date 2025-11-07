@@ -12,23 +12,23 @@ import { Button } from "@/components/ui/button";
 
 // Personalizar las imágenes por paso
 const STEP_IMAGES = [
-  "/images/bot.webp",
-  "/images/bot.webp",
-  "/images/bot.webp",
+  "/images/affiliates/step1.png",
+  "/images/affiliates/step2.png",
+  "/images/affiliates/step3.png",
 ];
 
 const STEPS = [
   {
     title: "Invita a tu audiencia",
-    desc: "Comparte tu enlace de referencia único y deja que tus amigos o audiencia se unan al mundo y confiabilidad de Wazend API.",
+    desc: "Comparte tu enlace de referencia único y deja que tus amigos o audiencia se unan al mundo y confiabilidad de EliteSeller.",
   },
   {
     title: "Tus amigos/audiencia aceptan",
-    desc: "Ellos se registran, comienzan a usar Wazend API y experimentan nuestra magia.",
+    desc: "Ellos se registran, comienzan a usar EliteSeller y experimentan nuestra magia.",
   },
   {
     title: "Recibe tu pago",
-    desc: "Cuando realizan un pago verificado, ganas 30% fácil y rápido.",
+    desc: "Cuando realizan un pago verificado, ganas 20% fácil y rápido.",
   },
 ];
 
@@ -50,7 +50,7 @@ export default function AffiliatePage() {
             asChild
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
-            <a href="#" aria-label="Activar Afiliado">
+            <a href="https://calendly.com/elitecode2025dev/30min" target="_blank" rel="noopener noreferrer" aria-label="Activar Afiliado">
               Activar Afiliado
             </a>
           </Button>

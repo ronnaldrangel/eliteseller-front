@@ -22,7 +22,6 @@ export default async function HelpPage({ params }) {
   if (!chatbot) redirect("/select");
 
   const qs = new URLSearchParams();
-  qs.set("filters[type][$eq]", "help");
   qs.set("sort", "createdAt:desc");
   qs.set("fields[0]", "title");
   qs.set("fields[1]", "description");
