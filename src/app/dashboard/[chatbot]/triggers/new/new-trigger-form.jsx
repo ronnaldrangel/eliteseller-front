@@ -56,6 +56,13 @@ export default function NewTriggerForm({
         url: m.attributes?.url,
         size: m.attributes?.size,
       }));
+      const inferredType =
+        attrs?.type ||
+        (attrs?.message?.trim()
+          ? "message"
+          : existingMedia.length > 0
+          ? "media"
+          : "message");
       return {
         id: tc.id || tc.documentId || `temp-${index}`,
         documentId: tc.documentId || tc.id || null,
@@ -63,6 +70,7 @@ export default function NewTriggerForm({
         isExisting: true,
         mediaExisting: existingMedia,
         mediaNew: [],
+        type: inferredType,
       };
     });
   }, [initialTrigger]);
@@ -91,6 +99,7 @@ export default function NewTriggerForm({
   );
   const [newMessage, setNewMessage] = useState("");
   const [newMediaFiles, setNewMediaFiles] = useState([]);
+  const [newType, setNewType] = useState("message");
 
   const keywordsJoined = useMemo(() => keywordsList.join(","), [keywordsList]);
 
@@ -119,10 +128,18 @@ export default function NewTriggerForm({
         (msg.mediaExisting && msg.mediaExisting.length > 0) ||
         (msg.mediaNew && msg.mediaNew.length > 0);
       const textTooLong = (msg.message || "").length > MAX_MESSAGE_LENGTH;
-      return (!hasText && !hasMedia) || textTooLong;
+      // return (!hasText && !hasMedia) || textTooLong;
+      const invalidByType =
+        (msg.type === "message" && (!hasText || hasMedia)) ||
+        (msg.type === "media" && (!hasMedia || hasText));
+      return invalidByType || textTooLong;
     });
     if (hasInvalid) {
-      nextErrors.messages = `Cada respuesta debe tener texto y/o multimedia. El texto no debe exceder ${MAX_MESSAGE_LENGTH} caracteres.`;
+      nextErrors.messages =
+        `Cada respuesta debe ser solo de un tipo:` +
+        `\n- Mensaje: texto (sin archivos)` +
+        `\n- Multimedia: archivos (sin texto)` +
+        `\nAdemás, el texto no debe exceder ${MAX_MESSAGE_LENGTH} caracteres.`;
     }
 
     return nextErrors;
@@ -150,7 +167,8 @@ export default function NewTriggerForm({
   const handleAddMessage = () => {
     const hasText = !!newMessage.trim();
     const hasMedia = newMediaFiles.length > 0;
-    if (!hasText && !hasMedia) return;
+    if (newType === "message" && !hasText) return;
+    if (newType === "media" && !hasMedia) return;
 
     if (hasText && newMessage.length > MAX_MESSAGE_LENGTH) {
       toast.error(
@@ -164,14 +182,38 @@ export default function NewTriggerForm({
       {
         id: `temp-${Date.now()}`,
         documentId: null,
-        message: newMessage.trim(),
+        // message: newMessage.trim(),
+        message: newType === "message" ? newMessage.trim() : "",
         isExisting: false,
         mediaExisting: [],
-        mediaNew: [...newMediaFiles],
+        mediaNew: newType === "media" ? [...newMediaFiles] : [],
+        type: newType,
       },
     ]);
     setNewMessage("");
     setNewMediaFiles([]);
+    setNewType("message");
+  };
+
+  const handleChangeType = (index, next) => {
+    setMessages((prev) =>
+      prev.map((m, i) => {
+        if (i !== index) return m;
+        return {
+          ...m,
+          type: next,
+          message: next === "message" ? m.message : "",
+          mediaNew: next === "media" ? m.mediaNew : [],
+          mediaExisting: next === "media" ? m.mediaExisting : [],
+        };
+      })
+    );
+  };
+
+  const handleChangeNewType = (next) => {
+    setNewType(next);
+    if (next === "message") setNewMediaFiles([]);
+    else setNewMessage("");
   };
 
   const handleRemoveMessage = (index) => {
@@ -291,12 +333,11 @@ export default function NewTriggerForm({
           const allMediaIds = [...existingIds, ...uploadedIds];
 
           if (msg.isExisting && msg.documentId) {
-            // PUT contenido existente
             const contentPayload = {
               data: {
-                message: (msg.message || "").trim(),
-                // Para media en Strapi (media field): se asigna array de IDs
-                messageMedia: allMediaIds,
+                type: msg.type,
+                message: msg.type === "message" ? (msg.message || "").trim() : "",
+                messageMedia: msg.type === "media" ? allMediaIds : [],
               },
             };
             const contentRes = await fetch(
@@ -319,8 +360,9 @@ export default function NewTriggerForm({
             // POST nuevo contenido
             const contentPayload = {
               data: {
-                message: (msg.message || "").trim(),
-                messageMedia: allMediaIds,
+                type: msg.type,
+                message: msg.type === "message" ? (msg.message || "").trim() : "",
+                messageMedia: msg.type === "media" ? allMediaIds : [],
                 trigger: { connect: [{ documentId: triggerDocId }] },
               },
             };
@@ -424,8 +466,9 @@ export default function NewTriggerForm({
 
           const contentPayload = {
             data: {
-              message: (msg.message || "").trim(),
-              messageMedia: allMediaIds,
+              type: msg.type,
+              message: msg.type === "message" ? (msg.message || "").trim() : "",
+              messageMedia: msg.type === "media" ? allMediaIds : [],
               trigger: { connect: [{ documentId: triggerDocId }] },
             },
           };
@@ -499,6 +542,7 @@ export default function NewTriggerForm({
             </span>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-6">
           <FieldSet className="gap-6">
             <FieldGroup className="gap-6">
@@ -517,7 +561,7 @@ export default function NewTriggerForm({
                     }
                   />
                   <FieldDescription>
-                    Sera visible dentro del panel para identificar el
+                    Será visible dentro del panel para identificar el
                     disparador.
                   </FieldDescription>
                   <FieldError>{errors.name}</FieldError>
@@ -541,7 +585,7 @@ export default function NewTriggerForm({
                     }
                   />
                   <FieldDescription>
-                    Vincula este disparador con un anuncio o campana especifica.
+                    Vincula este disparador con un anuncio o campaña específica.
                   </FieldDescription>
                 </FieldContent>
               </Field>
@@ -621,37 +665,11 @@ export default function NewTriggerForm({
                 </FieldContent>
               </Field>
 
-              {/* Palabras clave IA han sido comentadas por ahoraaa  */}
-
-              {/* <Field>
-                <FieldLabel htmlFor="trigger-keywords-ai">
-                  Palabras clave IA (opcional)
-                </FieldLabel>
-                <FieldContent>
-                  <Textarea
-                    id="trigger-keywords-ai"
-                    rows={2}
-                    maxLength={MAX_KEYWORDS_LENGTH}
-                    placeholder="Palabras clave alternativas para IA"
-                    value={form.keywords_ai}
-                    onChange={(event) =>
-                      setForm((previous) => ({
-                        ...previous,
-                        keywords_ai: event.target.value,
-                      }))
-                    }
-                  />
-                  <FieldDescription className="text-xs">
-                    Si esta vacio, se usaran las palabras clave principales.
-                  </FieldDescription>
-                </FieldContent>
-              </Field> */}
-
               <Field data-invalid={errors.messages ? true : undefined}>
-                <FieldLabel>Mensajes de respuesta</FieldLabel>
+                <FieldLabel>Respuestas</FieldLabel>
                 <FieldContent>
                   <div className="space-y-4">
-                    {/* lista */}
+                    {/* Lista de contenidos existentes/nuevos */}
                     {messages.map((msg, index) => (
                       <div
                         key={msg.id}
@@ -659,91 +677,133 @@ export default function NewTriggerForm({
                       >
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
-                            <Textarea
-                              rows={3}
-                              maxLength={MAX_MESSAGE_LENGTH}
-                              placeholder="Escribe el mensaje de respuesta (opcional si adjuntas archivos)"
-                              value={msg.message}
-                              onChange={(e) =>
-                                handleUpdateMessage(index, e.target.value)
-                              }
-                              className="resize-none"
-                            />
-                            <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                              <span>Mensaje {index + 1}</span>
-                              <span>
-                                {(msg.message || "").length}/
-                                {MAX_MESSAGE_LENGTH}
-                              </span>
-                            </div>
-
-                            {/* NUEVO: adjuntos existentes */}
-                            {msg.mediaExisting?.length ? (
-                              <div className="mt-2 space-y-1">
-                                {msg.mediaExisting.map((m, i) => (
-                                  <div
-                                    key={`ex-${i}`}
-                                    className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
-                                  >
-                                    <span className="truncate">{m.name}</span>
-                                    <button
-                                      type="button"
-                                      className="text-muted-foreground hover:text-foreground"
-                                      onClick={() =>
-                                        handleRemoveMedia(index, "existing", i)
-                                      }
-                                    >
-                                      Quitar
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-
-                            {/* NUEVO: adjuntos por subir */}
-                            {msg.mediaNew?.length ? (
-                              <div className="mt-2 space-y-1">
-                                {msg.mediaNew.map((f, i) => (
-                                  <div
-                                    key={`new-${i}`}
-                                    className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
-                                  >
-                                    <span className="truncate">
-                                      {f.name} ({Math.round(f.size / 1024)} KB)
-                                    </span>
-                                    <button
-                                      type="button"
-                                      className="text-muted-foreground hover:text-foreground"
-                                      onClick={() =>
-                                        handleRemoveMedia(index, "new", i)
-                                      }
-                                    >
-                                      Quitar
-                                    </button>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-
-                            {/* Botón/archivo para añadir multimedia a este mensaje */}
-                            <div className="mt-2">
-                              <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
-                                <Paperclip className="h-4 w-4" />
-                                <span>Añadir multimedia</span>
+                            {/* Selector de tipo */}
+                            <div className="mb-2 flex items-center gap-4 text-sm">
+                              <label className="inline-flex items-center gap-2">
                                 <input
-                                  type="file"
-                                  accept={ACCEPT}
-                                  multiple
-                                  className="hidden"
-                                  onChange={(e) =>
-                                    handleAddMediaToMessage(
-                                      index,
-                                      e.target.files
-                                    )
+                                  type="radio"
+                                  name={`type-${msg.id}`}
+                                  value="message"
+                                  checked={msg.type === "message"}
+                                  onChange={() =>
+                                    handleChangeType(index, "message")
                                   }
                                 />
+                                Mensaje
+                              </label>
+                              <label className="inline-flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`type-${msg.id}`}
+                                  value="media"
+                                  checked={msg.type === "media"}
+                                  onChange={() =>
+                                    handleChangeType(index, "media")
+                                  }
+                                />
+                                Multimedia
                               </label>
                             </div>
+
+                            {/* Campo para MENSAJE */}
+                            {msg.type === "message" && (
+                              <>
+                                <Textarea
+                                  rows={3}
+                                  maxLength={MAX_MESSAGE_LENGTH}
+                                  placeholder="Escribe el mensaje de respuesta"
+                                  value={msg.message}
+                                  onChange={(e) =>
+                                    handleUpdateMessage(index, e.target.value)
+                                  }
+                                  className="resize-none"
+                                />
+                                <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                                  <span>Mensaje {index + 1}</span>
+                                  <span>
+                                    {(msg.message || "").length}/
+                                    {MAX_MESSAGE_LENGTH}
+                                  </span>
+                                </div>
+                              </>
+                            )}
+
+                            {/* Campo para MULTIMEDIA */}
+                            {msg.type === "media" && (
+                              <>
+                                {msg.mediaExisting?.length ? (
+                                  <div className="space-y-1">
+                                    {msg.mediaExisting.map((m, i) => (
+                                      <div
+                                        key={`ex-${i}`}
+                                        className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
+                                      >
+                                        <span className="truncate">
+                                          {m.name}
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="text-muted-foreground hover:text-foreground"
+                                          onClick={() =>
+                                            handleRemoveMedia(
+                                              index,
+                                              "existing",
+                                              i
+                                            )
+                                          }
+                                        >
+                                          Quitar
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+
+                                {msg.mediaNew?.length ? (
+                                  <div className="mt-2 space-y-1">
+                                    {msg.mediaNew.map((f, i) => (
+                                      <div
+                                        key={`new-${i}`}
+                                        className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
+                                      >
+                                        <span className="truncate">
+                                          {f.name} ({Math.round(f.size / 1024)}{" "}
+                                          KB)
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="text-muted-foreground hover:text-foreground"
+                                          onClick={() =>
+                                            handleRemoveMedia(index, "new", i)
+                                          }
+                                        >
+                                          Quitar
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : null}
+
+                                <div className="mt-2">
+                                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
+                                    <Paperclip className="h-4 w-4" />
+                                    <span>Añadir multimedia</span>
+                                    <input
+                                      type="file"
+                                      accept={ACCEPT}
+                                      multiple
+                                      className="hidden"
+                                      onChange={(e) =>
+                                        handleAddMediaToMessage(
+                                          index,
+                                          e.target.files
+                                        )
+                                      }
+                                    />
+                                  </label>
+                                </div>
+                              </>
+                            )}
                           </div>
 
                           <Button
@@ -760,80 +820,119 @@ export default function NewTriggerForm({
                       </div>
                     ))}
 
-                    {/* NUEVO: campo para crear NUEVO mensaje + adjuntos */}
+                    {/* NUEVO contenido */}
                     <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
-                      <Textarea
-                        rows={3}
-                        maxLength={MAX_MESSAGE_LENGTH}
-                        placeholder="Escribe un nuevo mensaje y/o adjunta archivos"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && e.ctrlKey) {
-                            e.preventDefault();
-                            handleAddMessage();
-                          }
-                        }}
-                        className="resize-none"
-                      />
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {newMessage.length}/{MAX_MESSAGE_LENGTH}
-                        </span>
-                        <div className="flex items-center gap-3">
-                          <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
-                            <Paperclip className="h-4 w-4" />
-                            <span>Añadir multimedia</span>
-                            <input
-                              type="file"
-                              accept={ACCEPT}
-                              multiple
-                              className="hidden"
-                              onChange={(e) =>
-                                handleAddMediaToNew(e.target.files)
-                              }
-                            />
-                          </label>
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={handleAddMessage}
-                            disabled={
-                              !newMessage.trim() && newMediaFiles.length === 0
-                            }
-                          >
-                            <PlusIcon className="size-4 mr-2" />
-                            Agregar
-                          </Button>
-                        </div>
+                      {/* Selector de tipo para el nuevo */}
+                      <div className="mb-2 flex items-center gap-4 text-sm">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="new-type"
+                            value="message"
+                            checked={newType === "message"}
+                            onChange={() => handleChangeNewType("message")}
+                          />
+                          Mensaje
+                        </label>
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="new-type"
+                            value="media"
+                            checked={newType === "media"}
+                            onChange={() => handleChangeNewType("media")}
+                          />
+                          Multimedia
+                        </label>
                       </div>
 
-                      {/* lista de adjuntos del NUEVO mensaje */}
-                      {newMediaFiles.length ? (
-                        <div className="mt-2 space-y-1">
-                          {newMediaFiles.map((f, i) => (
-                            <div
-                              key={`nm-${i}`}
-                              className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
+                      {newType === "message" && (
+                        <>
+                          <Textarea
+                            rows={3}
+                            maxLength={MAX_MESSAGE_LENGTH}
+                            placeholder="Escribe un nuevo mensaje"
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && e.ctrlKey) {
+                                e.preventDefault();
+                                handleAddMessage();
+                              }
+                            }}
+                            className="resize-none"
+                          />
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-xs text-muted-foreground">
+                              {newMessage.length}/{MAX_MESSAGE_LENGTH}
+                            </span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleAddMessage}
+                              disabled={!newMessage.trim()}
                             >
-                              <span className="truncate">
-                                {f.name} ({Math.round(f.size / 1024)} KB)
-                              </span>
-                              <button
-                                type="button"
-                                className="text-muted-foreground hover:text-foreground"
-                                onClick={() =>
-                                  setNewMediaFiles((prev) =>
-                                    prev.filter((_, idx) => idx !== i)
-                                  )
+                              <PlusIcon className="size-4 mr-2" />
+                              Agregar
+                            </Button>
+                          </div>
+                        </>
+                      )}
+
+                      {newType === "media" && (
+                        <>
+                          <div className="flex items-center justify-between">
+                            <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
+                              <Paperclip className="h-4 w-4" />
+                              <span>Añadir multimedia</span>
+                              <input
+                                type="file"
+                                accept={ACCEPT}
+                                multiple
+                                className="hidden"
+                                onChange={(e) =>
+                                  handleAddMediaToNew(e.target.files)
                                 }
-                              >
-                                Quitar
-                              </button>
+                              />
+                            </label>
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleAddMessage}
+                              disabled={newMediaFiles.length === 0}
+                            >
+                              <PlusIcon className="size-4 mr-2" />
+                              Agregar
+                            </Button>
+                          </div>
+
+                          {newMediaFiles.length ? (
+                            <div className="mt-2 space-y-1">
+                              {newMediaFiles.map((f, i) => (
+                                <div
+                                  key={`nm-${i}`}
+                                  className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
+                                >
+                                  <span className="truncate">
+                                    {f.name} ({Math.round(f.size / 1024)} KB)
+                                  </span>
+                                  <button
+                                    type="button"
+                                    className="text-muted-foreground hover:text-foreground"
+                                    onClick={() =>
+                                      setNewMediaFiles((prev) =>
+                                        prev.filter((_, idx) => idx !== i)
+                                      )
+                                    }
+                                  >
+                                    Quitar
+                                  </button>
+                                </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      ) : null}
+                          ) : null}
+                        </>
+                      )}
                     </div>
 
                     <FieldError>{errors.messages}</FieldError>

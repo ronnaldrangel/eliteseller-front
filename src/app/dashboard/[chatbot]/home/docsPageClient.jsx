@@ -279,7 +279,7 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
                     <div className="overflow-hidden rounded-lg border">
                       <div className="relative h-48 w-full">
                         <img
-                          src={activeNews.image}
+                          src={activeNews.image ? activeNews.image : null}
                           alt={activeNews.imageAlt}
                           className="h-full w-full object-cover"
                           loading="lazy"

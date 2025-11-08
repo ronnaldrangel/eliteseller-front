@@ -37,9 +37,8 @@ export default async function EditTriggerPage({ params }) {
 
   // Contenidos (mensaje + documentId/id)
   qs.set("populate[trigger_contents][fields][0]", "message");
-  qs.set("populate[trigger_contents][fields][1]", "documentId"); // si usas documentId
-  // Si prefieres el id base de Strapi, también puedes pedir "id":
-  // qs.set("populate[trigger_contents][fields][2]", "id");
+  qs.set("populate[trigger_contents][fields][1]", "documentId");
+  qs.set("populate[trigger_contents][fields][2]", "type");
 
   // Media dentro de cada contenido
   qs.set(
@@ -89,7 +88,7 @@ export default async function EditTriggerPage({ params }) {
         `No se pudo cargar el disparador (status ${res.status}).`;
     } else {
       const data = await res.json();
-      console.log("Trigger raw data from Strapi:", data, "From URL:", url);
+      // console.log("Trigger raw data from Strapi:", data, "From URL:", url);
       const raw = data?.data;
 
       // helper: convertir media (objeto o array) a data[]
@@ -126,6 +125,7 @@ export default async function EditTriggerPage({ params }) {
           id: c.id,
           documentId: c.documentId,
           message: c?.message ?? "",
+          type: c?.type ?? (c?.message ? "message" : "media"),
           // normalizado al formato que usa el form (messageMedia.data = [])
           messageMedia: {
             data: toMediaDataArray(c?.messageMedia),
