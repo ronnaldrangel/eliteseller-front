@@ -136,6 +136,19 @@ const data = {
         />
       ),
     },
+    {
+      title: "Contactos",
+      url: "/contacts",
+      icon: () => (
+        <Image
+          src="/icons/contacts.png"
+          alt="Contactos"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
     // {
     //   title: "Metricas",
     //   url: "/metrics",
@@ -229,7 +242,7 @@ export function AppSidebar({
     return `/dashboard/${slug}${trimmed}`
   }
   const navMainDynamic = data.navMain.map((item) => {
-    const dynamicPaths = ["/dashboard", "/home", "/chats", "/tags", "/triggers", "/products", "/sales", "/assistant", "/integrations"]
+    const dynamicPaths = ["/dashboard", "/home", "/chats", "/tags", "/triggers", "/products", "/sales", "/assistant", "/integrations", "/contacts"]
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs
       const mappedSubItems = item.items.map((sub) => ({

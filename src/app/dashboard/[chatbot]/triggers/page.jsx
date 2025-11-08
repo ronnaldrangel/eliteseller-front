@@ -57,7 +57,7 @@ export default async function TriggersPage({ params }) {
         `No se pudieron cargar los disparadores (status ${res.status}).`;
     } else {
       const data = await res.json();
-      console.log("Fetched triggers:", data, "from URL:", url);
+      // console.log("Fetched triggers:", data, "from URL:", url);
       triggers = Array.isArray(data) ? data : data?.data || [];
     }
   } catch (error) {

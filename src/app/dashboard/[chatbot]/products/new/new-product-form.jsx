@@ -40,6 +40,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     available: true,
     description_wsp: "",
     description_complete: "",
+    is_auto_delivery: false,
+    auto_delivery_msg: "",
   });
   const [errors, setErrors] = useState({});
   const [uploadItems, setUploadItems] = useState([]);
@@ -53,6 +55,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       available: true,
       description_wsp: "",
       description_complete: "",
+      is_auto_delivery: false,
+      auto_delivery_msg: "",
     });
     setErrors({});
     setUploadItems([]);
@@ -83,6 +87,15 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       nextErrors.description_complete = `Maximo ${LONG_DESCRIPTION_LIMIT} caracteres permitidos.`;
     }
 
+    if (form.is_auto_delivery) {
+      if (!form.auto_delivery_msg.trim()) {
+        nextErrors.auto_delivery_msg =
+          "Ingresa el mensaje de entrega automática.";
+      } else if (form.auto_delivery_msg.length > LONG_DESCRIPTION_LIMIT) {
+        nextErrors.auto_delivery_msg = `Maximo ${LONG_DESCRIPTION_LIMIT} caracteres permitidos.`;
+      }
+    }
+
     return nextErrors;
   };
 
@@ -111,6 +124,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           available: Boolean(form.available),
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
+          is_auto_delivery: !!form.is_auto_delivery,
+          auto_delivery_msg: form.is_auto_delivery
+            ? form.auto_delivery_msg.trim()
+            : "",
         },
       };
 
@@ -355,6 +372,71 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                     <FieldError>{errors.description_complete}</FieldError>
                   </FieldContent>
                 </Field>
+              </div>
+
+              <div className="grid gap-4">
+                <Field>
+                  <FieldLabel>Entrega automática</FieldLabel>
+                  <FieldContent>
+                    <div className="flex items-center gap-3 rounded-lg border border-muted-foreground/20 bg-background px-4 py-3">
+                      <Switch
+                        id="product-auto-delivery"
+                        checked={!!form.is_auto_delivery}
+                        onCheckedChange={(val) =>
+                          setForm((p) => ({
+                            ...p,
+                            is_auto_delivery: !!val,
+                            // si se apaga, limpiamos el mensaje para no enviar ruido
+                            auto_delivery_msg: val ? p.auto_delivery_msg : "",
+                          }))
+                        }
+                      />
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">
+                          {form.is_auto_delivery
+                            ? "Auto-entrega activada"
+                            : "Auto-entrega desactivada"}
+                        </p>
+                        <FieldDescription className="text-xs">
+                          Si está activo, enviaremos automáticamente el
+                          siguiente mensaje tras la compra/solicitud.
+                        </FieldDescription>
+                      </div>
+                    </div>
+                  </FieldContent>
+                </Field>
+
+                {form.is_auto_delivery && (
+                  <Field
+                    data-invalid={errors.auto_delivery_msg ? true : undefined}
+                  >
+                    <FieldLabel htmlFor="product-auto-delivery-msg">
+                      Mensaje de entrega automática
+                    </FieldLabel>
+                    <FieldContent>
+                      <Textarea
+                        id="product-auto-delivery-msg"
+                        rows={4}
+                        maxLength={LONG_DESCRIPTION_LIMIT}
+                        placeholder="Escribe el mensaje que recibirá el cliente automáticamente."
+                        value={form.auto_delivery_msg}
+                        onChange={(e) =>
+                          setForm((p) => ({
+                            ...p,
+                            auto_delivery_msg: e.target.value,
+                          }))
+                        }
+                      />
+                      <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {form.auto_delivery_msg.length}/
+                          {LONG_DESCRIPTION_LIMIT}
+                        </span>
+                      </div>
+                      <FieldError>{errors.auto_delivery_msg}</FieldError>
+                    </FieldContent>
+                  </Field>
+                )}
               </div>
             </FieldGroup>
 

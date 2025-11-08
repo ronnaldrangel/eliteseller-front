@@ -1,19 +1,27 @@
-"use client"
+"use client";
 
-import { useCallback, useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
-import { buildStrapiUrl } from "@/lib/strapi"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
-import CardUpload from "@/components/card-upload"
+import { useCallback, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import { buildStrapiUrl } from "@/lib/strapi";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import CardUpload from "@/components/card-upload";
 
-export default function EditProductForm({ initialData, token, chatbotId, chatbotSlug, documentId }) {
-  const router = useRouter()
-  const attrs = initialData?.attributes || initialData || {}
+const LONG_DESCRIPTION_LIMIT = 500;
+
+export default function EditProductForm({
+  initialData,
+  token,
+  chatbotId,
+  chatbotSlug,
+  documentId,
+}) {
+  const router = useRouter();
+  const attrs = (initialData?.attributes || initialData || {});
 
   const [form, setForm] = useState({
     name: attrs.name || "",
@@ -21,17 +29,34 @@ export default function EditProductForm({ initialData, token, chatbotId, chatbot
     description_complete: attrs.description_complete || "",
     price: (attrs.price ?? "").toString(),
     available: typeof attrs.available === "boolean" ? attrs.available : true,
-  })
-  const [status, setStatus] = useState({ loading: false, error: null })
-  const [files, setFiles] = useState([])
-  const [uploadItems, setUploadItems] = useState([])
-  const existingMedia = Array.isArray(attrs?.media) ? attrs.media : []
+    // NUEVO:
+    is_auto_delivery:
+      typeof attrs.is_auto_delivery === "boolean"
+        ? attrs.is_auto_delivery
+        : false,
+    auto_delivery_msg: attrs.auto_delivery_msg || "",
+  });
+  const [status, setStatus] = useState({ loading: false, error: null });
+  const [files, setFiles] = useState([]);
+  const [uploadItems, setUploadItems] = useState([]);
+  const existingMedia = Array.isArray(attrs?.media) ? attrs.media : [];
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setStatus({ loading: true, error: null })
+    e.preventDefault();
+    setStatus({ loading: true, error: null });
+
+    // Validación mínima para auto-delivery
+    if (form.is_auto_delivery && !form.auto_delivery_msg.trim()) {
+      setStatus({ loading: false, error: "Ingresa el mensaje de entrega automática." });
+      return;
+    }
+    if (form.auto_delivery_msg.length > LONG_DESCRIPTION_LIMIT) {
+      setStatus({ loading: false, error: `Maximo ${LONG_DESCRIPTION_LIMIT} caracteres permitidos en el mensaje de auto-entrega.` });
+      return;
+    }
+
     try {
-      const priceNum = Number(form.price)
+      const priceNum = Number(form.price);
       const payload = {
         data: {
           name: form.name,
@@ -39,25 +64,28 @@ export default function EditProductForm({ initialData, token, chatbotId, chatbot
           available: !!form.available,
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
+          // NUEVO:
+          is_auto_delivery: !!form.is_auto_delivery,
+          auto_delivery_msg: form.is_auto_delivery
+            ? form.auto_delivery_msg.trim()
+            : "",
         },
-      }
+      };
 
       if (chatbotId) {
         payload.data.chatbot = {
-          set: [{ documentId: chatbotId }]
-        }
+          set: [{ documentId: chatbotId }],
+        };
       }
 
-      // Derivar arrays desde CardUpload
       const newFiles = (uploadItems || [])
         .map((item) => item?.file)
-        .filter((f) => typeof File !== 'undefined' && f instanceof File)
+        .filter((f) => typeof File !== "undefined" && f instanceof File);
 
-      // Upload new files if provided
-      let uploadedMediaIds = []
+      let uploadedMediaIds = [];
       if (newFiles && newFiles.length > 0) {
-        const fd = new FormData()
-        newFiles.forEach((f) => fd.append("files", f))
+        const fd = new FormData();
+        newFiles.forEach((f) => fd.append("files", f));
 
         const uploadRes = await fetch(buildStrapiUrl(`/api/upload`), {
           method: "POST",
@@ -65,27 +93,33 @@ export default function EditProductForm({ initialData, token, chatbotId, chatbot
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
           body: fd,
-        })
+        });
 
-        const uploaded = await uploadRes.json().catch(() => [])
+        const uploaded = await uploadRes.json().catch(() => []);
         if (!uploadRes.ok) {
-          const msg = Array.isArray(uploaded) ? "No se pudieron subir las imágenes" : (uploaded?.error?.message || "No se pudieron subir las imágenes")
-          setStatus({ loading: false, error: msg })
-          return
+          const msg = Array.isArray(uploaded)
+            ? "No se pudieron subir las imágenes"
+            : uploaded?.error?.message || "No se pudieron subir las imágenes";
+          setStatus({ loading: false, error: msg });
+          return;
         }
-        uploadedMediaIds = (Array.isArray(uploaded) ? uploaded : []).map((u) => u?.id).filter(Boolean)
+        uploadedMediaIds = (Array.isArray(uploaded) ? uploaded : [])
+          .map((u) => u?.id)
+          .filter(Boolean);
       }
 
-      // IDs de imágenes existentes se derivan de uploadItems actuales (excluyendo las eliminadas)
       const existingMediaIds = (uploadItems || [])
         .map((item) => item?.file)
-        .filter((f) => !(typeof File !== 'undefined' && f instanceof File))
+        .filter((f) => !(typeof File !== "undefined" && f instanceof File))
         .map((f) => f?.id)
-        .filter(Boolean)
+        .filter(Boolean);
 
-      const finalMedia = [...existingMediaIds, ...uploadedMediaIds]
+      const finalMedia = [...existingMediaIds, ...uploadedMediaIds];
       if (finalMedia.length > 0) {
-        payload.data.media = finalMedia
+        payload.data.media = finalMedia;
+      } else {
+        // si quitas todo, envía [] para limpiar la relación
+        payload.data.media = [];
       }
 
       const res = await fetch(buildStrapiUrl(`/api/products/${documentId}`), {
@@ -95,50 +129,117 @@ export default function EditProductForm({ initialData, token, chatbotId, chatbot
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify(payload),
-      })
+      });
 
-      const body = await res.json().catch(() => ({}))
+      const body = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const msg = body?.error?.message || "No se pudo actualizar el producto"
-        setStatus({ loading: false, error: msg })
-        return
+        const msg = body?.error?.message || "No se pudo actualizar el producto";
+        setStatus({ loading: false, error: msg });
+        return;
       }
 
-      toast.success("Actualizado")
-      setStatus({ loading: false, error: null })
-      const segment = chatbotSlug || chatbotId
-      router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
+      toast.success("Actualizado");
+      setStatus({ loading: false, error: null });
+      const segment = chatbotSlug || chatbotId;
+      router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
     } catch (err) {
-      setStatus({ loading: false, error: "Error de red al actualizar" })
+      setStatus({ loading: false, error: "Error de red al actualizar" });
     }
-  }
+  };
 
   const handleUploadChange = useCallback((items) => {
-    setUploadItems(items)
+    setUploadItems(items);
     const newFiles = items
       .map((item) => item?.file)
-      .filter((f) => typeof File !== 'undefined' && f instanceof File)
-    setFiles(newFiles)
-  }, [])
+      .filter((f) => typeof File !== "undefined" && f instanceof File);
+    setFiles(newFiles);
+  }, []);
 
   return (
     <div className="rounded-lg border bg-muted/20 p-4">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid gap-2">
           <Label htmlFor="product-name">Nombre del producto</Label>
-          <Input id="product-name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
+          <Input
+            id="product-name"
+            value={form.name}
+            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+          />
         </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="product-description-wsp">Descripción del producto en WhatsApp</Label>
-            <Textarea id="product-description-wsp" rows={3} maxLength={500} value={form.description_wsp} onChange={(e) => setForm((p) => ({ ...p, description_wsp: e.target.value }))} />
+            <Label htmlFor="product-description-wsp">
+              Descripción del producto en WhatsApp
+            </Label>
+            <Textarea
+              id="product-description-wsp"
+              rows={3}
+              maxLength={500}
+              value={form.description_wsp}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, description_wsp: e.target.value }))
+              }
+            />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="product-description-complete">Descripción completa del producto</Label>
-            <Textarea id="product-description-complete" rows={3} maxLength={500} value={form.description_complete} onChange={(e) => setForm((p) => ({ ...p, description_complete: e.target.value }))} />
+            <Label htmlFor="product-description-complete">
+              Descripción completa del producto
+            </Label>
+            <Textarea
+              id="product-description-complete"
+              rows={3}
+              maxLength={500}
+              value={form.description_complete}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, description_complete: e.target.value }))
+              }
+            />
           </div>
         </div>
-        <Label className="font-medium">Imagenes y videos (MP4) del producto. Solo JPG, PNG o MP4.</Label>
+
+        {/* NUEVO: Auto-delivery */}
+        <div className="space-y-3 rounded-lg border bg-background p-4">
+          <div className="flex items-center gap-2">
+            <Switch
+              id="product-auto-delivery"
+              checked={!!form.is_auto_delivery}
+              onCheckedChange={(val) =>
+                setForm((p) => ({
+                  ...p,
+                  is_auto_delivery: !!val,
+                  auto_delivery_msg: val ? p.auto_delivery_msg : "",
+                }))
+              }
+            />
+            <Label htmlFor="product-auto-delivery">Entrega automática</Label>
+          </div>
+
+          {form.is_auto_delivery && (
+            <div className="grid gap-2">
+              <Label htmlFor="product-auto-delivery-msg">
+                Mensaje de entrega automática
+              </Label>
+              <Textarea
+                id="product-auto-delivery-msg"
+                rows={4}
+                maxLength={LONG_DESCRIPTION_LIMIT}
+                placeholder="Escribe el mensaje que recibirá el cliente automáticamente."
+                value={form.auto_delivery_msg}
+                onChange={(e) =>
+                  setForm((p) => ({ ...p, auto_delivery_msg: e.target.value }))
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                {form.auto_delivery_msg.length}/{LONG_DESCRIPTION_LIMIT}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <Label className="font-medium">
+          Imagenes y videos (MP4) del producto. Solo JPG, PNG o MP4.
+        </Label>
         <div className="rounded-lg border bg-background p-4">
           <CardUpload
             accept=".jpg,.jpeg,.png,.mp4,video/mp4"
@@ -148,19 +249,33 @@ export default function EditProductForm({ initialData, token, chatbotId, chatbot
             initialFiles={existingMedia.map((m) => ({
               id: m?.id,
               name: m?.name || `Imagen`,
-              size: typeof m?.size === 'number' ? m.size : 0,
-              type: m?.mime || 'image/jpeg',
+              size: typeof m?.size === "number" ? m.size : 0,
+              type: m?.mime || "image/jpeg",
               url: m?.url,
             }))}
             onFilesChange={handleUploadChange}
           />
         </div>
+
         <div className="grid gap-2">
           <Label htmlFor="product-price">Precio</Label>
-          <Input id="product-price" type="number" step="0.01" value={form.price} onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))} />
+          <Input
+            id="product-price"
+            type="number"
+            step="0.01"
+            value={form.price}
+            onChange={(e) => setForm((p) => ({ ...p, price: e.target.value }))}
+          />
         </div>
+
         <div className="flex items-center gap-2">
-          <Switch id="product-available" checked={!!form.available} onCheckedChange={(val) => setForm((p) => ({ ...p, available: !!val }))} />
+          <Switch
+            id="product-available"
+            checked={!!form.available}
+            onCheckedChange={(val) =>
+              setForm((p) => ({ ...p, available: !!val }))
+            }
+          />
           <Label htmlFor="product-available">Disponible</Label>
         </div>
 
@@ -171,15 +286,20 @@ export default function EditProductForm({ initialData, token, chatbotId, chatbot
             type="button"
             variant="outline"
             onClick={() => {
-              const segment = chatbotSlug || chatbotId
-              router.push(`/dashboard/${encodeURIComponent(segment)}/products`)
+              const segment = chatbotSlug || chatbotId;
+              router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
             }}
           >
             Cancelar
           </Button>
-          <Button type="submit" disabled={status.loading || !token || !chatbotId}>{status.loading ? "Guardando…" : "Guardar cambios"}</Button>
+          <Button
+            type="submit"
+            disabled={status.loading || !token || !chatbotId}
+          >
+            {status.loading ? "Guardando…" : "Guardar cambios"}
+          </Button>
         </div>
       </form>
     </div>
-  )
+  );
 }
