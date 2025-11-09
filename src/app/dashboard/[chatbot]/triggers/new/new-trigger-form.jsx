@@ -514,41 +514,108 @@ export default function NewTriggerForm({
     }
   };
 
-  // [Cambio] Helpers para previews (imagen/video/archivo)
-  const isBrowserFile = (f) => typeof File !== "undefined" && f instanceof File;
+  /** File del navegador? (sin romper en SSR) */
+  function isBrowserFile(x) {
+    return typeof File !== "undefined" && x instanceof File;
+  }
 
-  const detectKind = (f) => {
-    if (isBrowserFile(f)) {
-      if (f.type?.startsWith?.("image/")) return "image";
-      if (f.type?.startsWith?.("video/")) return "video";
-      return "other";
-    }
-    const name = f?.name || f?.url || "";
-    if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)) return "image";
-    if (/\.(mp4|webm|ogg|mov|m4v)$/i.test(name)) return "video";
+  /** Determina tipo para preview */
+  function detectKind(fileLike) {
+    const mime = fileLike?.type || fileLike?.mime;
+    const name = fileLike?.name || fileLike?.url || "";
+    const ext = (name.split(".").pop() || "").toLowerCase();
+
+    const isImg =
+      (mime && mime.startsWith("image/")) ||
+      ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"].includes(ext);
+
+    const isVid =
+      (mime && mime.startsWith("video/")) ||
+      ["mp4", "webm", "ogg"].includes(ext);
+
+    if (isImg) return "image";
+    if (isVid) return "video";
     return "other";
-  };
+  }
 
-  const getPreviewSrc = (f) => {
-    if (isBrowserFile(f)) {
+  /** URL para preview:
+   *  - File -> blob:
+   *  - Strapi relativo -> absoluto con buildStrapiUrl
+   *  - Absoluto -> tal cual
+   */
+  function getPreviewSrc(fileLike) {
+    if (!fileLike) return null;
+
+    if (isBrowserFile(fileLike)) {
       try {
-        return URL.createObjectURL(f);
+        return URL.createObjectURL(fileLike);
       } catch {
         return null;
       }
     }
-    return f?.url || null;
-  };
+
+    let url = fileLike?.url;
+    if (!url) return null;
+
+    // Si viene como objeto { attributes: { url } }
+    if (!url && fileLike?.attributes?.url) {
+      url = fileLike.attributes.url;
+    }
+
+    if (!url) return null;
+
+    // Absoluta ya
+    if (/^https?:\/\//i.test(url)) return url;
+
+    // Relativa de Strapi
+    return buildStrapiUrl(url);
+  }
 
   function MediaItemRow({ fileLike, onRemove }) {
     const kind = detectKind(fileLike);
-    const src = getPreviewSrc(fileLike);
+    const [previewSrc, setPreviewSrc] = useState(null);
 
-    // Obtiene un nombre amigable desde name o url
+    // Construye/limpia objectURL solo cuando fileLike cambia
+    useEffect(() => {
+      let revoked = false;
+      setPreviewSrc(null);
+
+      if (!fileLike) return;
+
+      // Browser File -> object URL
+      if (isBrowserFile(fileLike)) {
+        try {
+          const url = URL.createObjectURL(fileLike);
+          setPreviewSrc(url);
+          return () => {
+            // revoke created blob url
+            try {
+              URL.revokeObjectURL(url);
+            } catch {}
+            revoked = true;
+            setPreviewSrc(null);
+          };
+        } catch {
+          setPreviewSrc(null);
+        }
+      } else {
+        // Archivo existente: intentar resolver url/attributes.url o usar string directo
+        const raw =
+          fileLike?.url || fileLike?.attributes?.url || fileLike?.name || null;
+        if (typeof raw === "string" && raw) {
+          const resolved = /^https?:\/\//i.test(raw)
+            ? raw
+            : buildStrapiUrl(raw);
+          setPreviewSrc(resolved);
+        } else {
+          setPreviewSrc(null);
+        }
+      }
+    }, [fileLike]);
+
     const getDisplayName = (f) => {
       const raw = f?.name || f?.url || "archivo";
       try {
-        // si es URL, tomar la última parte del path
         const u = new URL(
           raw,
           typeof window !== "undefined"
@@ -564,31 +631,31 @@ export default function NewTriggerForm({
 
     const displayName = getDisplayName(fileLike);
 
-    useEffect(() => {
-      if (isBrowserFile(fileLike) && src) {
-        return () => URL.revokeObjectURL(src);
-      }
-    }, [fileLike, src]);
-
     return (
-      <div className="flex items-center gap-2 rounded border bg-muted/30 px-2 py-1 text-xs">
-        <div className="h-12 w-12 overflow-hidden rounded border bg-muted/40 flex items-center justify-center flex-shrink-0">
-          {kind === "image" && src ? (
-            <img src={src} className="h-full w-full object-cover" alt="" />
-          ) : kind === "video" && src ? (
-            <video src={src} className="h-full w-full object-cover" muted />
+      <div className="flex items-center gap-2 rounded border bg-muted/30 px-2 py-1 text-xs min-w-0">
+        <div className="h-12 w-12 overflow-hidden rounded border bg-muted/40 flex items-center justify-center shrink-0">
+          {kind === "image" && previewSrc ? (
+            <img
+              src={previewSrc}
+              className="h-full w-full object-cover"
+              alt={displayName}
+            />
+          ) : kind === "video" && previewSrc ? (
+            <video
+              src={previewSrc}
+              className="h-full w-full object-cover"
+              muted
+              playsInline
+              preload="metadata"
+              controls
+            />
           ) : (
             <FileIcon className="h-5 w-5 text-muted-foreground" />
           )}
         </div>
 
-        {/* Contenedor flexible con min-w-0 para permitir truncado */}
-        <div className="flex-1 max-w-1/3 min-w-0">
-          {/* El texto se trunca en una sola línea */}
-          <span
-            className="block truncate max-w-[calc(100%-3rem)] overflow-hidden text-ellipsis"
-            title={displayName} // tooltip con el nombre completo
-          >
+        <div className="flex-1 w-0 min-w-0">
+          <span className="block truncate" title={displayName}>
             {displayName}
           </span>
         </div>
@@ -596,7 +663,7 @@ export default function NewTriggerForm({
         {onRemove && (
           <button
             type="button"
-            className="text-muted-foreground hover:text-foreground flex-shrink-0"
+            className="text-muted-foreground hover:text-foreground shrink-0"
             onClick={onRemove}
           >
             Quitar
