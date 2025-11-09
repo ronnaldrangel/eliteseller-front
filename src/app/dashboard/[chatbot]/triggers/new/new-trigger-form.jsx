@@ -3,12 +3,13 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-// [Cambio] Importo File como FileIcon para previews de archivos no imagen/video
+// [Cambio] Agrego Upload para el ícono del dropzone; ya estaba FileIcon
 import {
   Paperclip,
   PlusIcon,
   Trash2Icon,
   File as FileIcon,
+  Upload, // [Cambio]
 } from "lucide-react";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Button } from "@/components/ui/button";
@@ -229,13 +230,19 @@ export default function NewTriggerForm({
     );
   };
 
+  // [Cambio] Reemplazo por lógica de UN SOLO archivo
   const handleAddMediaToMessage = (index, fileList) => {
     const files = Array.from(fileList || []);
-    if (!files.length) return;
+    const first = files[0];
+    if (!first) return;
     setMessages((prev) =>
       prev.map((msg, i) =>
         i === index
-          ? { ...msg, mediaNew: [...(msg.mediaNew || []), ...files] }
+          ? {
+              ...msg,
+              mediaExisting: [], // si había existentes, los quitamos
+              mediaNew: [first], // guardamos SOLO 1
+            }
           : msg
       )
     );
@@ -246,22 +253,20 @@ export default function NewTriggerForm({
       prev.map((msg, i) => {
         if (i !== index) return msg;
         if (type === "new") {
-          const list = [...(msg.mediaNew || [])];
-          list.splice(idx, 1);
-          return { ...msg, mediaNew: list };
+          return { ...msg, mediaNew: [] }; // [Cambio] al ser único, limpiamos todo
         } else {
-          const list = [...(msg.mediaExisting || [])];
-          list.splice(idx, 1);
-          return { ...msg, mediaExisting: list };
+          return { ...msg, mediaExisting: [] }; // [Cambio]
         }
       })
     );
   };
 
+  // [Cambio] Nuevo: solo 1 archivo para el bloque “nuevo contenido”
   const handleAddMediaToNew = (fileList) => {
     const files = Array.from(fileList || []);
-    if (!files.length) return;
-    setNewMediaFiles((prev) => [...prev, ...files]);
+    const first = files[0];
+    if (!first) return;
+    setNewMediaFiles([first]); // solo 1
   };
 
   const handleSubmit = async (event) => {
@@ -538,83 +543,48 @@ export default function NewTriggerForm({
     return "other";
   }
 
-  /** URL para preview:
-   *  - File -> blob:
-   *  - Strapi relativo -> absoluto con buildStrapiUrl
-   *  - Absoluto -> tal cual
-   */
-  function getPreviewSrc(fileLike) {
-    if (!fileLike) return null;
-
-    if (isBrowserFile(fileLike)) {
-      try {
-        return URL.createObjectURL(fileLike);
-      } catch {
-        return null;
-      }
-    }
-
-    let url = fileLike?.url;
-    if (!url) return null;
-
-    // Si viene como objeto { attributes: { url } }
-    if (!url && fileLike?.attributes?.url) {
-      url = fileLike.attributes.url;
-    }
-
-    if (!url) return null;
-
-    // Absoluta ya
-    if (/^https?:\/\//i.test(url)) return url;
-
-    // Relativa de Strapi
-    return buildStrapiUrl(url);
+  // [NUEVO] Formatea bytes a KB/MB legibles
+  function formatBytes(bytes = 0) {
+    if (!bytes || isNaN(bytes)) return "";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${(bytes / Math.pow(k, i)).toFixed(i ? 2 : 0)}${sizes[i]}`;
   }
 
-  function MediaItemRow({ fileLike, onRemove }) {
+  // [REEMPLAZO] Card con preview grande + footer oscuro con nombre truncado
+  function MediaCard({ fileLike, onRemove }) {
     const kind = detectKind(fileLike);
     const [previewSrc, setPreviewSrc] = useState(null);
 
-    // Construye/limpia objectURL solo cuando fileLike cambia
     useEffect(() => {
-      let revoked = false;
-      setPreviewSrc(null);
-
+      let url;
       if (!fileLike) return;
 
-      // Browser File -> object URL
+      // File del navegador → blob
       if (isBrowserFile(fileLike)) {
-        try {
-          const url = URL.createObjectURL(fileLike);
-          setPreviewSrc(url);
-          return () => {
-            // revoke created blob url
-            try {
-              URL.revokeObjectURL(url);
-            } catch {}
-            revoked = true;
-            setPreviewSrc(null);
-          };
-        } catch {
-          setPreviewSrc(null);
-        }
+        url = URL.createObjectURL(fileLike);
+        setPreviewSrc(url);
+        return () => {
+          try {
+            URL.revokeObjectURL(url);
+          } catch {}
+        };
+      }
+
+      // Activo existente (Strapi): resolver URL absoluta
+      const raw = fileLike?.url || fileLike?.attributes?.url || null;
+      if (raw) {
+        const abs = /^https?:\/\//i.test(raw) ? raw : buildStrapiUrl(raw);
+        setPreviewSrc(abs);
       } else {
-        // Archivo existente: intentar resolver url/attributes.url o usar string directo
-        const raw =
-          fileLike?.url || fileLike?.attributes?.url || fileLike?.name || null;
-        if (typeof raw === "string" && raw) {
-          const resolved = /^https?:\/\//i.test(raw)
-            ? raw
-            : buildStrapiUrl(raw);
-          setPreviewSrc(resolved);
-        } else {
-          setPreviewSrc(null);
-        }
+        setPreviewSrc(null);
       }
     }, [fileLike]);
 
-    const getDisplayName = (f) => {
-      const raw = f?.name || f?.url || "archivo";
+    // Nombre a mostrar (último segmento) y tamaño
+    const displayName = (() => {
+      const raw = fileLike?.name || fileLike?.url || "archivo";
       try {
         const u = new URL(
           raw,
@@ -627,18 +597,24 @@ export default function NewTriggerForm({
       } catch {
         return raw;
       }
-    };
+    })();
 
-    const displayName = getDisplayName(fileLike);
+    const size =
+      typeof fileLike?.size === "number"
+        ? fileLike.size
+        : typeof fileLike?.attributes?.size === "number"
+        ? fileLike.attributes.size
+        : undefined;
 
     return (
-      <div className="flex items-center gap-2 rounded border bg-muted/30 px-2 py-1 text-xs min-w-0">
-        <div className="h-12 w-12 overflow-hidden rounded border bg-muted/40 flex items-center justify-center shrink-0">
+      <div className="group relative overflow-hidden rounded-2xl border bg-card shadow-sm">
+        {/* Preview (4:3) */}
+        <div className="relative aspect-[4/3] w-full bg-muted/40">
           {kind === "image" && previewSrc ? (
             <img
               src={previewSrc}
-              className="h-full w-full object-cover"
               alt={displayName}
+              className="h-full w-full object-cover"
             />
           ) : kind === "video" && previewSrc ? (
             <video
@@ -647,29 +623,76 @@ export default function NewTriggerForm({
               muted
               playsInline
               preload="metadata"
-              controls
+              controls={false}
+              onLoadedData={(e) => {
+                e.currentTarget.currentTime = 0;
+              }}
             />
           ) : (
-            <FileIcon className="h-5 w-5 text-muted-foreground" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <FileIcon className="h-10 w-10 text-muted-foreground/70" />
+            </div>
+          )}
+
+          {/* Botón quitar (hover) */}
+          {onRemove && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="absolute right-2 top-2 rounded-md bg-background/80 px-2 py-1 text-[11px] font-medium text-foreground shadow transition-opacity hover:bg-background group-hover:opacity-100 opacity-0"
+            >
+              Quitar
+            </button>
           )}
         </div>
 
-        <div className="flex-1 w-0 min-w-0">
-          <span className="block truncate" title={displayName}>
+        {/* Footer con nombre truncado y tamaño */}
+        <div className="space-y-1 bg-muted/80 px-3 py-2">
+          <div
+            className="truncate text-[13px] font-medium leading-5"
+            title={displayName}
+          >
             {displayName}
-          </span>
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            {size ? formatBytes(size) : ""}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // [Cambio] Pequeño componente para el “dropzone button” con estilo nuevo
+  function DropzoneButton({ id, onChange }) {
+    return (
+      <label
+        htmlFor={id}
+        className="relative block rounded-2xl border border-dashed border-muted-foreground/40 bg-muted/10 hover:bg-muted/20 transition-colors cursor-pointer"
+      >
+        <div className="flex h-32 w-full flex-col items-center justify-center gap-2">
+          <div className="rounded-full bg-muted/50 p-2">
+            <Upload className="h-5 w-5 text-muted-foreground" />
+          </div>
+          <p className="text-sm">
+            <span className="font-medium">Suelta archivos aquí</span>{" "}
+            <span className="text-muted-foreground">o</span>{" "}
+            <span className="text-primary underline">examinar archivos</span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Acepta imágenes, videos o documentos
+          </p>
         </div>
 
-        {onRemove && (
-          <button
-            type="button"
-            className="text-muted-foreground hover:text-foreground shrink-0"
-            onClick={onRemove}
-          >
-            Quitar
-          </button>
-        )}
-      </div>
+        {/* [Cambio] input ocupa toda el área pero es invisible */}
+        <input
+          id={id}
+          type="file"
+          accept={ACCEPT}
+          // [Cambio] sin multiple
+          className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+          onChange={onChange}
+        />
+      </label>
     );
   }
 
@@ -889,124 +912,132 @@ export default function NewTriggerForm({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Contenidos existentes/edición */}
-          {messages.map((msg, index) => (
-            <div
-              key={msg.id}
-              className="rounded-lg border border-muted-foreground/20 bg-background p-3"
-            >
-              {/* ⭐ min-w-0 para permitir truncado interno */}
-              <div className="flex items-start gap-2 min-w-0">
-                {/* ⭐ flex-1 w-0 min-w-0 para que el área principal pueda encoger y truncar */}
-                <div className="flex-1 w-0 min-w-0">
-                  {/* Tipo */}
-                  <div className="mb-2 flex items-center gap-4 text-sm">
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name={`type-${msg.id}`}
-                        value="message"
-                        checked={msg.type === "message"}
-                        onChange={() => handleChangeType(index, "message")}
-                      />
-                      Mensaje
-                    </label>
-                    <label className="inline-flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name={`type-${msg.id}`}
-                        value="media"
-                        checked={msg.type === "media"}
-                        onChange={() => handleChangeType(index, "media")}
-                      />
-                      Multimedia
-                    </label>
+          {messages.map((msg, index) => {
+            const hasAnyMedia =
+              (msg.mediaExisting?.length || 0) + (msg.mediaNew?.length || 0) >
+              0;
+
+            return (
+              <div
+                key={msg.id}
+                className="rounded-lg border border-muted-foreground/20 bg-background p-3"
+              >
+                <div className="flex items-start gap-2 min-w-0">
+                  <div className="flex-1 w-0 min-w-0">
+                    {/* Tipo */}
+                    <div className="mb-2 flex items-center gap-4 text-sm">
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`type-${msg.id}`}
+                          value="message"
+                          checked={msg.type === "message"}
+                          onChange={() => handleChangeType(index, "message")}
+                        />
+                        Mensaje
+                      </label>
+                      <label className="inline-flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name={`type-${msg.id}`}
+                          value="media"
+                          checked={msg.type === "media"}
+                          onChange={() => handleChangeType(index, "media")}
+                        />
+                        Multimedia
+                      </label>
+                    </div>
+
+                    {msg.type === "message" ? (
+                      <>
+                        <Textarea
+                          rows={3}
+                          maxLength={MAX_MESSAGE_LENGTH}
+                          placeholder="Escribe el mensaje de respuesta"
+                          value={msg.message}
+                          onChange={(e) =>
+                            handleUpdateMessage(index, e.target.value)
+                          }
+                          className="resize-none"
+                        />
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>Mensaje {index + 1}</span>
+                          <span>
+                            {(msg.message || "").length}/{MAX_MESSAGE_LENGTH}
+                          </span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {/* Existentes */}
+                        {msg.mediaExisting?.length ? (
+                          <>
+                            <div className="mb-1 text-xs font-medium text-muted-foreground">
+                              Files ({msg.mediaExisting.length})
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {msg.mediaExisting.map((m, i) => (
+                                <MediaCard
+                                  key={`ex-${i}`}
+                                  fileLike={m}
+                                  onRemove={() =>
+                                    handleRemoveMedia(index, "existing", i)
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </>
+                        ) : null}
+
+                        {/* Nuevos (previews) */}
+                        {msg.mediaNew?.length ? (
+                          <>
+                            <div className="mt-3 mb-1 text-xs font-medium text-muted-foreground">
+                              Files nuevos ({msg.mediaNew.length})
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                              {msg.mediaNew.map((f, i) => (
+                                <MediaCard
+                                  key={`new-${i}`}
+                                  fileLike={f}
+                                  onRemove={() =>
+                                    handleRemoveMedia(index, "new", i)
+                                  }
+                                />
+                              ))}
+                            </div>
+                          </>
+                        ) : null}
+
+                        {/* [Cambio] Dropzone nuevo SOLO si no hay archivo */}
+                        {!hasAnyMedia && (
+                          <div className="mt-3">
+                            <DropzoneButton
+                              id={`add-media-${msg.id}`}
+                              onChange={(e) =>
+                                handleAddMediaToMessage(index, e.target.files)
+                              }
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
 
-                  {msg.type === "message" ? (
-                    <>
-                      <Textarea
-                        rows={3}
-                        maxLength={MAX_MESSAGE_LENGTH}
-                        placeholder="Escribe el mensaje de respuesta"
-                        value={msg.message}
-                        onChange={(e) =>
-                          handleUpdateMessage(index, e.target.value)
-                        }
-                        className="resize-none"
-                      />
-                      <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Mensaje {index + 1}</span>
-                        <span>
-                          {(msg.message || "").length}/{MAX_MESSAGE_LENGTH}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Existentes */}
-                      {msg.mediaExisting?.length ? (
-                        <div className="mt-2 space-y-1">
-                          {msg.mediaExisting.map((m, i) => (
-                            <MediaItemRow
-                              key={`ex-${i}`}
-                              fileLike={m}
-                              onRemove={() =>
-                                handleRemoveMedia(index, "existing", i)
-                              }
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {/* Nuevos (previews) */}
-                      {msg.mediaNew?.length ? (
-                        <div className="mt-2 space-y-1">
-                          {msg.mediaNew.map((f, i) => (
-                            <MediaItemRow
-                              key={`new-${i}`}
-                              fileLike={f}
-                              onRemove={() =>
-                                handleRemoveMedia(index, "new", i)
-                              }
-                            />
-                          ))}
-                        </div>
-                      ) : null}
-
-                      {/* ⭐ En móviles puede envolver; en desktop se mantiene en una línea sin romper layout */}
-                      <div className="mt-2 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-                        {/* ⭐ min-w-0 para que el texto interno (si lo hubiera) no rompa */}
-                        <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline min-w-0">
-                          <Paperclip className="h-4 w-4 shrink-0" />
-                          <span className="truncate">Añadir multimedia</span>
-                          <input
-                            type="file"
-                            accept={ACCEPT}
-                            multiple
-                            className="hidden"
-                            onChange={(e) =>
-                              handleAddMediaToMessage(index, e.target.files)
-                            }
-                          />
-                        </label>
-                      </div>
-                    </>
-                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleRemoveMessage(index)}
+                    className="shrink-0 my-auto hover:cursor-pointer"
+                    aria-label="Eliminar mensaje"
+                  >
+                    <Trash2Icon className="size-4" />
+                  </Button>
                 </div>
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleRemoveMessage(index)}
-                  className="shrink-0 my-auto hover:cursor-pointer"
-                  aria-label="Eliminar mensaje"
-                >
-                  <Trash2Icon className="size-4" />
-                </Button>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* Nuevo contenido */}
           <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
@@ -1066,46 +1097,39 @@ export default function NewTriggerForm({
               </>
             ) : (
               <>
-                {/* ⭐ Flex seguro: envuelve en móviles, no rompe en desktop */}
-                <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
-                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline min-w-0">
-                    <Paperclip className="h-4 w-4 shrink-0" />
-                    <span className="truncate">Añadir multimedia</span>
-                    <input
-                      type="file"
-                      accept={ACCEPT}
-                      multiple
-                      className="hidden"
-                      onChange={(e) => handleAddMediaToNew(e.target.files)}
-                    />
-                  </label>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleAddMessage}
-                    disabled={newMediaFiles.length === 0}
-                    className="shrink-0" // ⭐ no se comprime
-                  >
-                    <PlusIcon className="size-4 mr-2" />
-                    Agregar
-                  </Button>
-                </div>
+                {/* [Cambio] Dropzone estilo nuevo (solo 1 archivo) */}
+                {newMediaFiles.length === 0 ? (
+                  <DropzoneButton
+                    id="new-media-drop"
+                    onChange={(e) => handleAddMediaToNew(e.target.files)}
+                  />
+                ) : null}
 
                 {/* Previews de nuevos archivos */}
                 {newMediaFiles.length ? (
-                  <div className="mt-2 space-y-1">
-                    {newMediaFiles.map((f, i) => (
-                      <MediaItemRow
-                        key={`nm-${i}`}
-                        fileLike={f}
-                        onRemove={() =>
-                          setNewMediaFiles((prev) =>
-                            prev.filter((_, idx) => idx !== i)
-                          )
-                        }
+                  <>
+                    <div className="mt-3 mb-1 text-xs font-medium text-muted-foreground">
+                      Files ({newMediaFiles.length})
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <MediaCard
+                        fileLike={newMediaFiles[0]}
+                        onRemove={() => setNewMediaFiles([])}
                       />
-                    ))}
-                  </div>
+                    </div>
+
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleAddMessage}
+                        className="shrink-0"
+                      >
+                        <PlusIcon className="size-4 mr-2" />
+                        Agregar
+                      </Button>
+                    </div>
+                  </>
                 ) : null}
               </>
             )}
