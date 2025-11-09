@@ -7,14 +7,14 @@ export const columns = [
     accessorKey: "name",
     header: ({ column }) => (
       <div
-        className="inline-flex items-center gap-1 cursor-pointer select-none"
+        className="inline-flex items-center gap-1 cursor-pointer select-none pl-4"
         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
       >
         Nombre <ArrowUpDown className="ml-1 h-3 w-3" />
       </div>
     ),
     cell: ({ row }) => (
-      <span className="font-medium">{row.getValue("name") || "-"}</span>
+      <span className="font-medium pl-4">{row.getValue("name") || "-"}</span>
     ),
   },
   {
