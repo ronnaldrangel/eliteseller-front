@@ -698,209 +698,7 @@ export default function NewTriggerForm({
 
   // [Cambio] Layout en dos columnas con un Card lateral para mensajes/multimedia
   return (
-    <div className="xl:grid xl:grid-cols-[1fr_420px] xl:items-start gap-6 space-y-6 xl:space-y-0">
-      <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
-        <form onSubmit={handleSubmit} className="contents">
-          <CardHeader className="flex items-start justify-between">
-            <div>
-              <CardTitle>
-                {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
-              </CardTitle>
-              <CardDescription>
-                Define el nombre, palabras clave y configuración general.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="trigger-available"
-                checked={!!form.available}
-                onCheckedChange={(value) =>
-                  setForm((previous) => ({
-                    ...previous,
-                    available: !!value,
-                  }))
-                }
-                aria-label="Estado activo"
-              />
-              <span className="text-sm text-muted-foreground">
-                {form.available ? "Activo" : "Inactivo"}
-              </span>
-            </div>
-          </CardHeader>
-
-          <CardContent className="space-y-6">
-            <FieldSet className="gap-6">
-              <FieldGroup className="gap-6">
-                <Field data-invalid={errors.name ? true : undefined}>
-                  <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="trigger-name"
-                      placeholder="Ej. Bienvenida inicial"
-                      value={form.name}
-                      onChange={(event) =>
-                        setForm((previous) => ({
-                          ...previous,
-                          name: event.target.value,
-                        }))
-                      }
-                    />
-                    <FieldDescription>
-                      Será visible dentro del panel para identificar el
-                      disparador.
-                    </FieldDescription>
-                    <FieldError>{errors.name}</FieldError>
-                  </FieldContent>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="trigger-id-ads">
-                    ID Ads (opcional)
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="trigger-id-ads"
-                      placeholder="Ej. 023232323232121"
-                      value={form.id_ads}
-                      onChange={(event) =>
-                        setForm((previous) => ({
-                          ...previous,
-                          id_ads: event.target.value,
-                        }))
-                      }
-                    />
-                    <FieldDescription>
-                      Vincula este disparador con un anuncio o campaña
-                      específica.
-                    </FieldDescription>
-                  </FieldContent>
-                </Field>
-              </FieldGroup>
-
-              <FieldGroup className="gap-6">
-                <Field data-invalid={errors.keywords ? true : undefined}>
-                  <FieldLabel htmlFor="trigger-keywords">
-                    Palabras clave
-                  </FieldLabel>
-                  <FieldContent>
-                    <div>
-                      <div className="flex flex-wrap gap-2">
-                        {keywordsList.map((kw, index) => (
-                          <span
-                            key={`${kw}-${index}`}
-                            className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
-                          >
-                            {kw}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setKeywordsList((prev) =>
-                                  prev.filter((_, i) => i !== index)
-                                )
-                              }
-                              className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
-                              aria-label={`Quitar palabra ${kw}`}
-                            >
-                              x
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <Input
-                        id="trigger-keywords"
-                        placeholder="Escribe una palabra y presiona enter"
-                        value={keywordInput}
-                        onChange={(e) => setKeywordInput(e.target.value)}
-                        onBlur={() => {
-                          const next = keywordInput.trim();
-                          if (next) {
-                            setKeywordsList((prev) =>
-                              prev.includes(next) ? prev : [...prev, next]
-                            );
-                            setKeywordInput("");
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          const isSeparator =
-                            e.key === " " || e.key === "Enter" || e.key === ",";
-                          if (isSeparator) {
-                            e.preventDefault();
-                            const next = keywordInput.trim();
-                            if (next) {
-                              setKeywordsList((prev) =>
-                                prev.includes(next) ? prev : [...prev, next]
-                              );
-                              setKeywordInput("");
-                            }
-                          } else if (
-                            e.key === "Backspace" &&
-                            keywordInput.length === 0
-                          ) {
-                            setKeywordsList((prev) => prev.slice(0, -1));
-                          }
-                        }}
-                        className="mt-2"
-                      />
-                      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
-                        </span>
-                      </div>
-                    </div>
-                    <FieldError>{errors.keywords}</FieldError>
-                  </FieldContent>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
-
-            {status.error && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {status.error}
-              </div>
-            )}
-          </CardContent>
-
-          <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
-            <div className="text-xs text-muted-foreground md:text-sm">
-              {messages.length > 0
-                ? `${messages.length} mensaje${
-                    messages.length > 1 ? "s" : ""
-                  } configurado${messages.length > 1 ? "s" : ""}.`
-                : "Agrega al menos un mensaje de respuesta."}
-            </div>
-            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  const segment = chatbotSlug || chatbotId;
-                  router.push(
-                    `/dashboard/${encodeURIComponent(segment)}/triggers`
-                  );
-                }}
-                className="w-full md:w-auto"
-                disabled={status.loading}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="w-full md:w-auto"
-                disabled={status.loading || !token || !chatbotId}
-              >
-                {status.loading
-                  ? mode === "edit"
-                    ? "Actualizando..."
-                    : "Creando..."
-                  : mode === "edit"
-                  ? "Actualizar disparador"
-                  : "Crear disparador"}
-              </Button>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
-
+    <div className="xl:grid xl:items-start gap-6 space-y-6 xl:space-y-0 xl:grid-cols-2">
       {/* [Cambio] Card lateral independiente para Mensajes/Multimedia (2da columna en desktop) */}
       <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
         <CardHeader>
@@ -1139,6 +937,208 @@ export default function NewTriggerForm({
         </CardContent>
       </Card>
       {/* [/Cambio] */}
+
+      <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
+        <form onSubmit={handleSubmit} className="contents">
+          <CardHeader className="flex items-start justify-between">
+            <div>
+              <CardTitle>
+                {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
+              </CardTitle>
+              <CardDescription>
+                Define el nombre, palabras clave y configuración general.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="trigger-available"
+                checked={!!form.available}
+                onCheckedChange={(value) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    available: !!value,
+                  }))
+                }
+                aria-label="Estado activo"
+              />
+              <span className="text-sm text-muted-foreground">
+                {form.available ? "Activo" : "Inactivo"}
+              </span>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <FieldSet className="gap-6">
+              <FieldGroup className="gap-6">
+                <Field data-invalid={errors.name ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id="trigger-name"
+                      placeholder="Ej. Bienvenida inicial"
+                      value={form.name}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          name: event.target.value,
+                        }))
+                      }
+                    />
+                    <FieldDescription>
+                      Será visible dentro del panel para identificar el
+                      disparador.
+                    </FieldDescription>
+                    <FieldError>{errors.name}</FieldError>
+                  </FieldContent>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="trigger-id-ads">
+                    ID Ads (opcional)
+                  </FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id="trigger-id-ads"
+                      placeholder="Ej. 023232323232121"
+                      value={form.id_ads}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          id_ads: event.target.value,
+                        }))
+                      }
+                    />
+                    <FieldDescription>
+                      Vincula este disparador con un anuncio o campaña
+                      específica.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+              </FieldGroup>
+
+              <FieldGroup className="gap-6">
+                <Field data-invalid={errors.keywords ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-keywords">
+                    Palabras clave
+                  </FieldLabel>
+                  <FieldContent>
+                    <div>
+                      <div className="flex flex-wrap gap-2">
+                        {keywordsList.map((kw, index) => (
+                          <span
+                            key={`${kw}-${index}`}
+                            className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
+                          >
+                            {kw}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setKeywordsList((prev) =>
+                                  prev.filter((_, i) => i !== index)
+                                )
+                              }
+                              className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
+                              aria-label={`Quitar palabra ${kw}`}
+                            >
+                              x
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <Input
+                        id="trigger-keywords"
+                        placeholder="Escribe una palabra y presiona enter"
+                        value={keywordInput}
+                        onChange={(e) => setKeywordInput(e.target.value)}
+                        onBlur={() => {
+                          const next = keywordInput.trim();
+                          if (next) {
+                            setKeywordsList((prev) =>
+                              prev.includes(next) ? prev : [...prev, next]
+                            );
+                            setKeywordInput("");
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          const isSeparator =
+                            e.key === " " || e.key === "Enter" || e.key === ",";
+                          if (isSeparator) {
+                            e.preventDefault();
+                            const next = keywordInput.trim();
+                            if (next) {
+                              setKeywordsList((prev) =>
+                                prev.includes(next) ? prev : [...prev, next]
+                              );
+                              setKeywordInput("");
+                            }
+                          } else if (
+                            e.key === "Backspace" &&
+                            keywordInput.length === 0
+                          ) {
+                            setKeywordsList((prev) => prev.slice(0, -1));
+                          }
+                        }}
+                        className="mt-2"
+                      />
+                      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
+                        </span>
+                      </div>
+                    </div>
+                    <FieldError>{errors.keywords}</FieldError>
+                  </FieldContent>
+                </Field>
+              </FieldGroup>
+            </FieldSet>
+
+            {status.error && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {status.error}
+              </div>
+            )}
+          </CardContent>
+
+          <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
+            <div className="text-xs text-muted-foreground md:text-sm">
+              {messages.length > 0
+                ? `${messages.length} mensaje${
+                    messages.length > 1 ? "s" : ""
+                  } configurado${messages.length > 1 ? "s" : ""}.`
+                : "Agrega al menos un mensaje de respuesta."}
+            </div>
+            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const segment = chatbotSlug || chatbotId;
+                  router.push(
+                    `/dashboard/${encodeURIComponent(segment)}/triggers`
+                  );
+                }}
+                className="w-full md:w-auto"
+                disabled={status.loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="w-full md:w-auto"
+                disabled={status.loading || !token || !chatbotId}
+              >
+                {status.loading
+                  ? mode === "edit"
+                    ? "Actualizando..."
+                    : "Creando..."
+                  : mode === "edit"
+                  ? "Actualizar disparador"
+                  : "Crear disparador"}
+              </Button>
+            </div>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }
