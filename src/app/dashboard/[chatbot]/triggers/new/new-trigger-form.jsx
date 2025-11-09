@@ -1,9 +1,15 @@
 ﻿"use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Paperclip, PlusIcon, Trash2Icon } from "lucide-react";
+// [Cambio] Importo File como FileIcon para previews de archivos no imagen/video
+import {
+  Paperclip,
+  PlusIcon,
+  Trash2Icon,
+  File as FileIcon,
+} from "lucide-react";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,7 +27,6 @@ import {
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
   FieldSet,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -48,7 +53,7 @@ export default function NewTriggerForm({
     const contents =
       initialTrigger?.trigger_contents || initialTrigger?.messages || [];
     return contents.map((tc, index) => {
-      const attrs = tc.attributes || tc; // por si viene normalizado
+      const attrs = tc.attributes || tc;
       const mediaNodes = attrs?.messageMedia?.data || [];
       const existingMedia = mediaNodes.map((m) => ({
         id: m.id,
@@ -121,14 +126,13 @@ export default function NewTriggerForm({
       nextErrors.messages = "Agrega al menos un mensaje de respuesta.";
     }
 
-    // Validar cada mensaje
+    // Validar cada mensaje por tipo
     const hasInvalid = messages.some((msg) => {
       const hasText = !!msg.message?.trim();
       const hasMedia =
         (msg.mediaExisting && msg.mediaExisting.length > 0) ||
         (msg.mediaNew && msg.mediaNew.length > 0);
       const textTooLong = (msg.message || "").length > MAX_MESSAGE_LENGTH;
-      // return (!hasText && !hasMedia) || textTooLong;
       const invalidByType =
         (msg.type === "message" && (!hasText || hasMedia)) ||
         (msg.type === "media" && (!hasMedia || hasText));
@@ -182,7 +186,6 @@ export default function NewTriggerForm({
       {
         id: `temp-${Date.now()}`,
         documentId: null,
-        // message: newMessage.trim(),
         message: newType === "message" ? newMessage.trim() : "",
         isExisting: false,
         mediaExisting: [],
@@ -282,7 +285,6 @@ export default function NewTriggerForm({
       const joinedAi = form.keywords_ai.trim() || joined;
 
       if (mode === "edit" && initialTrigger) {
-        // Actualizar el trigger existente
         const triggerDocId = initialTrigger.documentId || initialTrigger.id;
         const triggerPayload = {
           data: {
@@ -315,11 +317,10 @@ export default function NewTriggerForm({
           return;
         }
 
-        // Gestionar los mensajes: actualizar existentes y crear nuevos
+        // Gestionar contenidos
         let hasErrors = false;
 
         for (const msg of messages) {
-          // 1) Subir archivos nuevos de este mensaje
           let uploadedIds = [];
           try {
             uploadedIds = await uploadFiles(msg.mediaNew || []);
@@ -328,7 +329,6 @@ export default function NewTriggerForm({
             hasErrors = true;
           }
 
-          // 2) Armar IDs finales (existentes + nuevos)
           const existingIds = (msg.mediaExisting || []).map((m) => m.id);
           const allMediaIds = [...existingIds, ...uploadedIds];
 
@@ -336,7 +336,8 @@ export default function NewTriggerForm({
             const contentPayload = {
               data: {
                 type: msg.type,
-                message: msg.type === "message" ? (msg.message || "").trim() : "",
+                message:
+                  msg.type === "message" ? (msg.message || "").trim() : "",
                 messageMedia: msg.type === "media" ? allMediaIds : [],
               },
             };
@@ -357,11 +358,11 @@ export default function NewTriggerForm({
               hasErrors = true;
             }
           } else {
-            // POST nuevo contenido
             const contentPayload = {
               data: {
                 type: msg.type,
-                message: msg.type === "message" ? (msg.message || "").trim() : "",
+                message:
+                  msg.type === "message" ? (msg.message || "").trim() : "",
                 messageMedia: msg.type === "media" ? allMediaIds : [],
                 trigger: { connect: [{ documentId: triggerDocId }] },
               },
@@ -385,7 +386,7 @@ export default function NewTriggerForm({
           }
         }
 
-        // Eliminar mensajes que ya no están en la lista
+        // Eliminar contenidos removidos
         const existingIds = messages
           .filter((m) => m.isExisting && m.documentId)
           .map((m) => m.documentId);
@@ -461,8 +462,8 @@ export default function NewTriggerForm({
             console.error("Upload fallido:", e);
             hasErrors = true;
           }
-          const existingIds = (msg.mediaExisting || []).map((m) => m.id);
-          const allMediaIds = [...existingIds, ...uploadedIds];
+          const existingIds2 = (msg.mediaExisting || []).map((m) => m.id);
+          const allMediaIds = [...existingIds2, ...uploadedIds];
 
           const contentPayload = {
             data: {
@@ -513,132 +514,214 @@ export default function NewTriggerForm({
     }
   };
 
+  // [Cambio] Helpers para previews (imagen/video/archivo)
+  const isBrowserFile = (f) => typeof File !== "undefined" && f instanceof File;
+
+  const detectKind = (f) => {
+    if (isBrowserFile(f)) {
+      if (f.type?.startsWith?.("image/")) return "image";
+      if (f.type?.startsWith?.("video/")) return "video";
+      return "other";
+    }
+    const name = f?.name || f?.url || "";
+    if (/\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(name)) return "image";
+    if (/\.(mp4|webm|ogg|mov|m4v)$/i.test(name)) return "video";
+    return "other";
+  };
+
+  const getPreviewSrc = (f) => {
+    if (isBrowserFile(f)) {
+      try {
+        return URL.createObjectURL(f);
+      } catch {
+        return null;
+      }
+    }
+    return f?.url || null;
+  };
+
+  function MediaItemRow({ fileLike, onRemove }) {
+    const kind = detectKind(fileLike);
+    const src = getPreviewSrc(fileLike);
+
+    // Obtiene un nombre amigable desde name o url
+    const getDisplayName = (f) => {
+      const raw = f?.name || f?.url || "archivo";
+      try {
+        // si es URL, tomar la última parte del path
+        const u = new URL(
+          raw,
+          typeof window !== "undefined"
+            ? window.location.href
+            : "http://localhost"
+        );
+        const last = u.pathname.split("/").filter(Boolean).pop();
+        return last || raw;
+      } catch {
+        return raw;
+      }
+    };
+
+    const displayName = getDisplayName(fileLike);
+
+    useEffect(() => {
+      if (isBrowserFile(fileLike) && src) {
+        return () => URL.revokeObjectURL(src);
+      }
+    }, [fileLike, src]);
+
+    return (
+      <div className="flex items-center gap-2 rounded border bg-muted/30 px-2 py-1 text-xs">
+        <div className="h-12 w-12 overflow-hidden rounded border bg-muted/40 flex items-center justify-center flex-shrink-0">
+          {kind === "image" && src ? (
+            <img src={src} className="h-full w-full object-cover" alt="" />
+          ) : kind === "video" && src ? (
+            <video src={src} className="h-full w-full object-cover" muted />
+          ) : (
+            <FileIcon className="h-5 w-5 text-muted-foreground" />
+          )}
+        </div>
+
+        {/* Contenedor flexible con min-w-0 para permitir truncado */}
+        <div className="flex-1 max-w-1/3 min-w-0">
+          {/* El texto se trunca en una sola línea */}
+          <span
+            className="block truncate max-w-[calc(100%-3rem)] overflow-hidden text-ellipsis"
+            title={displayName} // tooltip con el nombre completo
+          >
+            {displayName}
+          </span>
+        </div>
+
+        {onRemove && (
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground flex-shrink-0"
+            onClick={onRemove}
+          >
+            Quitar
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // [Cambio] Layout en dos columnas con un Card lateral para mensajes/multimedia
   return (
-    <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
-      <form onSubmit={handleSubmit} className="contents">
-        <CardHeader className="flex items-start justify-between">
-          <div>
-            <CardTitle>
-              {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
-            </CardTitle>
-            <CardDescription>
-              Define el nombre, palabras clave y mensajes de respuesta.
-            </CardDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              id="trigger-available"
-              checked={!!form.available}
-              onCheckedChange={(value) =>
-                setForm((previous) => ({
-                  ...previous,
-                  available: !!value,
-                }))
-              }
-              aria-label="Estado activo"
-            />
-            <span className="text-sm text-muted-foreground">
-              {form.available ? "Activo" : "Inactivo"}
-            </span>
-          </div>
-        </CardHeader>
+    <div className="xl:grid xl:grid-cols-[1fr_420px] xl:items-start gap-6 space-y-6 xl:space-y-0">
+      <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
+        <form onSubmit={handleSubmit} className="contents">
+          <CardHeader className="flex items-start justify-between">
+            <div>
+              <CardTitle>
+                {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
+              </CardTitle>
+              <CardDescription>
+                Define el nombre, palabras clave y configuración general.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="trigger-available"
+                checked={!!form.available}
+                onCheckedChange={(value) =>
+                  setForm((previous) => ({
+                    ...previous,
+                    available: !!value,
+                  }))
+                }
+                aria-label="Estado activo"
+              />
+              <span className="text-sm text-muted-foreground">
+                {form.available ? "Activo" : "Inactivo"}
+              </span>
+            </div>
+          </CardHeader>
 
-        <CardContent className="space-y-6">
-          <FieldSet className="gap-6">
-            <FieldGroup className="gap-6">
-              <Field data-invalid={errors.name ? true : undefined}>
-                <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="trigger-name"
-                    placeholder="Ej. Bienvenida inicial"
-                    value={form.name}
-                    onChange={(event) =>
-                      setForm((previous) => ({
-                        ...previous,
-                        name: event.target.value,
-                      }))
-                    }
-                  />
-                  <FieldDescription>
-                    Será visible dentro del panel para identificar el
-                    disparador.
-                  </FieldDescription>
-                  <FieldError>{errors.name}</FieldError>
-                </FieldContent>
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="trigger-id-ads">
-                  ID Ads (opcional)
-                </FieldLabel>
-                <FieldContent>
-                  <Input
-                    id="trigger-id-ads"
-                    placeholder="Ej. 023232323232121"
-                    value={form.id_ads}
-                    onChange={(event) =>
-                      setForm((previous) => ({
-                        ...previous,
-                        id_ads: event.target.value,
-                      }))
-                    }
-                  />
-                  <FieldDescription>
-                    Vincula este disparador con un anuncio o campaña específica.
-                  </FieldDescription>
-                </FieldContent>
-              </Field>
-            </FieldGroup>
-
-            <FieldGroup className="gap-6">
-              <Field data-invalid={errors.keywords ? true : undefined}>
-                <FieldLabel htmlFor="trigger-keywords">
-                  Palabras clave
-                </FieldLabel>
-                <FieldContent>
-                  <div>
-                    <div className="flex flex-wrap gap-2">
-                      {keywordsList.map((kw, index) => (
-                        <span
-                          key={`${kw}-${index}`}
-                          className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
-                        >
-                          {kw}
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setKeywordsList((prev) =>
-                                prev.filter((_, i) => i !== index)
-                              )
-                            }
-                            className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
-                            aria-label={`Quitar palabra ${kw}`}
-                          >
-                            x
-                          </button>
-                        </span>
-                      ))}
-                    </div>
+          <CardContent className="space-y-6">
+            <FieldSet className="gap-6">
+              <FieldGroup className="gap-6">
+                <Field data-invalid={errors.name ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
+                  <FieldContent>
                     <Input
-                      id="trigger-keywords"
-                      placeholder="Escribe una palabra y presiona enter"
-                      value={keywordInput}
-                      onChange={(e) => setKeywordInput(e.target.value)}
-                      onBlur={() => {
-                        const next = keywordInput.trim();
-                        if (next) {
-                          setKeywordsList((prev) =>
-                            prev.includes(next) ? prev : [...prev, next]
-                          );
-                          setKeywordInput("");
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        const isSeparator =
-                          e.key === " " || e.key === "Enter" || e.key === ",";
-                        if (isSeparator) {
-                          e.preventDefault();
+                      id="trigger-name"
+                      placeholder="Ej. Bienvenida inicial"
+                      value={form.name}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          name: event.target.value,
+                        }))
+                      }
+                    />
+                    <FieldDescription>
+                      Será visible dentro del panel para identificar el
+                      disparador.
+                    </FieldDescription>
+                    <FieldError>{errors.name}</FieldError>
+                  </FieldContent>
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="trigger-id-ads">
+                    ID Ads (opcional)
+                  </FieldLabel>
+                  <FieldContent>
+                    <Input
+                      id="trigger-id-ads"
+                      placeholder="Ej. 023232323232121"
+                      value={form.id_ads}
+                      onChange={(event) =>
+                        setForm((previous) => ({
+                          ...previous,
+                          id_ads: event.target.value,
+                        }))
+                      }
+                    />
+                    <FieldDescription>
+                      Vincula este disparador con un anuncio o campaña
+                      específica.
+                    </FieldDescription>
+                  </FieldContent>
+                </Field>
+              </FieldGroup>
+
+              <FieldGroup className="gap-6">
+                <Field data-invalid={errors.keywords ? true : undefined}>
+                  <FieldLabel htmlFor="trigger-keywords">
+                    Palabras clave
+                  </FieldLabel>
+                  <FieldContent>
+                    <div>
+                      <div className="flex flex-wrap gap-2">
+                        {keywordsList.map((kw, index) => (
+                          <span
+                            key={`${kw}-${index}`}
+                            className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
+                          >
+                            {kw}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setKeywordsList((prev) =>
+                                  prev.filter((_, i) => i !== index)
+                                )
+                              }
+                              className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
+                              aria-label={`Quitar palabra ${kw}`}
+                            >
+                              x
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <Input
+                        id="trigger-keywords"
+                        placeholder="Escribe una palabra y presiona enter"
+                        value={keywordInput}
+                        onChange={(e) => setKeywordInput(e.target.value)}
+                        onBlur={() => {
                           const next = keywordInput.trim();
                           if (next) {
                             setKeywordsList((prev) =>
@@ -646,348 +729,325 @@ export default function NewTriggerForm({
                             );
                             setKeywordInput("");
                           }
-                        } else if (
-                          e.key === "Backspace" &&
-                          keywordInput.length === 0
-                        ) {
-                          setKeywordsList((prev) => prev.slice(0, -1));
-                        }
-                      }}
-                      className="mt-2"
-                    />
-                    <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                      <span>
-                        {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
-                      </span>
-                    </div>
-                  </div>
-                  <FieldError>{errors.keywords}</FieldError>
-                </FieldContent>
-              </Field>
-
-              <Field data-invalid={errors.messages ? true : undefined}>
-                <FieldLabel>Respuestas</FieldLabel>
-                <FieldContent>
-                  <div className="space-y-4">
-                    {/* Lista de contenidos existentes/nuevos */}
-                    {messages.map((msg, index) => (
-                      <div
-                        key={msg.id}
-                        className="rounded-lg border border-muted-foreground/20 bg-background p-3"
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="flex-1">
-                            {/* Selector de tipo */}
-                            <div className="mb-2 flex items-center gap-4 text-sm">
-                              <label className="inline-flex items-center gap-2">
-                                <input
-                                  type="radio"
-                                  name={`type-${msg.id}`}
-                                  value="message"
-                                  checked={msg.type === "message"}
-                                  onChange={() =>
-                                    handleChangeType(index, "message")
-                                  }
-                                />
-                                Mensaje
-                              </label>
-                              <label className="inline-flex items-center gap-2">
-                                <input
-                                  type="radio"
-                                  name={`type-${msg.id}`}
-                                  value="media"
-                                  checked={msg.type === "media"}
-                                  onChange={() =>
-                                    handleChangeType(index, "media")
-                                  }
-                                />
-                                Multimedia
-                              </label>
-                            </div>
-
-                            {/* Campo para MENSAJE */}
-                            {msg.type === "message" && (
-                              <>
-                                <Textarea
-                                  rows={3}
-                                  maxLength={MAX_MESSAGE_LENGTH}
-                                  placeholder="Escribe el mensaje de respuesta"
-                                  value={msg.message}
-                                  onChange={(e) =>
-                                    handleUpdateMessage(index, e.target.value)
-                                  }
-                                  className="resize-none"
-                                />
-                                <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                                  <span>Mensaje {index + 1}</span>
-                                  <span>
-                                    {(msg.message || "").length}/
-                                    {MAX_MESSAGE_LENGTH}
-                                  </span>
-                                </div>
-                              </>
-                            )}
-
-                            {/* Campo para MULTIMEDIA */}
-                            {msg.type === "media" && (
-                              <>
-                                {msg.mediaExisting?.length ? (
-                                  <div className="space-y-1">
-                                    {msg.mediaExisting.map((m, i) => (
-                                      <div
-                                        key={`ex-${i}`}
-                                        className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
-                                      >
-                                        <span className="truncate">
-                                          {m.name}
-                                        </span>
-                                        <button
-                                          type="button"
-                                          className="text-muted-foreground hover:text-foreground"
-                                          onClick={() =>
-                                            handleRemoveMedia(
-                                              index,
-                                              "existing",
-                                              i
-                                            )
-                                          }
-                                        >
-                                          Quitar
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : null}
-
-                                {msg.mediaNew?.length ? (
-                                  <div className="mt-2 space-y-1">
-                                    {msg.mediaNew.map((f, i) => (
-                                      <div
-                                        key={`new-${i}`}
-                                        className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
-                                      >
-                                        <span className="truncate">
-                                          {f.name} ({Math.round(f.size / 1024)}{" "}
-                                          KB)
-                                        </span>
-                                        <button
-                                          type="button"
-                                          className="text-muted-foreground hover:text-foreground"
-                                          onClick={() =>
-                                            handleRemoveMedia(index, "new", i)
-                                          }
-                                        >
-                                          Quitar
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : null}
-
-                                <div className="mt-2">
-                                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
-                                    <Paperclip className="h-4 w-4" />
-                                    <span>Añadir multimedia</span>
-                                    <input
-                                      type="file"
-                                      accept={ACCEPT}
-                                      multiple
-                                      className="hidden"
-                                      onChange={(e) =>
-                                        handleAddMediaToMessage(
-                                          index,
-                                          e.target.files
-                                        )
-                                      }
-                                    />
-                                  </label>
-                                </div>
-                              </>
-                            )}
-                          </div>
-
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRemoveMessage(index)}
-                            className="flex-shrink-0"
-                            aria-label="Eliminar mensaje"
-                          >
-                            <Trash2Icon className="size-4" />
-                          </Button>
-                        </div>
+                        }}
+                        onKeyDown={(e) => {
+                          const isSeparator =
+                            e.key === " " || e.key === "Enter" || e.key === ",";
+                          if (isSeparator) {
+                            e.preventDefault();
+                            const next = keywordInput.trim();
+                            if (next) {
+                              setKeywordsList((prev) =>
+                                prev.includes(next) ? prev : [...prev, next]
+                              );
+                              setKeywordInput("");
+                            }
+                          } else if (
+                            e.key === "Backspace" &&
+                            keywordInput.length === 0
+                          ) {
+                            setKeywordsList((prev) => prev.slice(0, -1));
+                          }
+                        }}
+                        className="mt-2"
+                      />
+                      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>
+                          {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
+                        </span>
                       </div>
-                    ))}
-
-                    {/* NUEVO contenido */}
-                    <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
-                      {/* Selector de tipo para el nuevo */}
-                      <div className="mb-2 flex items-center gap-4 text-sm">
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="new-type"
-                            value="message"
-                            checked={newType === "message"}
-                            onChange={() => handleChangeNewType("message")}
-                          />
-                          Mensaje
-                        </label>
-                        <label className="inline-flex items-center gap-2">
-                          <input
-                            type="radio"
-                            name="new-type"
-                            value="media"
-                            checked={newType === "media"}
-                            onChange={() => handleChangeNewType("media")}
-                          />
-                          Multimedia
-                        </label>
-                      </div>
-
-                      {newType === "message" && (
-                        <>
-                          <Textarea
-                            rows={3}
-                            maxLength={MAX_MESSAGE_LENGTH}
-                            placeholder="Escribe un nuevo mensaje"
-                            value={newMessage}
-                            onChange={(e) => setNewMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" && e.ctrlKey) {
-                                e.preventDefault();
-                                handleAddMessage();
-                              }
-                            }}
-                            className="resize-none"
-                          />
-                          <div className="mt-2 flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">
-                              {newMessage.length}/{MAX_MESSAGE_LENGTH}
-                            </span>
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={handleAddMessage}
-                              disabled={!newMessage.trim()}
-                            >
-                              <PlusIcon className="size-4 mr-2" />
-                              Agregar
-                            </Button>
-                          </div>
-                        </>
-                      )}
-
-                      {newType === "media" && (
-                        <>
-                          <div className="flex items-center justify-between">
-                            <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline">
-                              <Paperclip className="h-4 w-4" />
-                              <span>Añadir multimedia</span>
-                              <input
-                                type="file"
-                                accept={ACCEPT}
-                                multiple
-                                className="hidden"
-                                onChange={(e) =>
-                                  handleAddMediaToNew(e.target.files)
-                                }
-                              />
-                            </label>
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={handleAddMessage}
-                              disabled={newMediaFiles.length === 0}
-                            >
-                              <PlusIcon className="size-4 mr-2" />
-                              Agregar
-                            </Button>
-                          </div>
-
-                          {newMediaFiles.length ? (
-                            <div className="mt-2 space-y-1">
-                              {newMediaFiles.map((f, i) => (
-                                <div
-                                  key={`nm-${i}`}
-                                  className="flex items-center justify-between rounded border bg-muted/30 px-2 py-1 text-xs"
-                                >
-                                  <span className="truncate">
-                                    {f.name} ({Math.round(f.size / 1024)} KB)
-                                  </span>
-                                  <button
-                                    type="button"
-                                    className="text-muted-foreground hover:text-foreground"
-                                    onClick={() =>
-                                      setNewMediaFiles((prev) =>
-                                        prev.filter((_, idx) => idx !== i)
-                                      )
-                                    }
-                                  >
-                                    Quitar
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          ) : null}
-                        </>
-                      )}
                     </div>
+                    <FieldError>{errors.keywords}</FieldError>
+                  </FieldContent>
+                </Field>
+              </FieldGroup>
+            </FieldSet>
 
-                    <FieldError>{errors.messages}</FieldError>
-                  </div>
-                </FieldContent>
-              </Field>
-            </FieldGroup>
-          </FieldSet>
+            {status.error && (
+              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {status.error}
+              </div>
+            )}
+          </CardContent>
 
-          {status.error && (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {status.error}
+          <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
+            <div className="text-xs text-muted-foreground md:text-sm">
+              {messages.length > 0
+                ? `${messages.length} mensaje${
+                    messages.length > 1 ? "s" : ""
+                  } configurado${messages.length > 1 ? "s" : ""}.`
+                : "Agrega al menos un mensaje de respuesta."}
             </div>
-          )}
-        </CardContent>
+            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  const segment = chatbotSlug || chatbotId;
+                  router.push(
+                    `/dashboard/${encodeURIComponent(segment)}/triggers`
+                  );
+                }}
+                className="w-full md:w-auto"
+                disabled={status.loading}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                className="w-full md:w-auto"
+                disabled={status.loading || !token || !chatbotId}
+              >
+                {status.loading
+                  ? mode === "edit"
+                    ? "Actualizando..."
+                    : "Creando..."
+                  : mode === "edit"
+                  ? "Actualizar disparador"
+                  : "Crear disparador"}
+              </Button>
+            </div>
+          </CardFooter>
+        </form>
+      </Card>
 
-        <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
-          <div className="text-xs text-muted-foreground md:text-sm">
-            {messages.length > 0
-              ? `${messages.length} mensaje${
-                  messages.length > 1 ? "s" : ""
-                } configurado${messages.length > 1 ? "s" : ""}.`
-              : "Agrega al menos un mensaje de respuesta."}
-          </div>
-          <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                const segment = chatbotSlug || chatbotId;
-                router.push(
-                  `/dashboard/${encodeURIComponent(segment)}/triggers`
-                );
-              }}
-              className="w-full md:w-auto"
-              disabled={status.loading}
+      {/* [Cambio] Card lateral independiente para Mensajes/Multimedia (2da columna en desktop) */}
+      <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
+        <CardHeader>
+          <CardTitle>Respuestas</CardTitle>
+          <CardDescription>
+            Agrega mensajes o archivos multimedia. En escritorio se muestra como
+            una columna aparte.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Contenidos existentes/edición */}
+          {messages.map((msg, index) => (
+            <div
+              key={msg.id}
+              className="rounded-lg border border-muted-foreground/20 bg-background p-3"
             >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="w-full md:w-auto"
-              disabled={status.loading || !token || !chatbotId}
-            >
-              {status.loading
-                ? mode === "edit"
-                  ? "Actualizando..."
-                  : "Creando..."
-                : mode === "edit"
-                ? "Actualizar disparador"
-                : "Crear disparador"}
-            </Button>
+              {/* ⭐ min-w-0 para permitir truncado interno */}
+              <div className="flex items-start gap-2 min-w-0">
+                {/* ⭐ flex-1 w-0 min-w-0 para que el área principal pueda encoger y truncar */}
+                <div className="flex-1 w-0 min-w-0">
+                  {/* Tipo */}
+                  <div className="mb-2 flex items-center gap-4 text-sm">
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`type-${msg.id}`}
+                        value="message"
+                        checked={msg.type === "message"}
+                        onChange={() => handleChangeType(index, "message")}
+                      />
+                      Mensaje
+                    </label>
+                    <label className="inline-flex items-center gap-2">
+                      <input
+                        type="radio"
+                        name={`type-${msg.id}`}
+                        value="media"
+                        checked={msg.type === "media"}
+                        onChange={() => handleChangeType(index, "media")}
+                      />
+                      Multimedia
+                    </label>
+                  </div>
+
+                  {msg.type === "message" ? (
+                    <>
+                      <Textarea
+                        rows={3}
+                        maxLength={MAX_MESSAGE_LENGTH}
+                        placeholder="Escribe el mensaje de respuesta"
+                        value={msg.message}
+                        onChange={(e) =>
+                          handleUpdateMessage(index, e.target.value)
+                        }
+                        className="resize-none"
+                      />
+                      <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                        <span>Mensaje {index + 1}</span>
+                        <span>
+                          {(msg.message || "").length}/{MAX_MESSAGE_LENGTH}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Existentes */}
+                      {msg.mediaExisting?.length ? (
+                        <div className="mt-2 space-y-1">
+                          {msg.mediaExisting.map((m, i) => (
+                            <MediaItemRow
+                              key={`ex-${i}`}
+                              fileLike={m}
+                              onRemove={() =>
+                                handleRemoveMedia(index, "existing", i)
+                              }
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* Nuevos (previews) */}
+                      {msg.mediaNew?.length ? (
+                        <div className="mt-2 space-y-1">
+                          {msg.mediaNew.map((f, i) => (
+                            <MediaItemRow
+                              key={`new-${i}`}
+                              fileLike={f}
+                              onRemove={() =>
+                                handleRemoveMedia(index, "new", i)
+                              }
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+
+                      {/* ⭐ En móviles puede envolver; en desktop se mantiene en una línea sin romper layout */}
+                      <div className="mt-2 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+                        {/* ⭐ min-w-0 para que el texto interno (si lo hubiera) no rompa */}
+                        <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline min-w-0">
+                          <Paperclip className="h-4 w-4 shrink-0" />
+                          <span className="truncate">Añadir multimedia</span>
+                          <input
+                            type="file"
+                            accept={ACCEPT}
+                            multiple
+                            className="hidden"
+                            onChange={(e) =>
+                              handleAddMediaToMessage(index, e.target.files)
+                            }
+                          />
+                        </label>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleRemoveMessage(index)}
+                  className="shrink-0 my-auto hover:cursor-pointer"
+                  aria-label="Eliminar mensaje"
+                >
+                  <Trash2Icon className="size-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {/* Nuevo contenido */}
+          <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
+            <div className="mb-2 flex items-center gap-4 text-sm">
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="new-type"
+                  value="message"
+                  checked={newType === "message"}
+                  onChange={() => setNewType("message")}
+                />
+                Mensaje
+              </label>
+              <label className="inline-flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="new-type"
+                  value="media"
+                  checked={newType === "media"}
+                  onChange={() => setNewType("media")}
+                />
+                Multimedia
+              </label>
+            </div>
+
+            {newType === "message" ? (
+              <>
+                <Textarea
+                  rows={3}
+                  maxLength={MAX_MESSAGE_LENGTH}
+                  placeholder="Escribe un nuevo mensaje"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && e.ctrlKey) {
+                      e.preventDefault();
+                      handleAddMessage();
+                    }
+                  }}
+                  className="resize-none"
+                />
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {newMessage.length}/{MAX_MESSAGE_LENGTH}
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddMessage}
+                    disabled={!newMessage.trim()}
+                  >
+                    <PlusIcon className="size-4 mr-2" />
+                    Agregar
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* ⭐ Flex seguro: envuelve en móviles, no rompe en desktop */}
+                <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+                  <label className="inline-flex items-center gap-2 cursor-pointer text-sm font-medium text-primary hover:underline min-w-0">
+                    <Paperclip className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Añadir multimedia</span>
+                    <input
+                      type="file"
+                      accept={ACCEPT}
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleAddMediaToNew(e.target.files)}
+                    />
+                  </label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddMessage}
+                    disabled={newMediaFiles.length === 0}
+                    className="shrink-0" // ⭐ no se comprime
+                  >
+                    <PlusIcon className="size-4 mr-2" />
+                    Agregar
+                  </Button>
+                </div>
+
+                {/* Previews de nuevos archivos */}
+                {newMediaFiles.length ? (
+                  <div className="mt-2 space-y-1">
+                    {newMediaFiles.map((f, i) => (
+                      <MediaItemRow
+                        key={`nm-${i}`}
+                        fileLike={f}
+                        onRemove={() =>
+                          setNewMediaFiles((prev) =>
+                            prev.filter((_, idx) => idx !== i)
+                          )
+                        }
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
-        </CardFooter>
-      </form>
-    </Card>
+
+          <FieldError>{errors.messages}</FieldError>
+        </CardContent>
+      </Card>
+      {/* [/Cambio] */}
+    </div>
   );
 }
