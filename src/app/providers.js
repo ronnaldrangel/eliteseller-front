@@ -3,7 +3,7 @@
 import { ChatbotProvider } from "@/contexts/chatbot-context";
 import { SWRConfig } from "swr";
 import { useSession } from "next-auth/react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const CenteredSpinner = () => (
@@ -15,21 +15,32 @@ const CenteredSpinner = () => (
 const Providers = ({ children }) => {
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Solo escuchar cambios en pathname (sin searchParams)
   useEffect(() => {
     setLoading(false);
   }, [pathname]);
 
   useEffect(() => {
     const handleClick = (e) => {
-      if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+      if (
+        e.defaultPrevented ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
+      ) {
         return;
       }
 
       const anchor = e.target.closest("a");
-      if (!anchor || !anchor.href || anchor.target || anchor.hasAttribute("download")) {
+      if (
+        !anchor ||
+        !anchor.href ||
+        anchor.target ||
+        anchor.hasAttribute("download")
+      ) {
         return;
       }
 
@@ -57,6 +68,26 @@ const Providers = ({ children }) => {
     document.addEventListener("click", handleClick, true);
     return () => document.removeEventListener("click", handleClick, true);
   }, [pathname]);
+
+  useEffect(() => {
+    const originalPush = router.push;
+    const originalReplace = router.replace;
+
+    router.push = (...args) => {
+      setLoading(true);
+      return originalPush.apply(router, args);
+    };
+
+    router.replace = (...args) => {
+      setLoading(true);
+      return originalReplace.apply(router, args);
+    };
+
+    return () => {
+      router.push = originalPush;
+      router.replace = originalReplace;
+    };
+  }, [router]);
 
   const fetcher = async (url) => {
     const res = await fetch(url, {
