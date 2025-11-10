@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Turnstile from "react-turnstile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -22,7 +22,17 @@ export function LoginForm({
 }) {
   const [showPassword, setShowPassword] = useState(false)
   const [tsToken, setTsToken] = useState("")
+  const [tsBound, setTsBound] = useState(null)
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  
+  // Tras finalizar un envío, resetea y ejecuta el widget para nuevo token
+  useEffect(() => {
+    if (!submitting) {
+      tsBound?.reset?.()
+      tsBound?.execute?.()
+      setTsToken("")
+    }
+  }, [submitting, tsBound])
   return (
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
@@ -70,13 +80,21 @@ export function LoginForm({
           <Field>
             <Turnstile
               sitekey={siteKey}
-              onVerify={(token) => setTsToken(token)}
+              refreshExpired="auto"
+              retry="auto"
+              responseField={false}
+              onLoad={(widgetId, bound) => setTsBound(bound)}
+              onExpire={() => setTsToken("")}
+              onVerify={(token, bound) => {
+                setTsBound(bound)
+                setTsToken(token)
+              }}
             />
             <input type="hidden" name="cf-turnstile-response" value={tsToken} />
           </Field>
         ) : null}
         <Field>
-          <Button type="submit" disabled={submitting}>
+          <Button type="submit" disabled={submitting || (siteKey && !tsToken)}>
             {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

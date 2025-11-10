@@ -56,7 +56,7 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
         ) : null}
 
         {/* Grid de cards */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-fr">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 auto-rows-fr">
           {items.map((item) => (
             <Card
               key={item.id}

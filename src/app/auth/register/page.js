@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
 import AuthLayout from "../../../components/AuthLayout"
@@ -33,6 +33,16 @@ export default function RegisterPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [tsToken, setTsToken] = useState("")
+  const [tsBound, setTsBound] = useState(null)
+
+  useEffect(() => {
+    // Al terminar un envío, resetear el widget y limpiar token
+    if (!isLoading) {
+      tsBound?.reset?.()
+      tsBound?.execute?.()
+      setTsToken("")
+    }
+  }, [isLoading, tsBound])
 
   const generateUsernameFromEmail = (email) => {
     if (!email || typeof email !== "string") return ""
@@ -73,6 +83,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isLoading) return
     
     if (!validateForm()) return
 
@@ -328,16 +339,24 @@ export default function RegisterPage() {
 
             {SITE_KEY ? (
               <Field>
-                <Turnstile
-                  sitekey={SITE_KEY}
-                  onVerify={(token) => setTsToken(token)}
-                />
-                <input type="hidden" name="cf-turnstile-response" value={tsToken} />
-              </Field>
-            ) : null}
+            <Turnstile
+              sitekey={SITE_KEY}
+              refreshExpired="auto"
+              retry="auto"
+              responseField={false}
+              onLoad={(widgetId, bound) => setTsBound(bound)}
+              onExpire={() => setTsToken("")}
+              onVerify={(token, bound) => {
+                setTsBound(bound)
+                setTsToken(token)
+              }}
+            />
+            <input type="hidden" name="cf-turnstile-response" value={tsToken} />
+          </Field>
+        ) : null}
 
-            <Field>
-              <Button type="submit" disabled={isLoading} className="w-full">
+        <Field>
+              <Button type="submit" disabled={isLoading || (SITE_KEY && !tsToken)} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
