@@ -23,7 +23,6 @@ export default async function DashboardPage({ params }) {
   if (!chatbot) redirect("/select");
 
   const qs = new URLSearchParams();
-  qs.set("filters[type][$eq]", "news");
   qs.set("sort", "createdAt:desc");
   qs.set("fields[0]", "title");
   qs.set("fields[1]", "description");
