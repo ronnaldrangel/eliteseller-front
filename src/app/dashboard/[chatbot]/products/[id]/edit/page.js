@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import EditProductForm from "./edit-product-form";
 import { getChatbotBySlug } from "@/lib/utils/chatbot-utils";
 
@@ -59,19 +58,7 @@ export default async function EditProductPage({ params }) {
 
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
-      <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex items-center justify-between py-4 md:py-6">
-          <div>
-            <h1 className="text-2xl font-semibold">Editar producto</h1>
-          </div>
-          <Link
-            href={`/dashboard/${encodeURIComponent(chatbotSlug)}/products`}
-            className="text-sm underline"
-          >
-            Volver a productos
-          </Link>
-        </div>
-
+      <div className="@container/main mx-auto w-full flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
         {error ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
             {error}

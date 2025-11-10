@@ -702,7 +702,7 @@ export default function NewTriggerForm({
     <div>
       {/* Este es un tipo de header para mostrar el título del formulario y un botón hacia atrás */}
       <section className="mb-6">
-        <div className="primary flex items-center gap-4">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => {
               const segment = chatbotSlug || chatbotId;
@@ -717,7 +717,6 @@ export default function NewTriggerForm({
             {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
           </h3>
         </div>
-        <div className="secondary"></div>
       </section>
       <div className="xl:grid xl:items-start gap-6 space-y-6 xl:space-y-0 xl:grid-cols-2">
         {/* [Cambio] Card lateral independiente para Mensajes/Multimedia (2da columna en desktop) */}
