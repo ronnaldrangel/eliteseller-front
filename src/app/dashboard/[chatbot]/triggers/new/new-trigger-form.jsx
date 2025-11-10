@@ -9,7 +9,8 @@ import {
   PlusIcon,
   Trash2Icon,
   File as FileIcon,
-  Upload, // [Cambio]
+  Upload, // [Cambio],
+  ChevronLeft,
 } from "lucide-react";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Button } from "@/components/ui/button";
@@ -698,372 +699,379 @@ export default function NewTriggerForm({
 
   // [Cambio] Layout en dos columnas con un Card lateral para mensajes/multimedia
   return (
-    <div className="xl:grid xl:items-start gap-6 space-y-6 xl:space-y-0 xl:grid-cols-2">
-      {/* [Cambio] Card lateral independiente para Mensajes/Multimedia (2da columna en desktop) */}
-      <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
-        <CardHeader>
-          <CardTitle>Respuestas</CardTitle>
-          <CardDescription>
-            Agrega mensajes o archivos multimedia. En escritorio se muestra como
-            una columna aparte.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Contenidos existentes/edición */}
-          {messages.map((msg, index) => {
-            const hasAnyMedia =
-              (msg.mediaExisting?.length || 0) + (msg.mediaNew?.length || 0) >
-              0;
-
-            return (
-              <div
-                key={msg.id}
-                className="rounded-lg border border-muted-foreground/20 bg-background p-3"
-              >
-                <div className="flex items-start gap-2 min-w-0">
-                  <div className="flex-1 w-0 min-w-0">
-                    {/* Tipo */}
-                    <div className="mb-2 flex items-center gap-4 text-sm">
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name={`type-${msg.id}`}
-                          value="message"
-                          checked={msg.type === "message"}
-                          onChange={() => handleChangeType(index, "message")}
-                        />
-                        Mensaje
-                      </label>
-                      <label className="inline-flex items-center gap-2">
-                        <input
-                          type="radio"
-                          name={`type-${msg.id}`}
-                          value="media"
-                          checked={msg.type === "media"}
-                          onChange={() => handleChangeType(index, "media")}
-                        />
-                        Multimedia
-                      </label>
-                    </div>
-
-                    {msg.type === "message" ? (
-                      <>
-                        <Textarea
-                          rows={3}
-                          maxLength={MAX_MESSAGE_LENGTH}
-                          placeholder="Escribe el mensaje de respuesta"
-                          value={msg.message}
-                          onChange={(e) =>
-                            handleUpdateMessage(index, e.target.value)
-                          }
-                          className="resize-none"
-                        />
-                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                          <span>Mensaje {index + 1}</span>
-                          <span>
-                            {(msg.message || "").length}/{MAX_MESSAGE_LENGTH}
-                          </span>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        {/* Existentes */}
-                        {msg.mediaExisting?.length ? (
-                          <>
-                            <div className="mb-1 text-xs font-medium text-muted-foreground">
-                              Files ({msg.mediaExisting.length})
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {msg.mediaExisting.map((m, i) => (
-                                <MediaCard
-                                  key={`ex-${i}`}
-                                  fileLike={m}
-                                  onRemove={() =>
-                                    handleRemoveMedia(index, "existing", i)
-                                  }
-                                />
-                              ))}
-                            </div>
-                          </>
-                        ) : null}
-
-                        {/* Nuevos (previews) */}
-                        {msg.mediaNew?.length ? (
-                          <>
-                            <div className="mt-3 mb-1 text-xs font-medium text-muted-foreground">
-                              Files nuevos ({msg.mediaNew.length})
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                              {msg.mediaNew.map((f, i) => (
-                                <MediaCard
-                                  key={`new-${i}`}
-                                  fileLike={f}
-                                  onRemove={() =>
-                                    handleRemoveMedia(index, "new", i)
-                                  }
-                                />
-                              ))}
-                            </div>
-                          </>
-                        ) : null}
-
-                        {/* [Cambio] Dropzone nuevo SOLO si no hay archivo */}
-                        {!hasAnyMedia && (
-                          <div className="mt-3">
-                            <DropzoneButton
-                              id={`add-media-${msg.id}`}
-                              onChange={(e) =>
-                                handleAddMediaToMessage(index, e.target.files)
-                              }
-                            />
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRemoveMessage(index)}
-                    className="shrink-0 my-auto hover:cursor-pointer"
-                    aria-label="Eliminar mensaje"
-                  >
-                    <Trash2Icon className="size-4" />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
-
-          {/* Nuevo contenido */}
-          <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
-            <div className="mb-2 flex items-center gap-4 text-sm">
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="new-type"
-                  value="message"
-                  checked={newType === "message"}
-                  onChange={() => setNewType("message")}
-                />
-                Mensaje
-              </label>
-              <label className="inline-flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="new-type"
-                  value="media"
-                  checked={newType === "media"}
-                  onChange={() => setNewType("media")}
-                />
-                Multimedia
-              </label>
-            </div>
-
-            {newType === "message" ? (
-              <>
-                <Textarea
-                  rows={3}
-                  maxLength={MAX_MESSAGE_LENGTH}
-                  placeholder="Escribe un nuevo mensaje"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && e.ctrlKey) {
-                      e.preventDefault();
-                      handleAddMessage();
-                    }
-                  }}
-                  className="resize-none"
-                />
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {newMessage.length}/{MAX_MESSAGE_LENGTH}
-                  </span>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={handleAddMessage}
-                    disabled={!newMessage.trim()}
-                  >
-                    <PlusIcon className="size-4 mr-2" />
-                    Agregar
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* [Cambio] Dropzone estilo nuevo (solo 1 archivo) */}
-                {newMediaFiles.length === 0 ? (
-                  <DropzoneButton
-                    id="new-media-drop"
-                    onChange={(e) => handleAddMediaToNew(e.target.files)}
-                  />
-                ) : null}
-
-                {/* Previews de nuevos archivos */}
-                {newMediaFiles.length ? (
-                  <>
-                    <div className="mt-3 mb-1 text-xs font-medium text-muted-foreground">
-                      Files ({newMediaFiles.length})
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <MediaCard
-                        fileLike={newMediaFiles[0]}
-                        onRemove={() => setNewMediaFiles([])}
-                      />
-                    </div>
-
-                    <div className="mt-3 flex justify-end">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={handleAddMessage}
-                        className="shrink-0"
-                      >
-                        <PlusIcon className="size-4 mr-2" />
-                        Agregar
-                      </Button>
-                    </div>
-                  </>
-                ) : null}
-              </>
-            )}
-          </div>
-
-          <FieldError>{errors.messages}</FieldError>
-        </CardContent>
-      </Card>
-      {/* [/Cambio] */}
-
-      <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
-        <form onSubmit={handleSubmit} className="contents">
-          <CardHeader className="flex items-start justify-between">
-            <div>
-              <CardTitle>
-                {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
-              </CardTitle>
-              <CardDescription>
-                Define el nombre, palabras clave y configuración general.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-              <Switch
-                id="trigger-available"
-                checked={!!form.available}
-                onCheckedChange={(value) =>
-                  setForm((previous) => ({
-                    ...previous,
-                    available: !!value,
-                  }))
-                }
-                aria-label="Estado activo"
-              />
-              <span className="text-sm text-muted-foreground">
-                {form.available ? "Activo" : "Inactivo"}
-              </span>
-            </div>
+    <div>
+      {/* Este es un tipo de header para mostrar el título del formulario y un botón hacia atrás */}
+      <section className="mb-6">
+        <div className="primary flex items-center gap-4">
+          <button
+            onClick={() => {
+              const segment = chatbotSlug || chatbotId;
+              router.push(`/dashboard/${encodeURIComponent(segment)}/triggers`);
+            }}
+            className="flex items-center text-sm opacity-75 transition-colors hover:text-primary hover:cursor-pointer"
+          >
+            <ChevronLeft className="inline size-5 mr-2" />
+            <span>Atrás</span>
+          </button>
+          <h3 className="font-medium text-lg">
+            {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
+          </h3>
+        </div>
+        <div className="secondary"></div>
+      </section>
+      <div className="xl:grid xl:items-start gap-6 space-y-6 xl:space-y-0 xl:grid-cols-2">
+        {/* [Cambio] Card lateral independiente para Mensajes/Multimedia (2da columna en desktop) */}
+        <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
+          <CardHeader>
+            <CardTitle>Respuestas</CardTitle>
+            <CardDescription>
+              Agrega mensajes o archivos multimedia. En escritorio se muestra
+              como una columna aparte.
+            </CardDescription>
           </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Contenidos existentes/edición */}
+            {messages.map((msg, index) => {
+              const hasAnyMedia =
+                (msg.mediaExisting?.length || 0) + (msg.mediaNew?.length || 0) >
+                0;
 
-          <CardContent className="space-y-6">
-            <FieldSet className="gap-6">
-              <FieldGroup className="gap-6">
-                <Field data-invalid={errors.name ? true : undefined}>
-                  <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="trigger-name"
-                      placeholder="Ej. Bienvenida inicial"
-                      value={form.name}
-                      onChange={(event) =>
-                        setForm((previous) => ({
-                          ...previous,
-                          name: event.target.value,
-                        }))
-                      }
-                    />
-                    <FieldDescription>
-                      Será visible dentro del panel para identificar el
-                      disparador.
-                    </FieldDescription>
-                    <FieldError>{errors.name}</FieldError>
-                  </FieldContent>
-                </Field>
-
-                <Field>
-                  <FieldLabel htmlFor="trigger-id-ads">
-                    ID Ads (opcional)
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="trigger-id-ads"
-                      placeholder="Ej. 023232323232121"
-                      value={form.id_ads}
-                      onChange={(event) =>
-                        setForm((previous) => ({
-                          ...previous,
-                          id_ads: event.target.value,
-                        }))
-                      }
-                    />
-                    <FieldDescription>
-                      Vincula este disparador con un anuncio o campaña
-                      específica.
-                    </FieldDescription>
-                  </FieldContent>
-                </Field>
-              </FieldGroup>
-
-              <FieldGroup className="gap-6">
-                <Field data-invalid={errors.keywords ? true : undefined}>
-                  <FieldLabel htmlFor="trigger-keywords">
-                    Palabras clave
-                  </FieldLabel>
-                  <FieldContent>
-                    <div>
-                      <div className="flex flex-wrap gap-2">
-                        {keywordsList.map((kw, index) => (
-                          <span
-                            key={`${kw}-${index}`}
-                            className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
-                          >
-                            {kw}
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setKeywordsList((prev) =>
-                                  prev.filter((_, i) => i !== index)
-                                )
-                              }
-                              className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
-                              aria-label={`Quitar palabra ${kw}`}
-                            >
-                              x
-                            </button>
-                          </span>
-                        ))}
+              return (
+                <div
+                  key={msg.id}
+                  className="rounded-lg border border-muted-foreground/20 bg-background p-3"
+                >
+                  <div className="flex items-start gap-2 min-w-0">
+                    <div className="flex-1 w-0 min-w-0">
+                      {/* Tipo */}
+                      <div className="mb-2 flex items-center gap-4 text-sm">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name={`type-${msg.id}`}
+                            value="message"
+                            checked={msg.type === "message"}
+                            onChange={() => handleChangeType(index, "message")}
+                          />
+                          Mensaje
+                        </label>
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name={`type-${msg.id}`}
+                            value="media"
+                            checked={msg.type === "media"}
+                            onChange={() => handleChangeType(index, "media")}
+                          />
+                          Multimedia
+                        </label>
                       </div>
+
+                      {msg.type === "message" ? (
+                        <>
+                          <Textarea
+                            rows={3}
+                            maxLength={MAX_MESSAGE_LENGTH}
+                            placeholder="Escribe el mensaje de respuesta"
+                            value={msg.message}
+                            onChange={(e) =>
+                              handleUpdateMessage(index, e.target.value)
+                            }
+                            className="resize-none"
+                          />
+                          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Mensaje {index + 1}</span>
+                            <span>
+                              {(msg.message || "").length}/{MAX_MESSAGE_LENGTH}
+                            </span>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          {/* Existentes */}
+                          {msg.mediaExisting?.length ? (
+                            <>
+                              <div className="mb-1 text-xs font-medium text-muted-foreground">
+                                Files ({msg.mediaExisting.length})
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {msg.mediaExisting.map((m, i) => (
+                                  <MediaCard
+                                    key={`ex-${i}`}
+                                    fileLike={m}
+                                    onRemove={() =>
+                                      handleRemoveMedia(index, "existing", i)
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          ) : null}
+
+                          {/* Nuevos (previews) */}
+                          {msg.mediaNew?.length ? (
+                            <>
+                              <div className="mt-3 mb-1 text-xs font-medium text-muted-foreground">
+                                Files nuevos ({msg.mediaNew.length})
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {msg.mediaNew.map((f, i) => (
+                                  <MediaCard
+                                    key={`new-${i}`}
+                                    fileLike={f}
+                                    onRemove={() =>
+                                      handleRemoveMedia(index, "new", i)
+                                    }
+                                  />
+                                ))}
+                              </div>
+                            </>
+                          ) : null}
+
+                          {/* [Cambio] Dropzone nuevo SOLO si no hay archivo */}
+                          {!hasAnyMedia && (
+                            <div className="mt-3">
+                              <DropzoneButton
+                                id={`add-media-${msg.id}`}
+                                onChange={(e) =>
+                                  handleAddMediaToMessage(index, e.target.files)
+                                }
+                              />
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveMessage(index)}
+                      className="shrink-0 my-auto hover:cursor-pointer"
+                      aria-label="Eliminar mensaje"
+                    >
+                      <Trash2Icon className="size-4" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Nuevo contenido */}
+            <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
+              <div className="mb-2 flex items-center gap-4 text-sm">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="new-type"
+                    value="message"
+                    checked={newType === "message"}
+                    onChange={() => setNewType("message")}
+                  />
+                  Mensaje
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="new-type"
+                    value="media"
+                    checked={newType === "media"}
+                    onChange={() => setNewType("media")}
+                  />
+                  Multimedia
+                </label>
+              </div>
+
+              {newType === "message" ? (
+                <>
+                  <Textarea
+                    rows={3}
+                    maxLength={MAX_MESSAGE_LENGTH}
+                    placeholder="Escribe un nuevo mensaje"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && e.ctrlKey) {
+                        e.preventDefault();
+                        handleAddMessage();
+                      }
+                    }}
+                    className="resize-none"
+                  />
+                  <div className="mt-2 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
+                      {newMessage.length}/{MAX_MESSAGE_LENGTH}
+                    </span>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddMessage}
+                      disabled={!newMessage.trim()}
+                    >
+                      <PlusIcon className="size-4 mr-2" />
+                      Agregar
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* [Cambio] Dropzone estilo nuevo (solo 1 archivo) */}
+                  {newMediaFiles.length === 0 ? (
+                    <DropzoneButton
+                      id="new-media-drop"
+                      onChange={(e) => handleAddMediaToNew(e.target.files)}
+                    />
+                  ) : null}
+
+                  {/* Previews de nuevos archivos */}
+                  {newMediaFiles.length ? (
+                    <>
+                      <div className="mt-3 mb-1 text-xs font-medium text-muted-foreground">
+                        Files ({newMediaFiles.length})
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <MediaCard
+                          fileLike={newMediaFiles[0]}
+                          onRemove={() => setNewMediaFiles([])}
+                        />
+                      </div>
+
+                      <div className="mt-3 flex justify-end">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={handleAddMessage}
+                          className="shrink-0"
+                        >
+                          <PlusIcon className="size-4 mr-2" />
+                          Agregar
+                        </Button>
+                      </div>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </div>
+
+            <FieldError>{errors.messages}</FieldError>
+          </CardContent>
+        </Card>
+        {/* [/Cambio] */}
+
+        <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
+          <form onSubmit={handleSubmit} className="contents">
+            <CardHeader className="flex items-start justify-between">
+              <div>
+                <CardTitle>
+                  {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
+                </CardTitle>
+                <CardDescription>
+                  Define el nombre, palabras clave y configuración general.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="trigger-available"
+                  checked={!!form.available}
+                  onCheckedChange={(value) =>
+                    setForm((previous) => ({
+                      ...previous,
+                      available: !!value,
+                    }))
+                  }
+                  aria-label="Estado activo"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {form.available ? "Activo" : "Inactivo"}
+                </span>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <FieldSet className="gap-6">
+                <FieldGroup className="gap-6">
+                  <Field data-invalid={errors.name ? true : undefined}>
+                    <FieldLabel htmlFor="trigger-name">Nombre</FieldLabel>
+                    <FieldContent>
                       <Input
-                        id="trigger-keywords"
-                        placeholder="Escribe una palabra y presiona enter"
-                        value={keywordInput}
-                        onChange={(e) => setKeywordInput(e.target.value)}
-                        onBlur={() => {
-                          const next = keywordInput.trim();
-                          if (next) {
-                            setKeywordsList((prev) =>
-                              prev.includes(next) ? prev : [...prev, next]
-                            );
-                            setKeywordInput("");
-                          }
-                        }}
-                        onKeyDown={(e) => {
-                          const isSeparator =
-                            e.key === " " || e.key === "Enter" || e.key === ",";
-                          if (isSeparator) {
-                            e.preventDefault();
+                        id="trigger-name"
+                        placeholder="Ej. Bienvenida inicial"
+                        value={form.name}
+                        onChange={(event) =>
+                          setForm((previous) => ({
+                            ...previous,
+                            name: event.target.value,
+                          }))
+                        }
+                      />
+                      <FieldDescription>
+                        Será visible dentro del panel para identificar el
+                        disparador.
+                      </FieldDescription>
+                      <FieldError>{errors.name}</FieldError>
+                    </FieldContent>
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="trigger-id-ads">
+                      ID Ads (opcional)
+                    </FieldLabel>
+                    <FieldContent>
+                      <Input
+                        id="trigger-id-ads"
+                        placeholder="Ej. 023232323232121"
+                        value={form.id_ads}
+                        onChange={(event) =>
+                          setForm((previous) => ({
+                            ...previous,
+                            id_ads: event.target.value,
+                          }))
+                        }
+                      />
+                      <FieldDescription>
+                        Vincula este disparador con un anuncio o campaña
+                        específica.
+                      </FieldDescription>
+                    </FieldContent>
+                  </Field>
+                </FieldGroup>
+
+                <FieldGroup className="gap-6">
+                  <Field data-invalid={errors.keywords ? true : undefined}>
+                    <FieldLabel htmlFor="trigger-keywords">
+                      Palabras clave
+                    </FieldLabel>
+                    <FieldContent>
+                      <div>
+                        <div className="flex flex-wrap gap-2">
+                          {keywordsList.map((kw, index) => (
+                            <span
+                              key={`${kw}-${index}`}
+                              className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
+                            >
+                              {kw}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setKeywordsList((prev) =>
+                                    prev.filter((_, i) => i !== index)
+                                  )
+                                }
+                                className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
+                                aria-label={`Quitar palabra ${kw}`}
+                              >
+                                x
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                        <Input
+                          id="trigger-keywords"
+                          placeholder="Escribe una palabra y presiona enter"
+                          value={keywordInput}
+                          onChange={(e) => setKeywordInput(e.target.value)}
+                          onBlur={() => {
                             const next = keywordInput.trim();
                             if (next) {
                               setKeywordsList((prev) =>
@@ -1071,74 +1079,90 @@ export default function NewTriggerForm({
                               );
                               setKeywordInput("");
                             }
-                          } else if (
-                            e.key === "Backspace" &&
-                            keywordInput.length === 0
-                          ) {
-                            setKeywordsList((prev) => prev.slice(0, -1));
-                          }
-                        }}
-                        className="mt-2"
-                      />
-                      <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
-                        </span>
+                          }}
+                          onKeyDown={(e) => {
+                            const isSeparator =
+                              e.key === " " ||
+                              e.key === "Enter" ||
+                              e.key === ",";
+                            if (isSeparator) {
+                              e.preventDefault();
+                              const next = keywordInput.trim();
+                              if (next) {
+                                setKeywordsList((prev) =>
+                                  prev.includes(next) ? prev : [...prev, next]
+                                );
+                                setKeywordInput("");
+                              }
+                            } else if (
+                              e.key === "Backspace" &&
+                              keywordInput.length === 0
+                            ) {
+                              setKeywordsList((prev) => prev.slice(0, -1));
+                            }
+                          }}
+                          className="mt-2"
+                        />
+                        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+                          <span>
+                            {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <FieldError>{errors.keywords}</FieldError>
-                  </FieldContent>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
+                      <FieldError>{errors.keywords}</FieldError>
+                    </FieldContent>
+                  </Field>
+                </FieldGroup>
+              </FieldSet>
 
-            {status.error && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {status.error}
+              {status.error && (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                  {status.error}
+                </div>
+              )}
+            </CardContent>
+
+            <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
+              <div className="text-xs text-muted-foreground md:text-sm">
+                {messages.length > 0
+                  ? `${messages.length} mensaje${
+                      messages.length > 1 ? "s" : ""
+                    } configurado${messages.length > 1 ? "s" : ""}.`
+                  : "Agrega al menos un mensaje de respuesta."}
               </div>
-            )}
-          </CardContent>
-
-          <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
-            <div className="text-xs text-muted-foreground md:text-sm">
-              {messages.length > 0
-                ? `${messages.length} mensaje${
-                    messages.length > 1 ? "s" : ""
-                  } configurado${messages.length > 1 ? "s" : ""}.`
-                : "Agrega al menos un mensaje de respuesta."}
-            </div>
-            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  const segment = chatbotSlug || chatbotId;
-                  router.push(
-                    `/dashboard/${encodeURIComponent(segment)}/triggers`
-                  );
-                }}
-                className="w-full md:w-auto"
-                disabled={status.loading}
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                className="w-full md:w-auto"
-                disabled={status.loading || !token || !chatbotId}
-              >
-                {status.loading
-                  ? mode === "edit"
-                    ? "Actualizando..."
-                    : "Creando..."
-                  : mode === "edit"
-                  ? "Actualizar disparador"
-                  : "Crear disparador"}
-              </Button>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+              <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    const segment = chatbotSlug || chatbotId;
+                    router.push(
+                      `/dashboard/${encodeURIComponent(segment)}/triggers`
+                    );
+                  }}
+                  className="w-full md:w-auto"
+                  disabled={status.loading}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  className="w-full md:w-auto"
+                  disabled={status.loading || !token || !chatbotId}
+                >
+                  {status.loading
+                    ? mode === "edit"
+                      ? "Actualizando..."
+                      : "Creando..."
+                    : mode === "edit"
+                    ? "Actualizar disparador"
+                    : "Crear disparador"}
+                </Button>
+              </div>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
