@@ -296,7 +296,7 @@ export default function NewTriggerForm({
           data: {
             name: form.name.trim(),
             keywords: joined,
-            keywords_ai: joinedAi,
+            // keywords_ai: joinedAi,
             available: Boolean(form.available),
             id_ads: form.id_ads.trim() || null,
           },
@@ -426,7 +426,7 @@ export default function NewTriggerForm({
           data: {
             name: form.name.trim(),
             keywords: joined,
-            keywords_ai: joinedAi,
+            // keywords_ai: joinedAi,
             available: Boolean(form.available),
             id_ads: form.id_ads.trim() || null,
           },

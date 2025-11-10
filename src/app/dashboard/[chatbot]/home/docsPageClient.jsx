@@ -189,7 +189,7 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
                 <div className="w-full lg:w-1/2 lg:min-w-[600px]">
                   <div className="aspect-video overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
                     <iframe
-                      src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1"
+                      src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1&controls=0&loop=1&playlist=fBaTyOcu0r8"
                       title="Bienvenida a EliteSeller"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                       allowFullScreen
