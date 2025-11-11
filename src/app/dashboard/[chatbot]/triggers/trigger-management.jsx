@@ -16,7 +16,6 @@ import {
   TableRow,
   TableCaption,
 } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 const randomId = () =>
@@ -105,18 +104,17 @@ export default function TriggerManagement({
 
   return (
     <div className="grid gap-6 pb-6">
-      <Card className="bg-background/80 overflow-x-auto">
-        <CardContent>
-          <Table className="min-w-max">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[200px]">Nombre</TableHead>
-                <TableHead className="min-w-[280px]">Palabras clave</TableHead>
-                <TableHead className="min-w-[120px]">Visibilidad</TableHead>
-                <TableHead className="min-w-[180px]">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <div className="overflow-hidden rounded-md border">
+        <Table className="min-w-max">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="min-w-[200px]">Nombre</TableHead>
+              <TableHead className="min-w-[280px]">Palabras clave</TableHead>
+              <TableHead className="min-w-[120px]">Visibilidad</TableHead>
+              <TableHead className="min-w-[180px]">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
               {triggers.length === 0 ? (
                 <TableRow>
                   <TableCell
@@ -199,9 +197,8 @@ export default function TriggerManagement({
                 Los disparadores se sincronizan automaticamente con tu chatbot.
               </TableCaption>
             )}
-          </Table>
-        </CardContent>
-      </Card>
+        </Table>
+      </div>
     </div>
   );
 }

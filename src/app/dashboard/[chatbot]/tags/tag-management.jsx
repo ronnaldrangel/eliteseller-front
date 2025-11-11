@@ -32,7 +32,6 @@ import {
   TableRow,
   TableCaption,
 } from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
   FieldContent,
@@ -477,11 +476,8 @@ export default function TagManagement({
       </Dialog>
 
       <div className="grid gap-6 pb-6">
-        {/* El overflow aquí es para el responsive */}
-        <Card className="bg-background/80 overflow-x-auto">
-          <CardContent>
-            {/* <div className="overflow-x-auto"> */}
-              <Table className="min-w-full">
+        <div className="overflow-hidden rounded-md border">
+          <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-[180px]">
@@ -579,9 +575,7 @@ export default function TagManagement({
                   </TableCaption>
                 )}
               </Table>
-            {/* </div> */}
-          </CardContent>
-        </Card>
+            </div>
 
         {/* Modal de edicion */}
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
