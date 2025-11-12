@@ -106,7 +106,7 @@ export function NavUser({
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={withChatbotSegment('/billing')}>
+                <Link href='/billing'>
                   <CreditCardIcon />
                   Facturacion
                 </Link>
