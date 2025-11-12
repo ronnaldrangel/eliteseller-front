@@ -58,6 +58,84 @@ async function fetchCollectionCount(collection, token, chatbotDocumentId) {
   }
 }
 
+async function fetchContactsSeries(token, chatbotDocumentId) {
+  const buckets = new Map();
+  const since = new Date();
+  since.setDate(since.getDate() - 120);
+  const sinceIso = since.toISOString();
+
+  const pageSize = 200;
+  let page = 1;
+  let pageCount = 1;
+
+  do {
+    const qs = new URLSearchParams();
+    qs.set("pagination[page]", String(page));
+    qs.set("pagination[pageSize]", String(pageSize));
+    qs.set("sort", "createdAt:asc");
+    qs.set("fields[0]", "createdAt");
+    qs.set("filters[createdAt][$gte]", sinceIso);
+    if (chatbotDocumentId) {
+      qs.set("filters[chatbot][documentId][$eq]", chatbotDocumentId);
+    }
+
+    const url = buildStrapiUrl(`/api/contacts?${qs.toString()}`);
+
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        console.error(
+          `[dashboard/stats] No se pudo obtener la serie de contactos (status ${res.status})`
+        );
+        break;
+      }
+
+      const payload = await res.json().catch(() => ({}));
+      const rows = Array.isArray(payload?.data)
+        ? payload.data
+        : Array.isArray(payload)
+        ? payload
+        : [];
+
+      rows.forEach((row) => {
+        const createdAt =
+          row?.attributes?.createdAt ||
+          row?.createdAt ||
+          row?.attributes?.created_at;
+        if (!createdAt) return;
+        const day = createdAt.split("T")[0];
+        if (!day) return;
+        buckets.set(day, (buckets.get(day) || 0) + 1);
+      });
+
+      const pagination = payload?.meta?.pagination;
+      if (!pagination) {
+        break;
+      }
+      pageCount = pagination.pageCount || page;
+      page += 1;
+    } catch (error) {
+      console.error(
+        "[dashboard/stats] Error al obtener contactos para la serie:",
+        error?.message || error
+      );
+      break;
+    }
+  } while (page <= pageCount);
+
+  return Array.from(buckets.entries())
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([date, count]) => ({ date, count }));
+}
+
 export async function GET(request) {
   const session = await auth();
 
@@ -86,10 +164,11 @@ export async function GET(request) {
     chatbotDocumentId = chatbot.documentId;
   }
 
-  const [contacts, triggers, products] = await Promise.all([
+  const [contacts, triggers, products, contactSeries] = await Promise.all([
     fetchCollectionCount("contacts", session.strapiToken, chatbotDocumentId),
     fetchCollectionCount("triggers", session.strapiToken, chatbotDocumentId),
     fetchCollectionCount("products", session.strapiToken, chatbotDocumentId),
+    fetchContactsSeries(session.strapiToken, chatbotDocumentId),
   ]);
 
   return NextResponse.json({
@@ -99,6 +178,7 @@ export async function GET(request) {
         triggers,
         products,
       },
+      contactSeries,
     },
   });
 }

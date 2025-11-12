@@ -78,11 +78,11 @@ import {
     { id: "7d", label: "Ultimos 7 dias" },
   ];
 
-  const RANGE_POINTS = {
-    "90d": 12,
-    "30d": 10,
-    "7d": 7,
-  };
+const RANGE_LIMIT_DAYS = {
+  "90d": 90,
+  "30d": 30,
+  "7d": 7,
+};
 
   function getTrendDescriptor(item, value) {
     if (typeof value !== "number") {
@@ -143,6 +143,7 @@ import {
 
     // Stats
     const [statsData, setStatsData] = useState({ ...INITIAL_STATS });
+    const [contactSeries, setContactSeries] = useState([]);
     const [statsLoading, setStatsLoading] = useState(true);
     const [statsError, setStatsError] = useState(null);
     const [chartRange, setChartRange] = useState("30d");
@@ -197,6 +198,9 @@ import {
 
           const payload = await response.json();
           const stats = payload?.data?.stats || {};
+          const series = Array.isArray(payload?.data?.contactSeries)
+            ? payload.data.contactSeries
+            : [];
 
           setStatsData({
             contacts:
@@ -206,6 +210,7 @@ import {
             products:
               typeof stats.products === "number" ? stats.products : null,
           });
+          setContactSeries(series);
         } catch (error) {
           const isAbortError =
             error?.name === "AbortError" ||
@@ -213,11 +218,12 @@ import {
               error instanceof DOMException &&
               error.name === "AbortError");
 
-          if (!isAbortError) {
-            console.error("Failed to load dashboard stats", error);
-            setStatsError("No se pudieron cargar las estadisticas.");
-            setStatsData({ ...INITIAL_STATS });
-          }
+            if (!isAbortError) {
+          console.error("Failed to load dashboard stats", error);
+          setStatsError("No se pudieron cargar las estadisticas.");
+          setStatsData({ ...INITIAL_STATS });
+          setContactSeries([]);
+        }
         } finally {
           if (!controller.signal.aborted) setStatsLoading(false);
         }
@@ -233,31 +239,39 @@ import {
       [chartRange]
     );
   const chartData = useMemo(() => {
-    const points = RANGE_POINTS[chartRange] || 10;
-    const contactsValue =
-      typeof statsData.contacts === "number" ? statsData.contacts : 0;
-    const maxStat = Math.max(contactsValue, 25);
-    if (!Number.isFinite(maxStat)) return [];
+    if (!Array.isArray(contactSeries) || contactSeries.length === 0) {
+      return [];
+    }
 
-    const today = new Date();
-    // Genera una onda suave tomando como referencia la cantidad de contactos.
-    return Array.from({ length: points }, (_, idx) => {
-      const current = new Date(today);
-      current.setDate(today.getDate() - (points - 1 - idx));
-      const normalizedIndex = idx / Math.max(points - 1, 1);
-      const seasonalWave = Math.sin(normalizedIndex * Math.PI * 2) * 0.3 + 0.7;
-      const momentum =
-        normalizedIndex * (contactsValue > 0 ? contactsValue * 0.1 : maxStat * 0.05);
-      const value = Math.max(
-        Math.round(seasonalWave * maxStat + momentum),
-        0
-      );
-      return {
+    const limitDays = RANGE_LIMIT_DAYS[chartRange] || 30;
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999);
+    const startDate = new Date(endDate);
+    startDate.setDate(startDate.getDate() - (limitDays - 1));
+
+    const buckets = new Map();
+    contactSeries.forEach((point) => {
+      if (!point?.date) return;
+      const count =
+        typeof point?.count === "number" ? point.count : Number(point?.count) || 0;
+      buckets.set(point.date, count);
+    });
+
+    const filled = [];
+    const cursor = new Date(startDate);
+    while (cursor <= endDate) {
+      const current = new Date(cursor);
+      const iso = current.toISOString().split("T")[0];
+      const value = buckets.get(iso) ?? 0;
+      filled.push({
         date: formatShortDate(current),
         value,
-      };
-    });
-  }, [chartRange, statsData.contacts]);
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return filled;
+  }, [chartRange, contactSeries]);
 
     const chartSummary = useMemo(() => {
       if (!chartData.length) {
