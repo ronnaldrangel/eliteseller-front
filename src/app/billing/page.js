@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import AffiliatePaymentCta from "@/components/affiliate-payment-cta"
+import ChangeCardCta from "@/components/change-card-cta"
 import SelectUserAvatarMenu from "@/components/select-user-avatar-menu"
 import { auth } from "@/lib/auth"
 import { buildStrapiUrl } from "@/lib/strapi"
@@ -134,7 +135,7 @@ export default async function BillingPage() {
                 ) : null}
               </div>
               <div className="mt-4 flex gap-2">
-                <button className="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-90">Actualizar método</button>
+                <ChangeCardCta userId={session?.user?.strapiUserId} />
                 <Link href="/plans" className="inline-flex items-center rounded-md border px-3 py-1.5 text-sm hover:bg-muted">Ver planes</Link>
               </div>
             </div>
