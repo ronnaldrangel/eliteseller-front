@@ -569,11 +569,11 @@ export default function TagManagement({
                     ))
                   )}
                 </TableBody>
-                {tags.length > 0 && (
+                {/* {tags.length > 0 && (
                   <TableCaption className="text-xs">
                     Las etiquetas se sincronizan automaticamente con tu chatbot.
                   </TableCaption>
-                )}
+                )} */}
               </Table>
             </div>
 

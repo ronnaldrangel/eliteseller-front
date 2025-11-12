@@ -60,7 +60,7 @@ const AuthLayout = ({ children }) => {
         <div className="relative hidden w-1/2 lg:block">
           <video
             className="absolute inset-0 h-full w-full object-cover"
-            src="/videos/bg-auth-3.mp4"
+            src="/videos/bg-auth.mp4"
             autoPlay
             loop
             muted

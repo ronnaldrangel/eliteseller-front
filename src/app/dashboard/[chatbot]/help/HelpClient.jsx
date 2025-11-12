@@ -66,7 +66,7 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
               <CardContent className="space-y-2 text-left flex flex-1 flex-col">
 
                 {item.image ? (
-                  <div className="w-[100px] h-[100px] rounded-full overflow-hidden border">
+                  <div className="w-[100px] h-auto">
                     <img
                       src={item.image}
                       alt={item.imageAlt || item.title || "Ayuda"}

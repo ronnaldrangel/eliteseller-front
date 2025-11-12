@@ -1,7 +1,7 @@
-  "use client";
+"use client";
 
-  import { useEffect, useMemo, useState } from "react";
-  import { useParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 
 import {
   Card,
@@ -16,67 +16,64 @@ import {
   ToggleGroup,
   ToggleGroupItem,
 } from "@/components/ui/toggle-group";
-  import {
-    ArrowRight,
-    Minus,
-    TrendingDown,
-    TrendingUp,
-    X as CloseIcon,
-  } from "lucide-react";
 import {
+  ArrowRight,
+  Minus,
+  TrendingDown,
+  TrendingUp,
+  X as CloseIcon,} from "lucide-react";
+  import {
     Area,
     AreaChart,
     CartesianGrid,
-    ResponsiveContainer,
-    Tooltip,
     XAxis,
-    YAxis,
   } from "recharts";
+  import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
-  const STAT_ITEMS = [
-    {
-      key: "contacts",
-      label: "Contactos",
-      helper: "Contactos totales registrados",
-      baseline: 120,
-      positiveSummary: "Alza en contactos",
-      positiveContext: "Las campañas de captación están funcionando.",
-      negativeSummary: "Menos contactos",
-      negativeContext: "Activa nuevos formularios o anuncios.",
-    },
-    {
-      key: "triggers",
-      label: "Disparadores",
-      helper: "Automatizaciones activas",
-      baseline: 18,
-      positiveSummary: "Automatización saludable",
-      positiveContext: "Tus flujos están cubriendo la demanda.",
-      negativeSummary: "Activa más flujos",
-      negativeContext: "Revisa disparadores deshabilitados.",
-    },
-    {
-      key: "products",
-      label: "Productos",
-      helper: "Productos publicados",
-      baseline: 40,
-      positiveSummary: "Catálogo robusto",
-      positiveContext: "Suficientes opciones para tus clientes.",
-      negativeSummary: "Amplía el catálogo",
-      negativeContext: "Carga nuevos productos destacados.",
-    },
-  ];
+const STAT_ITEMS = [
+  {
+    key: "contacts",
+    label: "Contactos",
+    helper: "Contactos totales registrados",
+    baseline: 120,
+    positiveSummary: "Alza en contactos",
+    positiveContext: "Las campañas de captación están funcionando.",
+    negativeSummary: "Menos contactos",
+    negativeContext: "Activa nuevos formularios o anuncios.",
+  },
+  {
+    key: "triggers",
+    label: "Disparadores",
+    helper: "Automatizaciones activas",
+    baseline: 18,
+    positiveSummary: "Automatización saludable",
+    positiveContext: "Tus flujos están cubriendo la demanda.",
+    negativeSummary: "Activa más flujos",
+    negativeContext: "Revisa disparadores deshabilitados.",
+  },
+  {
+    key: "products",
+    label: "Productos",
+    helper: "Productos publicados",
+    baseline: 40,
+    positiveSummary: "Catálogo robusto",
+    positiveContext: "Suficientes opciones para tus clientes.",
+    negativeSummary: "Amplía el catálogo",
+    negativeContext: "Carga nuevos productos destacados.",
+  },
+];
 
-  const INITIAL_STATS = {
-    contacts: null,
-    triggers: null,
-    products: null,
-  };
+const INITIAL_STATS = {
+  contacts: null,
+  triggers: null,
+  products: null,
+};
 
-  const CHART_RANGE_OPTIONS = [
-    { id: "90d", label: "Ultimos 3 meses" },
-    { id: "30d", label: "Ultimos 30 dias" },
-    { id: "7d", label: "Ultimos 7 dias" },
-  ];
+const CHART_RANGE_OPTIONS = [
+  { id: "90d", label: "Ultimos 3 meses" },
+  { id: "30d", label: "Ultimos 30 dias" },
+  { id: "7d", label: "Ultimos 7 dias" },
+];
 
 const RANGE_LIMIT_DAYS = {
   "90d": 90,
@@ -84,160 +81,160 @@ const RANGE_LIMIT_DAYS = {
   "7d": 7,
 };
 
-  function getTrendDescriptor(item, value) {
-    if (typeof value !== "number") {
-      return {
-        direction: "neutral",
-        deltaLabel: "--",
-        summary: "Sin datos",
-        context: "Aun no hay registros suficientes.",
-      };
-    }
+function getTrendDescriptor(item, value) {
+  if (typeof value !== "number") {
+    return {
+      direction: "neutral",
+      deltaLabel: "--",
+      summary: "Sin datos",
+      context: "Aun no hay registros suficientes.",
+    };
+  }
 
-    const baseline = item.baseline || Math.max(value, 1);
-    const delta = baseline ? ((value - baseline) / baseline) * 100 : 0;
-    const absDelta = Math.abs(delta);
-    const direction =
-      absDelta < 1 ? "neutral" : delta > 0 ? "up" : "down";
+  const baseline = item.baseline || Math.max(value, 1);
+  const delta = baseline ? ((value - baseline) / baseline) * 100 : 0;
+  const absDelta = Math.abs(delta);
+  const direction =
+    absDelta < 1 ? "neutral" : delta > 0 ? "up" : "down";
 
-    if (direction === "neutral") {
-      return {
-        direction,
-        deltaLabel: "0%",
-        summary: "Estable",
-        context: "Mantiene el mismo rendimiento.",
-      };
-    }
-
-    const isUp = direction === "up";
+  if (direction === "neutral") {
     return {
       direction,
-      deltaLabel: `${isUp ? "+" : ""}${delta.toFixed(1)}%`,
-      summary: isUp ? item.positiveSummary : item.negativeSummary,
-      context: isUp ? item.positiveContext : item.negativeContext,
+      deltaLabel: "0%",
+      summary: "Estable",
+      context: "Mantiene el mismo rendimiento.",
     };
   }
 
-  function formatShortDate(date) {
-    return date.toLocaleDateString("es-MX", {
-      day: "2-digit",
-      month: "short",
-    });
-  }
+  const isUp = direction === "up";
+  return {
+    direction,
+    deltaLabel: `${isUp ? "+" : ""}${delta.toFixed(1)}%`,
+    summary: isUp ? item.positiveSummary : item.negativeSummary,
+    context: isUp ? item.positiveContext : item.negativeContext,
+  };
+}
 
-  export default function DocsPageClient({ initialNewsItems = [], newsError }) {
-    const params = useParams();
-    const chatbotSegmentParam = params?.chatbot;
-    const chatbotSegment = useMemo(() => {
-      if (!chatbotSegmentParam) return undefined;
-      return Array.isArray(chatbotSegmentParam)
-        ? chatbotSegmentParam[0]
-        : String(chatbotSegmentParam);
-    }, [chatbotSegmentParam]);
+function formatShortDate(date) {
+  return date.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "short",
+  });
+}
 
-    // Novedades recibidas del server
-    const [newsItems, setNewsItems] = useState(
-      Array.isArray(initialNewsItems) ? initialNewsItems : []
-    );
-    const [activeSlide, setActiveSlide] = useState(0);
+export default function DocsPageClient({ initialNewsItems = [], newsError }) {
+  const params = useParams();
+  const chatbotSegmentParam = params?.chatbot;
+  const chatbotSegment = useMemo(() => {
+    if (!chatbotSegmentParam) return undefined;
+    return Array.isArray(chatbotSegmentParam)
+      ? chatbotSegmentParam[0]
+      : String(chatbotSegmentParam);
+  }, [chatbotSegmentParam]);
 
-    // Stats
-    const [statsData, setStatsData] = useState({ ...INITIAL_STATS });
-    const [contactSeries, setContactSeries] = useState([]);
-    const [statsLoading, setStatsLoading] = useState(true);
-    const [statsError, setStatsError] = useState(null);
-    const [chartRange, setChartRange] = useState("30d");
+  // Novedades recibidas del server
+  const [newsItems, setNewsItems] = useState(
+    Array.isArray(initialNewsItems) ? initialNewsItems : []
+  );
+  const [activeSlide, setActiveSlide] = useState(0);
 
-    // Cerrado de la sección de bienvenida gaaaa
-    const [showWelcome, setShowWelcome] = useState(true);
-    const WELCOME_CACHE_KEY = useMemo(
-      () => `welcomeCard:${chatbotSegment || "global"}:v1`,
-      [chatbotSegment]
-    );
+  // Stats
+  const [statsData, setStatsData] = useState({ ...INITIAL_STATS });
+  const [contactSeries, setContactSeries] = useState([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState(null);
+  const [chartRange, setChartRange] = useState("30d");
 
-    useEffect(() => {
+  // Cerrado de la sección de bienvenida gaaaa
+  const [showWelcome, setShowWelcome] = useState(true);
+  const WELCOME_CACHE_KEY = useMemo(
+    () => `welcomeCard:${chatbotSegment || "global"}:v1`,
+    [chatbotSegment]
+  );
+
+  useEffect(() => {
+    try {
+      const dismissed = localStorage.getItem(WELCOME_CACHE_KEY) === "1";
+      if (dismissed) setShowWelcome(false);
+    } catch {
+      // si localStorage falla (modo privado, etc.), ignoramos
+    }
+  }, [WELCOME_CACHE_KEY]);
+
+  const handleCloseWelcome = () => {
+    try {
+      localStorage.setItem(WELCOME_CACHE_KEY, "1");
+    } catch { }
+    setShowWelcome(false);
+  };
+
+  // Auto-advance del carrusel
+  useEffect(() => {
+    const len = Math.max(newsItems.length, 1);
+    const interval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % len);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [newsItems.length]);
+
+  // Carga de stats (tu lógica)
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadStats() {
+      setStatsLoading(true);
+      setStatsError(null);
       try {
-        const dismissed = localStorage.getItem(WELCOME_CACHE_KEY) === "1";
-        if (dismissed) setShowWelcome(false);
-      } catch {
-        // si localStorage falla (modo privado, etc.), ignoramos
-      }
-    }, [WELCOME_CACHE_KEY]);
+        const qs = chatbotSegment
+          ? `?chatbot=${encodeURIComponent(chatbotSegment)}`
+          : "";
+        const response = await fetch(`/api/dashboard/stats${qs}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
 
-    const handleCloseWelcome = () => {
-      try {
-        localStorage.setItem(WELCOME_CACHE_KEY, "1");
-      } catch {}
-      setShowWelcome(false);
-    };
+        const payload = await response.json();
+        const stats = payload?.data?.stats || {};
+        const series = Array.isArray(payload?.data?.contactSeries)
+          ? payload.data.contactSeries
+          : [];
 
-    // Auto-advance del carrusel
-    useEffect(() => {
-      const len = Math.max(newsItems.length, 1);
-      const interval = setInterval(() => {
-        setActiveSlide((prev) => (prev + 1) % len);
-      }, 6000);
-      return () => clearInterval(interval);
-    }, [newsItems.length]);
+        setStatsData({
+          contacts:
+            typeof stats.contacts === "number" ? stats.contacts : null,
+          triggers:
+            typeof stats.triggers === "number" ? stats.triggers : null,
+          products:
+            typeof stats.products === "number" ? stats.products : null,
+        });
+        setContactSeries(series);
+      } catch (error) {
+        const isAbortError =
+          error?.name === "AbortError" ||
+          (typeof DOMException !== "undefined" &&
+            error instanceof DOMException &&
+            error.name === "AbortError");
 
-    // Carga de stats (tu lógica)
-    useEffect(() => {
-      const controller = new AbortController();
-
-      async function loadStats() {
-        setStatsLoading(true);
-        setStatsError(null);
-        try {
-          const qs = chatbotSegment
-            ? `?chatbot=${encodeURIComponent(chatbotSegment)}`
-            : "";
-          const response = await fetch(`/api/dashboard/stats${qs}`, {
-            signal: controller.signal,
-            cache: "no-store",
-          });
-
-          const payload = await response.json();
-          const stats = payload?.data?.stats || {};
-          const series = Array.isArray(payload?.data?.contactSeries)
-            ? payload.data.contactSeries
-            : [];
-
-          setStatsData({
-            contacts:
-              typeof stats.contacts === "number" ? stats.contacts : null,
-            triggers:
-              typeof stats.triggers === "number" ? stats.triggers : null,
-            products:
-              typeof stats.products === "number" ? stats.products : null,
-          });
-          setContactSeries(series);
-        } catch (error) {
-          const isAbortError =
-            error?.name === "AbortError" ||
-            (typeof DOMException !== "undefined" &&
-              error instanceof DOMException &&
-              error.name === "AbortError");
-
-            if (!isAbortError) {
+        if (!isAbortError) {
           console.error("Failed to load dashboard stats", error);
           setStatsError("No se pudieron cargar las estadisticas.");
           setStatsData({ ...INITIAL_STATS });
           setContactSeries([]);
         }
-        } finally {
-          if (!controller.signal.aborted) setStatsLoading(false);
-        }
+      } finally {
+        if (!controller.signal.aborted) setStatsLoading(false);
       }
+    }
 
-      loadStats();
-      return () => controller.abort();
-    }, [chatbotSegment]);
+    loadStats();
+    return () => controller.abort();
+  }, [chatbotSegment]);
 
-    const activeNews = newsItems[activeSlide];
-    const chartGradientId = useMemo(
-      () => `dashboardAreaGradient-${chartRange}`,
-      [chartRange]
-    );
+  const activeNews = newsItems[activeSlide];
+  const chartGradientId = useMemo(
+    () => `dashboardAreaGradient-${chartRange}`,
+    [chartRange]
+  );
   const chartData = useMemo(() => {
     if (!Array.isArray(contactSeries) || contactSeries.length === 0) {
       return [];
@@ -273,22 +270,22 @@ const RANGE_LIMIT_DAYS = {
     return filled;
   }, [chartRange, contactSeries]);
 
-    const chartSummary = useMemo(() => {
-      if (!chartData.length) {
-        return { total: 0, average: 0 };
-      }
-      const total = chartData.reduce((sum, point) => sum + point.value, 0);
-      return {
-        total,
-        average: Math.round(total / chartData.length),
-      };
-    }, [chartData]);
+  const chartSummary = useMemo(() => {
+    if (!chartData.length) {
+      return { total: 0, average: 0 };
+    }
+    const total = chartData.reduce((sum, point) => sum + point.value, 0);
+    return {
+      total,
+      average: Math.round(total / chartData.length),
+    };
+  }, [chartData]);
 
-    return (
-      <div className="flex flex-1 flex-col">
-        <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
-          <div className="space-y-6 px-4 lg:px-6">
-            {showWelcome && (
+  return (
+    <div className="flex flex-1 flex-col">
+      <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
+        <div className="space-y-6 px-4 lg:px-6">
+          {/* {showWelcome && (
               <Card className="relative border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background">
                 <button
                   type="button"
@@ -323,8 +320,7 @@ const RANGE_LIMIT_DAYS = {
                   </div>
                 </CardHeader>
               </Card>
-            )}
-
+            )} */}
 
           <div className="grid gap-6 lg:grid-cols-[2.2fr_1fr]">
             <div className="flex flex-col gap-6">
@@ -345,13 +341,13 @@ const RANGE_LIMIT_DAYS = {
                     trend.direction === "up"
                       ? TrendingUp
                       : trend.direction === "down"
-                      ? TrendingDown
-                      : Minus;
+                        ? TrendingDown
+                        : Minus;
                   return (
                     <Card
                       key={item.key}
                       data-slot="card"
-                      className="@container/card overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-t from-primary/5 via-card to-card shadow-md dark:bg-card"
+                      className="@container/card overflow-hidden rounded-3xl bg-gradient-to-t from-primary/5 via-card to-card dark:bg-card"
                     >
                       <CardHeader className="relative">
                         <CardDescription className="text-sm font-medium">
@@ -382,171 +378,165 @@ const RANGE_LIMIT_DAYS = {
                 })}
               </div>
 
-              <Card className="@container/card overflow-hidden rounded-[2rem] border border-border/70 bg-gradient-to-b from-card via-background to-card shadow-2xl">
-                <CardHeader className="gap-4 pb-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <CardTitle>Evolucion de contactos</CardTitle>
-                    <CardDescription>
-                      Tendencia estimada de los contactos captados en este periodo.
-                    </CardDescription>
+              <Card className="@container/card overflow-hidden rounded-[2rem]">
+                <CardHeader className="gap-2 pb-2">
+                  <div className="flex items-center justify-between">
+
+                    <div>
+                      <CardTitle className="mb-2">Total de contactos</CardTitle>
+                      <CardDescription>
+                        Contactos captados en este periodo.
+                      </CardDescription>
+                    </div>
+
+                    <ToggleGroup
+                      type="single"
+                      value={chartRange}
+                      onValueChange={(value) => value && setChartRange(value)}
+                      variant="outline"
+                      className="flex gap-0"
+                    >
+                      {CHART_RANGE_OPTIONS.map((option) => (
+                        <ToggleGroupItem
+                          key={option.id}
+                          value={option.id}
+                          className="h-8 px-4"
+                        >
+                          {option.label}
+                        </ToggleGroupItem>
+                      ))}
+                    </ToggleGroup>
                   </div>
-                  <ToggleGroup
-                    type="single"
-                    value={chartRange}
-                    onValueChange={(value) => value && setChartRange(value)}
-                    className="flex flex-wrap gap-2 rounded-full border border-border/70 bg-background/70 p-1 text-xs font-medium text-foreground"
-                  >
-                    {CHART_RANGE_OPTIONS.map((option) => (
-                      <ToggleGroupItem
-                        key={option.id}
-                        value={option.id}
-                        className="h-8 rounded-full px-3"
-                      >
-                        {option.label}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
                 </CardHeader>
+
                 <CardContent className="space-y-6 px-6 pb-6">
-                  <div className="flex flex-wrap items-center gap-6 text-sm">
+
+                  {/* <div className="flex flex-wrap items-center gap-6 text-sm">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">
                         Contactos en el rango
-                        </p>
-                        <p className="text-2xl font-semibold">
-                          {chartSummary.total.toLocaleString("es-ES")}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                          Promedio diario de contactos
-                        </p>
-                        <p className="text-2xl font-semibold">
-                          {chartSummary.average.toLocaleString("es-ES")}
-                        </p>
-                      </div>
+                      </p>
+                      <p className="text-2xl font-semibold">
+                        {chartSummary.total.toLocaleString("es-ES")}
+                      </p>
                     </div>
-                  <div className="h-64 rounded-2xl border border-border/60 bg-background/60 p-4 text-foreground shadow-inner">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Promedio diario de contactos
+                      </p>
+                      <p className="text-2xl font-semibold">
+                        {chartSummary.average.toLocaleString("es-ES")}
+                      </p>
+                    </div>
+                  </div> */}
+
+                  <div className="h-64">
                     {chartData.length ? (
-                      <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={chartData} margin={{ left: 0, right: 0 }}>
-                            <defs>
-                              <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6d8df6" stopOpacity={0.25} />
-                                <stop offset="95%" stopColor="#6d8df6" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid
-                              stroke="hsl(var(--border))"
-                              strokeDasharray="4 4"
-                              opacity={0.4}
-                            />
-                            <XAxis
-                              dataKey="date"
-                              stroke="currentColor"
-                              fontSize={12}
-                              tickLine={false}
-                              axisLine={false}
-                              tick={{ fill: "currentColor" }}
-                            />
-                            <YAxis hide />
-                            <Tooltip
-                              contentStyle={{
-                                borderRadius: "1rem",
-                                border: "1px solid hsl(var(--border))",
-                                backgroundColor: "hsl(var(--background))",
-                              }}
-                            />
-                              <Area
-                                type="monotone"
-                                dataKey="value"
-                                stroke="hsl(var(--primary))"
-                                strokeWidth={3}
-                                fillOpacity={1}
-                                fill={`url(#${chartGradientId})`}
-                              />
-                            </AreaChart>
-                          </ResponsiveContainer>
-                        ) : (
-                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                          Aun no hay actividad para graficar.
-                        </div>
-                      )}
-                    </div>
+                      <ChartContainer config={{ contacts: { label: "Contactos" } }} className="aspect-auto h-full w-full">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#6d8df6" stopOpacity={0.25} />
+                              <stop offset="95%" stopColor="#6d8df6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                          />
+                          <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            fill={`url(#${chartGradientId})`}
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={3}
+                          />
+                        </AreaChart>
+                      </ChartContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                        Aun no hay actividad para graficar.
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
+
               </Card>
             </div>
 
-            <Card className="flex flex-col gap-4 border border-border bg-card shadow-2xl">
+            <Card className="flex flex-col gap-4">
               <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <CardTitle>Novedades</CardTitle>
+                  <CardTitle className="mb-2">Novedades</CardTitle>
                   <CardDescription>
-                      Explora los anuncios destacados de esta semana.
-                    </CardDescription>
+                    Nuevas noticias sobre EliteSeller de la semana.
+                  </CardDescription>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {newsError ? (
+                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                    {newsError}
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {newsError ? (
-                    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                      {newsError}
-                    </div>
-                  ) : null}
+                ) : null}
 
-                  {activeNews ? (
-                    <>
-                      <div className="overflow-hidden rounded-2xl shadow-lg">
-                        <div className="relative h-48 w-full">
-                          <img
-                            src={activeNews.image ? activeNews.image : null}
-                            alt={activeNews.imageAlt}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        </div>
+                {activeNews ? (
+                  <>
+                    <div className="overflow-hidden rounded-2xl shadow-md">
+                      <div className="relative h-48 w-full">
+                        <img
+                          src={activeNews.image ? activeNews.image : null}
+                          alt={activeNews.imageAlt}
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                        />
                       </div>
-                      <div className="space-y-2">
-                        <h3 className="text-base font-semibold">
-                          {activeNews.title}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {activeNews.description}
-                        </p>
-                        <a
-                          href={activeNews.href}
-                          className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
-                        >
-                          {activeNews.cta}
-                          <ArrowRight className="ml-1 h-4 w-4" />
-                        </a>
-                      </div>
-                      <div className="flex items-center justify-center gap-2">
-                        {newsItems.map((item, index) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => setActiveSlide(index)}
-                            className={`h-2.5 w-2.5 rounded-full ${
-                              index === activeSlide
-                                ? "bg-primary"
-                                : "bg-muted-foreground/30"
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-base font-semibold">
+                        {activeNews.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {activeNews.description}
+                      </p>
+                      <a
+                        href={activeNews.href}
+                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
+                      >
+                        {activeNews.cta}
+                        <ArrowRight className="ml-1 h-4 w-4" />
+                      </a>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                      {newsItems.map((item, index) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => setActiveSlide(index)}
+                          className={`h-2.5 w-2.5 rounded-full ${index === activeSlide
+                              ? "bg-primary"
+                              : "bg-muted-foreground/30"
                             }`}
-                            aria-label={`Ir a la novedad ${item.title}`}
-                          />
-                        ))}
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      Esperando nuevas noticias!.
+                          aria-label={`Ir a la novedad ${item.title}`}
+                        />
+                      ))}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    Esperando nuevas noticias!.
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
+
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}

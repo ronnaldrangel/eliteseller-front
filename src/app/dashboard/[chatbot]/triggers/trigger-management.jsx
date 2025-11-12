@@ -192,11 +192,11 @@ export default function TriggerManagement({
                 ))
               )}
             </TableBody>
-            {triggers.length > 0 && (
+            {/* {triggers.length > 0 && (
               <TableCaption className="text-xs">
                 Los disparadores se sincronizan automaticamente con tu chatbot.
               </TableCaption>
-            )}
+            )} */}
         </Table>
       </div>
     </div>
