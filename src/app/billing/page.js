@@ -1,5 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
+import AffiliatePaymentCta from "@/components/affiliate-payment-cta"
 import SelectUserAvatarMenu from "@/components/select-user-avatar-menu"
 import { auth } from "@/lib/auth"
 import { buildStrapiUrl } from "@/lib/strapi"
@@ -39,7 +40,6 @@ export default async function BillingPage() {
   const statusClass = customer?.customer_status === 1 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
   const payMethod = (() => {
     if (!customer) return '—'
-    if (customer.pay_mode === 'manual') return 'Facturación manual'
     if (customer.creditCardType && customer.last4CardDigits) return `${customer.creditCardType} •••• ${customer.last4CardDigits}`
     return 'Método no especificado'
   })()
@@ -88,9 +88,7 @@ export default async function BillingPage() {
               <p className="text-lg font-medium">Sin datos de facturación</p>
               <p className="text-sm text-muted-foreground">No tienes un método de pago afiliado todavía.</p>
               <div className="mt-6">
-                <Link href="/plans" className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground hover:opacity-90">
-                  Afiliar método de pago
-                </Link>
+                <AffiliatePaymentCta userId={session?.user?.strapiUserId} />
               </div>
             </div>
           </div>
