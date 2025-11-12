@@ -40,6 +40,7 @@ export default async function BillingPage() {
   const statusClass = customer?.customer_status === 1 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
   const payMethod = (() => {
     if (!customer) return '—'
+    if (customer.pay_mode === 'manual') return 'Facturación manual'
     if (customer.creditCardType && customer.last4CardDigits) return `${customer.creditCardType} •••• ${customer.last4CardDigits}`
     return 'Método no especificado'
   })()
