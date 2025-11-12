@@ -46,9 +46,8 @@ export default function RegisterPage() {
 
   const generateUsernameFromEmail = (email) => {
     if (!email || typeof email !== "string") return ""
-    const local = email.split("@")[0] || ""
-    // Sanitizar: minúsculas y caracteres permitidos a-z 0-9 . _ -
-    return local.toLowerCase().replace(/[^a-z0-9._-]/g, "")
+    // Usar todo el email y eliminar caracteres no alfanuméricos
+    return String(email).toLowerCase().replace(/[^a-z0-9]/g, "")
   }
 
   const validateForm = () => {
