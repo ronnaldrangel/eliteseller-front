@@ -181,8 +181,8 @@ const data = {
       ),
       items: [
         { title: "WhatsApp", url: "/integrations/whatsapp" },
-        { title: "Shopify", url: "/integrations/shopify" },
-        { title: "n8n", url: "/integrations/n8n" },
+        // { title: "Shopify", url: "/integrations/shopify" },
+        // { title: "n8n", url: "/integrations/n8n" },
       ],
     },
   ],
