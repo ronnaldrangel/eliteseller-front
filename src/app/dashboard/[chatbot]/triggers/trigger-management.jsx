@@ -108,7 +108,7 @@ export default function TriggerManagement({
         <Table className="min-w-max">
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[200px]">Nombre</TableHead>
+              <TableHead className="min-w-[200px] ml-1">Nombre</TableHead>
               <TableHead className="min-w-[280px]">Palabras clave</TableHead>
               <TableHead className="min-w-[120px]">Visibilidad</TableHead>
               <TableHead className="min-w-[180px]">Acciones</TableHead>
@@ -119,7 +119,7 @@ export default function TriggerManagement({
                 <TableRow>
                   <TableCell
                     colSpan={4}
-                    className="h-20 text-center text-muted-foreground"
+                    className="h-20 text-center text-muted-foreground mb"
                   >
                     Aun no has configurado disparadores. Crea el primero para
                     automatizar tus flujos.

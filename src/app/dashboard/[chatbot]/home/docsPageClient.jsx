@@ -1,332 +1,538 @@
-"use client";
+  "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+  import { useEffect, useMemo, useState } from "react";
+  import { useParams } from "next/navigation";
 
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowRight, X as CloseIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
+  import {
+    ArrowRight,
+    Minus,
+    TrendingDown,
+    TrendingUp,
+    X as CloseIcon,
+  } from "lucide-react";
+import {
+    Area,
+    AreaChart,
+    CartesianGrid,
+    ResponsiveContainer,
+    Tooltip,
+    XAxis,
+    YAxis,
+  } from "recharts";
 
-const STAT_ITEMS = [
-  { key: "activeChats", label: "Chats activos", helper: "Ultimas 24 horas" },
-  { key: "newLeads", label: "Nuevos leads", helper: "Ultimos 7 dias" },
-  {
-    key: "conversionRate",
-    label: "Tasa de conversion",
-    helper: "Respecto al total de leads",
-  },
-  {
-    key: "averageResponse",
-    label: "Promedio de respuesta",
-    helper: "Ultimos 30 dias",
-  },
-  {
-    key: "closedSales",
-    label: "Ventas cerradas",
-    helper: "Marcadas como venta",
-  },
-  {
-    key: "activeCampaigns",
-    label: "Campanas activas",
-    helper: "Triggers disponibles",
-  },
-];
+  const STAT_ITEMS = [
+    {
+      key: "contacts",
+      label: "Contactos",
+      helper: "Contactos totales registrados",
+      baseline: 120,
+      positiveSummary: "Alza en contactos",
+      positiveContext: "Las campañas de captación están funcionando.",
+      negativeSummary: "Menos contactos",
+      negativeContext: "Activa nuevos formularios o anuncios.",
+    },
+    {
+      key: "triggers",
+      label: "Disparadores",
+      helper: "Automatizaciones activas",
+      baseline: 18,
+      positiveSummary: "Automatización saludable",
+      positiveContext: "Tus flujos están cubriendo la demanda.",
+      negativeSummary: "Activa más flujos",
+      negativeContext: "Revisa disparadores deshabilitados.",
+    },
+    {
+      key: "products",
+      label: "Productos",
+      helper: "Productos publicados",
+      baseline: 40,
+      positiveSummary: "Catálogo robusto",
+      positiveContext: "Suficientes opciones para tus clientes.",
+      negativeSummary: "Amplía el catálogo",
+      negativeContext: "Carga nuevos productos destacados.",
+    },
+  ];
 
-const INITIAL_STATS = {
-  activeChats: null,
-  newLeads: null,
-  conversionRate: null,
-  averageResponseLabel: null,
-  closedSales: null,
-  activeCampaigns: null,
-};
-
-export default function DocsPageClient({ initialNewsItems = [], newsError }) {
-  const params = useParams();
-  const chatbotSegmentParam = params?.chatbot;
-  const chatbotSegment = useMemo(() => {
-    if (!chatbotSegmentParam) return undefined;
-    return Array.isArray(chatbotSegmentParam)
-      ? chatbotSegmentParam[0]
-      : String(chatbotSegmentParam);
-  }, [chatbotSegmentParam]);
-
-  // Novedades recibidas del server
-  const [newsItems, setNewsItems] = useState(
-    Array.isArray(initialNewsItems) ? initialNewsItems : []
-  );
-  const [activeSlide, setActiveSlide] = useState(0);
-
-  // Stats
-  const [statsData, setStatsData] = useState({ ...INITIAL_STATS });
-  const [statsLoading, setStatsLoading] = useState(true);
-  const [statsError, setStatsError] = useState(null);
-
-  // Cerrado de la sección de bienvenida gaaaa
-  const [showWelcome, setShowWelcome] = useState(true);
-  const WELCOME_CACHE_KEY = useMemo(
-    () => `welcomeCard:${chatbotSegment || "global"}:v1`,
-    [chatbotSegment]
-  );
-
-  useEffect(() => {
-    try {
-      const dismissed = localStorage.getItem(WELCOME_CACHE_KEY) === "1";
-      if (dismissed) setShowWelcome(false);
-    } catch {
-      // si localStorage falla (modo privado, etc.), ignoramos
-    }
-  }, [WELCOME_CACHE_KEY]);
-
-  const handleCloseWelcome = () => {
-    try {
-      localStorage.setItem(WELCOME_CACHE_KEY, "1");
-    } catch {}
-    setShowWelcome(false);
+  const INITIAL_STATS = {
+    contacts: null,
+    triggers: null,
+    products: null,
   };
 
-  // Auto-advance del carrusel
-  useEffect(() => {
-    const len = Math.max(newsItems.length, 1);
-    const interval = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % len);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [newsItems.length]);
+  const CHART_RANGE_OPTIONS = [
+    { id: "90d", label: "Ultimos 3 meses" },
+    { id: "30d", label: "Ultimos 30 dias" },
+    { id: "7d", label: "Ultimos 7 dias" },
+  ];
 
-  // Carga de stats (tu lógica)
-  useEffect(() => {
-    const controller = new AbortController();
+  const RANGE_POINTS = {
+    "90d": 12,
+    "30d": 10,
+    "7d": 7,
+  };
 
-    async function loadStats() {
-      setStatsLoading(true);
-      setStatsError(null);
-      try {
-        const qs = chatbotSegment
-          ? `?chatbot=${encodeURIComponent(chatbotSegment)}`
-          : "";
-        const response = await fetch(`/api/dashboard/stats${qs}`, {
-          signal: controller.signal,
-          cache: "no-store",
-        });
-
-        const payload = await response.json();
-        const stats = payload?.data?.stats || {};
-
-        setStatsData({
-          activeChats:
-            typeof stats.activeChats === "number" ? stats.activeChats : null,
-          newLeads: typeof stats.newLeads === "number" ? stats.newLeads : null,
-          conversionRate:
-            typeof stats.conversionRate === "number"
-              ? stats.conversionRate
-              : null,
-          averageResponseLabel:
-            typeof stats.averageResponseLabel === "string"
-              ? stats.averageResponseLabel
-              : null,
-          closedSales:
-            typeof stats.closedSales === "number" ? stats.closedSales : null,
-          activeCampaigns:
-            typeof stats.activeCampaigns === "number"
-              ? stats.activeCampaigns
-              : null,
-        });
-      } catch (error) {
-        const isAbortError =
-          error?.name === "AbortError" ||
-          (typeof DOMException !== "undefined" &&
-            error instanceof DOMException &&
-            error.name === "AbortError");
-
-        if (!isAbortError) {
-          console.error("Failed to load dashboard stats", error);
-          setStatsError("No se pudieron cargar las estadisticas.");
-          setStatsData({ ...INITIAL_STATS });
-        }
-      } finally {
-        if (!controller.signal.aborted) setStatsLoading(false);
-      }
+  function getTrendDescriptor(item, value) {
+    if (typeof value !== "number") {
+      return {
+        direction: "neutral",
+        deltaLabel: "--",
+        summary: "Sin datos",
+        context: "Aun no hay registros suficientes.",
+      };
     }
 
-    loadStats();
-    return () => controller.abort();
-  }, [chatbotSegment]);
+    const baseline = item.baseline || Math.max(value, 1);
+    const delta = baseline ? ((value - baseline) / baseline) * 100 : 0;
+    const absDelta = Math.abs(delta);
+    const direction =
+      absDelta < 1 ? "neutral" : delta > 0 ? "up" : "down";
 
-  const activeNews = newsItems[activeSlide];
+    if (direction === "neutral") {
+      return {
+        direction,
+        deltaLabel: "0%",
+        summary: "Estable",
+        context: "Mantiene el mismo rendimiento.",
+      };
+    }
 
-  return (
-    <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
-        <div className="space-y-6 px-4 lg:px-6">
-          {showWelcome && (
-            <Card className="relative border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background">
-              <button
-                type="button"
-                onClick={handleCloseWelcome}
-                aria-label="Cerrar bienvenida"
-                className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md border bg-background/60 hover:bg-background transition"
-              >
-                <CloseIcon className="h-4 w-4" />
-              </button>
+    const isUp = direction === "up";
+    return {
+      direction,
+      deltaLabel: `${isUp ? "+" : ""}${delta.toFixed(1)}%`,
+      summary: isUp ? item.positiveSummary : item.negativeSummary,
+      context: isUp ? item.positiveContext : item.negativeContext,
+    };
+  }
 
-              <CardHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between p-8">
-                <div className="flex-1 space-y-6">
-                  <CardTitle className="text-4xl lg:text-5xl font-extrabold tracking-tight">
-                    Bienvenido a EliteSeller!
-                  </CardTitle>
-                  <p className="text-lg text-muted-foreground leading-relaxed">
-                    Activa tus campañas, revisa los chats pendientes y mantente
-                    al tanto de nuestras actualizaciones para seguir escalando
-                    tus ventas.
-                  </p>
-                </div>
-                <div className="w-full lg:w-1/2 lg:min-w-[600px]">
-                  <div className="aspect-video overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
-                    <iframe
-                      src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1&controls=0&loop=1&playlist=fBaTyOcu0r8"
-                      title="Bienvenida a EliteSeller"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      className="h-full w-full"
-                    />
+  function formatShortDate(date) {
+    return date.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "short",
+    });
+  }
+
+  export default function DocsPageClient({ initialNewsItems = [], newsError }) {
+    const params = useParams();
+    const chatbotSegmentParam = params?.chatbot;
+    const chatbotSegment = useMemo(() => {
+      if (!chatbotSegmentParam) return undefined;
+      return Array.isArray(chatbotSegmentParam)
+        ? chatbotSegmentParam[0]
+        : String(chatbotSegmentParam);
+    }, [chatbotSegmentParam]);
+
+    // Novedades recibidas del server
+    const [newsItems, setNewsItems] = useState(
+      Array.isArray(initialNewsItems) ? initialNewsItems : []
+    );
+    const [activeSlide, setActiveSlide] = useState(0);
+
+    // Stats
+    const [statsData, setStatsData] = useState({ ...INITIAL_STATS });
+    const [statsLoading, setStatsLoading] = useState(true);
+    const [statsError, setStatsError] = useState(null);
+    const [chartRange, setChartRange] = useState("30d");
+
+    // Cerrado de la sección de bienvenida gaaaa
+    const [showWelcome, setShowWelcome] = useState(true);
+    const WELCOME_CACHE_KEY = useMemo(
+      () => `welcomeCard:${chatbotSegment || "global"}:v1`,
+      [chatbotSegment]
+    );
+
+    useEffect(() => {
+      try {
+        const dismissed = localStorage.getItem(WELCOME_CACHE_KEY) === "1";
+        if (dismissed) setShowWelcome(false);
+      } catch {
+        // si localStorage falla (modo privado, etc.), ignoramos
+      }
+    }, [WELCOME_CACHE_KEY]);
+
+    const handleCloseWelcome = () => {
+      try {
+        localStorage.setItem(WELCOME_CACHE_KEY, "1");
+      } catch {}
+      setShowWelcome(false);
+    };
+
+    // Auto-advance del carrusel
+    useEffect(() => {
+      const len = Math.max(newsItems.length, 1);
+      const interval = setInterval(() => {
+        setActiveSlide((prev) => (prev + 1) % len);
+      }, 6000);
+      return () => clearInterval(interval);
+    }, [newsItems.length]);
+
+    // Carga de stats (tu lógica)
+    useEffect(() => {
+      const controller = new AbortController();
+
+      async function loadStats() {
+        setStatsLoading(true);
+        setStatsError(null);
+        try {
+          const qs = chatbotSegment
+            ? `?chatbot=${encodeURIComponent(chatbotSegment)}`
+            : "";
+          const response = await fetch(`/api/dashboard/stats${qs}`, {
+            signal: controller.signal,
+            cache: "no-store",
+          });
+
+          const payload = await response.json();
+          const stats = payload?.data?.stats || {};
+
+          setStatsData({
+            contacts:
+              typeof stats.contacts === "number" ? stats.contacts : null,
+            triggers:
+              typeof stats.triggers === "number" ? stats.triggers : null,
+            products:
+              typeof stats.products === "number" ? stats.products : null,
+          });
+        } catch (error) {
+          const isAbortError =
+            error?.name === "AbortError" ||
+            (typeof DOMException !== "undefined" &&
+              error instanceof DOMException &&
+              error.name === "AbortError");
+
+          if (!isAbortError) {
+            console.error("Failed to load dashboard stats", error);
+            setStatsError("No se pudieron cargar las estadisticas.");
+            setStatsData({ ...INITIAL_STATS });
+          }
+        } finally {
+          if (!controller.signal.aborted) setStatsLoading(false);
+        }
+      }
+
+      loadStats();
+      return () => controller.abort();
+    }, [chatbotSegment]);
+
+    const activeNews = newsItems[activeSlide];
+    const chartGradientId = useMemo(
+      () => `dashboardAreaGradient-${chartRange}`,
+      [chartRange]
+    );
+  const chartData = useMemo(() => {
+    const points = RANGE_POINTS[chartRange] || 10;
+    const contactsValue =
+      typeof statsData.contacts === "number" ? statsData.contacts : 0;
+    const maxStat = Math.max(contactsValue, 25);
+    if (!Number.isFinite(maxStat)) return [];
+
+    const today = new Date();
+    // Genera una onda suave tomando como referencia la cantidad de contactos.
+    return Array.from({ length: points }, (_, idx) => {
+      const current = new Date(today);
+      current.setDate(today.getDate() - (points - 1 - idx));
+      const normalizedIndex = idx / Math.max(points - 1, 1);
+      const seasonalWave = Math.sin(normalizedIndex * Math.PI * 2) * 0.3 + 0.7;
+      const momentum =
+        normalizedIndex * (contactsValue > 0 ? contactsValue * 0.1 : maxStat * 0.05);
+      const value = Math.max(
+        Math.round(seasonalWave * maxStat + momentum),
+        0
+      );
+      return {
+        date: formatShortDate(current),
+        value,
+      };
+    });
+  }, [chartRange, statsData.contacts]);
+
+    const chartSummary = useMemo(() => {
+      if (!chartData.length) {
+        return { total: 0, average: 0 };
+      }
+      const total = chartData.reduce((sum, point) => sum + point.value, 0);
+      return {
+        total,
+        average: Math.round(total / chartData.length),
+      };
+    }, [chartData]);
+
+    return (
+      <div className="flex flex-1 flex-col">
+        <div className="@container/main flex flex-1 flex-col gap-6 py-4 md:py-6">
+          <div className="space-y-6 px-4 lg:px-6">
+            {showWelcome && (
+              <Card className="relative border-primary/10 bg-gradient-to-br from-primary/10 via-background to-background">
+                <button
+                  type="button"
+                  onClick={handleCloseWelcome}
+                  aria-label="Cerrar bienvenida"
+                  className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md border bg-background/60 hover:bg-background transition"
+                >
+                  <CloseIcon className="h-4 w-4" />
+                </button>
+
+                <CardHeader className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between p-8">
+                  <div className="flex-1 space-y-6">
+                    <CardTitle className="text-4xl lg:text-5xl font-extrabold tracking-tight">
+                      Bienvenido a EliteSeller!
+                    </CardTitle>
+                    <p className="text-lg text-muted-foreground leading-relaxed">
+                      Activa tus campañas, revisa los chats pendientes y mantente
+                      al tanto de nuestras actualizaciones para seguir escalando
+                      tus ventas.
+                    </p>
                   </div>
-                </div>
-              </CardHeader>
-            </Card>
-          )}
+                  <div className="w-full lg:w-1/2 lg:min-w-[600px]">
+                    <div className="aspect-video overflow-hidden rounded-2xl border-2 border-primary/20 shadow-2xl">
+                      <iframe
+                        src="https://www.youtube.com/embed/fBaTyOcu0r8?autoplay=1&mute=1&rel=0&playsinline=1&controls=0&loop=1&playlist=fBaTyOcu0r8"
+                        title="Bienvenida a EliteSeller"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="h-full w-full"
+                      />
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            )}
 
-          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            {/* --- Tarjeta de estadísticas (tu render actual) --- */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Estadisticas rapidas</CardTitle>
-                <CardDescription>
-                  Resumen de tus metricas mas recientes.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+
+          <div className="grid gap-6 lg:grid-cols-[2.2fr_1fr]">
+            <div className="flex flex-col gap-6">
+              <div className="@xl/main:grid-cols-2 @5xl/main:grid-cols-3 grid grid-cols-1 gap-4 px-0 sm:px-4 lg:px-0">
                 {statsError ? (
-                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                  <div className="col-span-full rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
                     {statsError}
                   </div>
                 ) : null}
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {STAT_ITEMS.map((item) => {
-                    let displayValue = "--";
-                    if (item.key === "conversionRate") {
-                      const value = statsData.conversionRate;
-                      if (value !== null && value !== undefined) {
-                        displayValue = `${value.toFixed(1)}%`;
-                      }
-                    } else if (item.key === "averageResponse") {
-                      if (statsData.averageResponseLabel) {
-                        displayValue = statsData.averageResponseLabel;
-                      }
-                    } else {
-                      const rawValue = statsData[item.key];
-                      if (typeof rawValue === "number") {
-                        displayValue = rawValue.toLocaleString("es-ES");
-                      }
-                    }
-                    return (
-                      <div
-                        key={item.key}
-                        className={`rounded-lg border bg-muted/30 p-4 ${
-                          statsLoading ? "animate-pulse" : ""
-                        }`}
-                      >
-                        <p className="text-sm text-muted-foreground">
+                {STAT_ITEMS.map((item) => {
+                  const rawValue = statsData[item.key];
+                  const displayValue =
+                    typeof rawValue === "number"
+                      ? rawValue.toLocaleString("es-ES")
+                      : "--";
+                  const trend = getTrendDescriptor(item, rawValue);
+                  const TrendIcon =
+                    trend.direction === "up"
+                      ? TrendingUp
+                      : trend.direction === "down"
+                      ? TrendingDown
+                      : Minus;
+                  return (
+                    <Card
+                      key={item.key}
+                      data-slot="card"
+                      className="@container/card overflow-hidden rounded-3xl border border-border/70 bg-gradient-to-t from-primary/5 via-card to-card shadow-md dark:bg-card"
+                    >
+                      <CardHeader className="relative">
+                        <CardDescription className="text-sm font-medium">
                           {item.label}
-                        </p>
-                        <p className="mt-2 text-2xl font-semibold">
+                        </CardDescription>
+                        <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
                           {displayValue}
+                        </CardTitle>
+                        <div className="absolute right-4 top-4">
+                          <Badge
+                            variant="outline"
+                            className="flex gap-1 rounded-xl border-border/60 text-xs text-foreground"
+                          >
+                            <TrendIcon className="h-3 w-3" />
+                            {trend.deltaLabel}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardFooter className="flex-col items-start gap-1 text-sm">
+                        <div className="line-clamp-1 flex gap-2 font-medium">
+                          {trend.summary}
+                          <TrendIcon className="h-4 w-4" />
+                        </div>
+                        <div className="text-muted-foreground">{trend.context}</div>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              <Card className="@container/card overflow-hidden rounded-[2rem] border border-border/70 bg-gradient-to-b from-card via-background to-card shadow-2xl">
+                <CardHeader className="gap-4 pb-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle>Evolucion de contactos</CardTitle>
+                    <CardDescription>
+                      Tendencia estimada de los contactos captados en este periodo.
+                    </CardDescription>
+                  </div>
+                  <ToggleGroup
+                    type="single"
+                    value={chartRange}
+                    onValueChange={(value) => value && setChartRange(value)}
+                    className="flex flex-wrap gap-2 rounded-full border border-border/70 bg-background/70 p-1 text-xs font-medium text-foreground"
+                  >
+                    {CHART_RANGE_OPTIONS.map((option) => (
+                      <ToggleGroupItem
+                        key={option.id}
+                        value={option.id}
+                        className="h-8 rounded-full px-3"
+                      >
+                        {option.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </CardHeader>
+                <CardContent className="space-y-6 px-6 pb-6">
+                  <div className="flex flex-wrap items-center gap-6 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Contactos en el rango
                         </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {item.helper}
+                        <p className="text-2xl font-semibold">
+                          {chartSummary.total.toLocaleString("es-ES")}
                         </p>
                       </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          Promedio diario de contactos
+                        </p>
+                        <p className="text-2xl font-semibold">
+                          {chartSummary.average.toLocaleString("es-ES")}
+                        </p>
+                      </div>
+                    </div>
+                  <div className="h-64 rounded-2xl border border-border/60 bg-background/60 p-4 text-foreground shadow-inner">
+                    {chartData.length ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData} margin={{ left: 0, right: 0 }}>
+                            <defs>
+                              <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="#6d8df6" stopOpacity={0.25} />
+                                <stop offset="95%" stopColor="#6d8df6" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid
+                              stroke="hsl(var(--border))"
+                              strokeDasharray="4 4"
+                              opacity={0.4}
+                            />
+                            <XAxis
+                              dataKey="date"
+                              stroke="currentColor"
+                              fontSize={12}
+                              tickLine={false}
+                              axisLine={false}
+                              tick={{ fill: "currentColor" }}
+                            />
+                            <YAxis hide />
+                            <Tooltip
+                              contentStyle={{
+                                borderRadius: "1rem",
+                                border: "1px solid hsl(var(--border))",
+                                backgroundColor: "hsl(var(--background))",
+                              }}
+                            />
+                              <Area
+                                type="monotone"
+                                dataKey="value"
+                                stroke="hsl(var(--primary))"
+                                strokeWidth={3}
+                                fillOpacity={1}
+                                fill={`url(#${chartGradientId})`}
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        ) : (
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                          Aun no hay actividad para graficar.
+                        </div>
+                      )}
+                    </div>
+                </CardContent>
+              </Card>
+            </div>
 
-            {/* --- Novedades: usa newsItems del server --- */}
-            <Card>
+            <Card className="flex flex-col gap-4 border border-border bg-card shadow-2xl">
               <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <CardTitle>Novedades</CardTitle>
                   <CardDescription>
-                    Explora los anuncios destacados de esta semana.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {newsError ? (
-                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                    {newsError}
+                      Explora los anuncios destacados de esta semana.
+                    </CardDescription>
                   </div>
-                ) : null}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {newsError ? (
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                      {newsError}
+                    </div>
+                  ) : null}
 
-                {activeNews ? (
-                  <>
-                    <div className="overflow-hidden rounded-lg border">
-                      <div className="relative h-48 w-full">
-                        <img
-                          src={activeNews.image ? activeNews.image : null}
-                          alt={activeNews.imageAlt}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
+                  {activeNews ? (
+                    <>
+                      <div className="overflow-hidden rounded-2xl shadow-lg">
+                        <div className="relative h-48 w-full">
+                          <img
+                            src={activeNews.image ? activeNews.image : null}
+                            alt={activeNews.imageAlt}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
                       </div>
+                      <div className="space-y-2">
+                        <h3 className="text-base font-semibold">
+                          {activeNews.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {activeNews.description}
+                        </p>
+                        <a
+                          href={activeNews.href}
+                          className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
+                        >
+                          {activeNews.cta}
+                          <ArrowRight className="ml-1 h-4 w-4" />
+                        </a>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        {newsItems.map((item, index) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setActiveSlide(index)}
+                            className={`h-2.5 w-2.5 rounded-full ${
+                              index === activeSlide
+                                ? "bg-primary"
+                                : "bg-muted-foreground/30"
+                            }`}
+                            aria-label={`Ir a la novedad ${item.title}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      Esperando nuevas noticias!.
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="text-base font-semibold">
-                        {activeNews.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {activeNews.description}
-                      </p>
-                      <a
-                        href={activeNews.href}
-                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
-                      >
-                        {activeNews.cta}
-                        <ArrowRight className="ml-1 h-4 w-4" />
-                      </a>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      {newsItems.map((item, index) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setActiveSlide(index)}
-                          className={`h-2.5 w-2.5 rounded-full ${
-                            index === activeSlide
-                              ? "bg-primary"
-                              : "bg-muted-foreground/30"
-                          }`}
-                          aria-label={`Ir a la novedad ${item.title}`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    No hay novedades disponibles.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
