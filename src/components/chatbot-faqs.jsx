@@ -151,16 +151,16 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
 
   return (
     <div className="rounded-lg border bg-muted/20 p-4">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-4">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Preguntas frecuentes</h4>
-        <Button type="button" size="sm" onClick={openCreate} disabled={!token || !chatbotId}>
+        <Button type="button" size="sm" className="w-full md:w-auto" onClick={openCreate} disabled={!token || !chatbotId}>
           <PlusIcon className="size-4" /> Añadir pregunta
         </Button>
       </div>
       {faqs.length === 0 ? (
         <p className="text-sm text-muted-foreground">Sin FAQs configuradas.</p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {faqs.map((f) => (
             <div key={f.documentId || f.id || f.question} className="rounded-md border bg-background p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">

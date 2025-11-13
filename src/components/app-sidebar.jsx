@@ -84,19 +84,19 @@ const data = {
         />
       ),
     },
-    {
-      title: "Etiquetas",
-      url: "/tags",
-      icon: () => (
-        <Image
-          src="/icons/tags.webp"
-          alt="Etiquetas"
-          width={16}
-          height={16}
-          className="size-4 rounded-sm object-cover"
-        />
-      ),
-    },
+    // {
+    //   title: "Etiquetas",
+    //   url: "/tags",
+    //   icon: () => (
+    //     <Image
+    //       src="/icons/tags.webp"
+    //       alt="Etiquetas"
+    //       width={16}
+    //       height={16}
+    //       className="size-4 rounded-sm object-cover"
+    //     />
+    //   ),
+    // },
     {
       title: "Disparadores",
       url: "/triggers",
@@ -123,19 +123,19 @@ const data = {
         />
       ),
     },
-    {
-      title: "Pedidos",
-      url: "/sales",
-      icon: () => (
-        <Image
-          src="/icons/sales.png"
-          alt="Ventas"
-          width={16}
-          height={16}
-          className="size-4 rounded-sm object-cover"
-        />
-      ),
-    },
+    // {
+    //   title: "Pedidos",
+    //   url: "/sales",
+    //   icon: () => (
+    //     <Image
+    //       src="/icons/sales.png"
+    //       alt="Ventas"
+    //       width={16}
+    //       height={16}
+    //       className="size-4 rounded-sm object-cover"
+    //     />
+    //   ),
+    // },
     {
       title: "Contactos",
       url: "/contacts",

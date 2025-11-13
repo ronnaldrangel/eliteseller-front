@@ -227,8 +227,8 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={status.loading}>
+      <div className="flex w-full items-center gap-3 mb-6">
+        <Button type="submit" className="w-full" disabled={status.loading}>
           {status.loading ? 'Guardando…' : 'Guardar cambios'}
         </Button>
       </div>
