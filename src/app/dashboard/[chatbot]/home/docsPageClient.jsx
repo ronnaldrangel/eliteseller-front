@@ -380,32 +380,11 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
 
               <Card className="@container/card overflow-hidden rounded-[2rem]">
                 <CardHeader className="gap-2 pb-2">
-                  <div className="flex items-center justify-between">
-
-                    <div>
-                      <CardTitle className="mb-2">Total de contactos</CardTitle>
-                      <CardDescription>
-                        Contactos captados en este periodo.
-                      </CardDescription>
-                    </div>
-
-                    <ToggleGroup
-                      type="single"
-                      value={chartRange}
-                      onValueChange={(value) => value && setChartRange(value)}
-                      variant="outline"
-                      className="flex gap-0"
-                    >
-                      {CHART_RANGE_OPTIONS.map((option) => (
-                        <ToggleGroupItem
-                          key={option.id}
-                          value={option.id}
-                          className="h-8 px-4"
-                        >
-                          {option.label}
-                        </ToggleGroupItem>
-                      ))}
-                    </ToggleGroup>
+                  <div>
+                    <CardTitle className="mb-2">Total de contactos</CardTitle>
+                    <CardDescription>
+                      Contactos captados en este periodo.
+                    </CardDescription>
                   </div>
                 </CardHeader>
 
@@ -430,7 +409,7 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
                     </div>
                   </div> */}
 
-                  <div className="h-64">
+                  <div className="h-48 sm:h-64">
                     {chartData.length ? (
                       <ChartContainer config={{ contacts: { label: "Contactos" } }} className="aspect-auto h-full w-full">
                         <AreaChart data={chartData}>
@@ -464,6 +443,25 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
                     )}
                   </div>
                 </CardContent>
+                <CardFooter className="px-6 pb-6">
+                  <ToggleGroup
+                    type="single"
+                    value={chartRange}
+                    onValueChange={(value) => value && setChartRange(value)}
+                    variant="outline"
+                    className="flex w-full flex-wrap"
+                  >
+                    {CHART_RANGE_OPTIONS.map((option) => (
+                      <ToggleGroupItem
+                        key={option.id}
+                        value={option.id}
+                        className="h-9 flex-1 sm:flex-none sm:px-4"
+                      >
+                        {option.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </CardFooter>
 
               </Card>
             </div>
