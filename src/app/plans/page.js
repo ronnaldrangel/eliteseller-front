@@ -19,19 +19,7 @@ export const metadata = {
 
 export default async function PlansPage() {
   const session = await auth();
-  const email = session?.user?.email || "";
-  const hotmartBase = "https://pay.hotmart.com/U102463815A?off=99w022je";
-  const hotmartHref = email
-    ? `${hotmartBase}${
-        hotmartBase.includes("?") ? "&" : "?"
-      }email=${encodeURIComponent(email)}`
-    : hotmartBase;
-  const hotmartPremiumBase = "https://pay.hotmart.com/U102463815A?off=sybe6vzp";
-  const hotmartPremiumHref = email
-    ? `${hotmartPremiumBase}${
-        hotmartPremiumBase.includes("?") ? "&" : "?"
-      }email=${encodeURIComponent(email)}`
-    : hotmartPremiumBase;
+  
 
   let dynamicPlans = [];
   let error = null;
@@ -97,7 +85,7 @@ export default async function PlansPage() {
           ? `${plan.regular_price}$/${plan.billing_period}`
           : "",
         features: plan.features || [],
-        href: isPremium ? hotmartPremiumHref : hotmartHref,
+        planId: plan.plan_id,
         delay: `${index * 150}ms`,
         highlight: isPremium,
         badgeText: isPremium ? "Mejor opción" : undefined,
@@ -115,6 +103,7 @@ export default async function PlansPage() {
     beforePrice,
     features,
     href,
+    planId,
     delay,
     highlight,
     badgeText,
@@ -156,9 +145,29 @@ export default async function PlansPage() {
               </li>
             ))}
           </ul>
-          <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
-            <a href={href}>Empieza ahora</a>
-          </Button>
+          {planId ? (
+            <form
+              className="w-full mt-auto"
+              action={async () => {
+                "use server"
+                const userId = session?.user?.strapiUserId
+                const url = "https://n8n.eliteseller.app/webhook/flow/subscribe"
+                await fetch(url, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ plan_id: planId, userId }),
+                })
+              }}
+            >
+              <Button type="submit" size="lg" className="w-full mt-auto h-12 text-base">
+                Empieza ahora
+              </Button>
+            </form>
+          ) : (
+            <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
+              <a href={href}>Empieza ahora</a>
+            </Button>
+          )}
         </CardContent>
       </Card>
     );
