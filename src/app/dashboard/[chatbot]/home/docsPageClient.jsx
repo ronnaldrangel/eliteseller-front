@@ -70,9 +70,9 @@ const INITIAL_STATS = {
 };
 
 const CHART_RANGE_OPTIONS = [
-  { id: "90d", label: "Ultimos 3 meses" },
-  { id: "30d", label: "Ultimos 30 dias" },
-  { id: "7d", label: "Ultimos 7 dias" },
+  { id: "90d", label: "Hace 3 meses" },
+  { id: "30d", label: "Hace 30 dias" },
+  { id: "7d", label: "Hace 7 dias" },
 ];
 
 const RANGE_LIMIT_DAYS = {
