@@ -1,10 +1,16 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Image from "next/image";
 import MarketingLayout from "@/components/marketing-layout";
 import { Check } from "lucide-react";
 import CountdownOffer from "@/components/countdown-offer";
 import { auth } from "@/lib/auth";
+import { buildStrapiUrl } from "@/lib/strapi";
 
 export const metadata = {
   title: "Planes",
@@ -12,83 +18,120 @@ export const metadata = {
 };
 
 export default async function PlansPage() {
-  const session = await auth()
-  const email = session?.user?.email || ''
-  const hotmartBase = 'https://pay.hotmart.com/U102463815A?off=99w022je'
-  const hotmartHref = email ? `${hotmartBase}${hotmartBase.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}` : hotmartBase
-  const hotmartPremiumBase = 'https://pay.hotmart.com/U102463815A?off=sybe6vzp'
-  const hotmartPremiumHref = email ? `${hotmartPremiumBase}${hotmartPremiumBase.includes('?') ? '&' : '?'}email=${encodeURIComponent(email)}` : hotmartPremiumBase
+  const session = await auth();
+  const email = session?.user?.email || "";
+  const hotmartBase = "https://pay.hotmart.com/U102463815A?off=99w022je";
+  const hotmartHref = email
+    ? `${hotmartBase}${
+        hotmartBase.includes("?") ? "&" : "?"
+      }email=${encodeURIComponent(email)}`
+    : hotmartBase;
+  const hotmartPremiumBase = "https://pay.hotmart.com/U102463815A?off=sybe6vzp";
+  const hotmartPremiumHref = email
+    ? `${hotmartPremiumBase}${
+        hotmartPremiumBase.includes("?") ? "&" : "?"
+      }email=${encodeURIComponent(email)}`
+    : hotmartPremiumBase;
+
+  let dynamicPlans = [];
+  let error = null;
+
+  try {
+    const url = buildStrapiUrl("/api/plans");
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.strapiToken}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      const details = await res.json().catch(() => ({}));
+      error =
+        details?.error?.message ||
+        `No se pudo cargar los planes (status ${res.status})`;
+    } else {
+      const data = await res.json();
+      dynamicPlans = Array.isArray(data) ? data : data?.data || [];
+    }
+  } catch (e) {
+    console.error("Error fetching plans:", e);
+    error = "Error al conectar con Strapi. Verifica tu conexión.";
+  }
+
+  // Este plan rompe el patrón de los demás por el precio y personalización
+  const empresarialPlan = {
+    title: "Empresarial",
+    price: "Precio a medida",
+    priceClass: "text-3xl font-bold",
+    perText: "",
+    beforePrice: "",
+    features: [
+      "Todas las funciones incluidas",
+      "Multiples número de WhatsApp",
+      "Ilimitados miembros del equipo",
+      "Flujos automatizados ilimitados",
+      "Reportes avanzados y analytics",
+      "Soporte 24/7 dedicado",
+      "Integraciones personalizadas",
+    ],
+    href: "https://www.instagram.com/elitecode.es/",
+    delay: "300ms",
+    highlight: false,
+    featureIconColor: "text-green-600",
+  };
 
   const plans = [
-    {
-      title: 'Básico',
-      price: '29$',
-      priceClass: 'text-3xl font-bold',
-      perText: 'al mes',
-      beforePrice: '58$/mes',
-      features: [
-        'Todas las funciones incluidas',
-        '1 número de WhatsApp',
-        'Sin miembros del equipo',
-        'Soporte por WhatsApp',
-      ],
-      href: hotmartHref,
-      delay: '0ms',
-      highlight: false,
-      featureIconColor: 'text-green-600',
-    },
-    {
-      title: 'Premium',
-      price: '49$',
-      priceClass: 'text-4xl font-extrabold',
-      perText: 'al mes',
-      beforePrice: '98$/mes',
-      features: [
-        'Todas las funciones incluidas',
-        '1 número de WhatsApp',
-        'Hasta 3 miembros del equipo',
-        'Flujos automatizados ilimitados',
-        'Reportes avanzados',
-        'Soporte por WhatsApp',
-      ],
-      href: hotmartPremiumHref,
-      delay: '150ms',
-      highlight: true,
-      badgeText: 'Mejor opción',
-      featureIconColor: 'text-cyan-600',
-    },
-    {
-      title: 'Empresarial',
-      price: 'Precio a medida',
-      priceClass: 'text-3xl font-bold',
-      perText: '',
-      beforePrice: '',
-      features: [
-        'Todas las funciones incluidas',
-        'Multiples número de WhatsApp',
-        'Ilimitados miembros del equipo',
-        'Flujos automatizados ilimitados',
-        'Reportes avanzados y analytics',
-        'Soporte 24/7 dedicado',
-        'Integraciones personalizadas',
-      ],
-      href: 'https://www.instagram.com/elitecode.es/',
-      delay: '300ms',
-      highlight: false,
-      featureIconColor: 'text-green-600',
-    },
-  ]
+    ...dynamicPlans.map((plan, index) => {
+      const isPremium = plan.plan_id === "PREMIUM";
+      return {
+        title: plan.name,
+        price: `${plan.price}$`,
+        priceClass: isPremium
+          ? "text-4xl font-extrabold"
+          : "text-3xl font-bold",
+        perText: `al ${plan.billing_period}`,
+        beforePrice: plan.regular_price
+          ? `${plan.regular_price}$/${plan.billing_period}`
+          : "",
+        features: plan.features || [],
+        href: isPremium ? hotmartPremiumHref : hotmartHref,
+        delay: `${index * 150}ms`,
+        highlight: isPremium,
+        badgeText: isPremium ? "Mejor opción" : undefined,
+        featureIconColor: isPremium ? "text-cyan-600" : "text-green-600",
+      };
+    }),
+    empresarialPlan,
+  ];
 
-  const PlanCard = ({ title, price, priceClass, perText, beforePrice, features, href, delay, highlight, badgeText, featureIconColor }) => {
+  const PlanCard = ({
+    title,
+    price,
+    priceClass,
+    perText,
+    beforePrice,
+    features,
+    href,
+    delay,
+    highlight,
+    badgeText,
+    featureIconColor,
+  }) => {
     const highlightClasses = highlight
-      ? 'relative ring-opacity-70 shadow-xl bg-gradient-to-b from-[rgba(84,162,177,0.12)] dark:from-[rgba(84,162,177,0.12)] hover:shadow-2xl'
-      : 'hover:shadow-lg'
+      ? "relative ring-opacity-70 shadow-xl bg-gradient-to-b from-[rgba(84,162,177,0.12)] dark:from-[rgba(84,162,177,0.12)] hover:shadow-2xl"
+      : "hover:shadow-lg";
 
     return (
-      <Card style={{ animationDelay: delay, animationFillMode: 'both' }} className={`animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out transition-shadow h-full flex flex-col ${highlightClasses}`}>
+      <Card
+        style={{ animationDelay: delay, animationFillMode: "both" }}
+        className={`animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out transition-shadow h-full flex flex-col ${highlightClasses}`}
+      >
         {highlight && (
           <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 shadow">
-            {badgeText || 'Mejor opción'}
+            {badgeText || "Mejor opción"}
           </div>
         )}
         <CardHeader>
@@ -98,7 +141,10 @@ export default async function PlansPage() {
             {perText && <span className="ml-1">{perText}</span>}
           </CardDescription>
           {beforePrice && (
-            <div className="mt-1 text-xs"><span className="text-muted-foreground">Antes: </span><span className="line-through opacity-70">{beforePrice}</span></div>
+            <div className="mt-1 text-xs">
+              <span className="text-muted-foreground">Antes: </span>
+              <span className="line-through opacity-70">{beforePrice}</span>
+            </div>
           )}
         </CardHeader>
         <CardContent className="pt-2 flex flex-col flex-1">
@@ -115,20 +161,31 @@ export default async function PlansPage() {
           </Button>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
+
   return (
     <MarketingLayout>
       <div className="mt-2">
         <h1 className="text-2xl font-semibold">🎉 Empieza tus 7 días gratis</h1>
-        <p className="text-sm text-muted-foreground mt-2">Elige el plan que mejor se adapte a tu negocio.</p>
+        <p className="text-sm text-muted-foreground mt-2">
+          Elige el plan que mejor se adapte a tu negocio.
+        </p>
       </div>
-      <CountdownOffer days={7} color="#ef4444" />
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {plans.map((p) => (
-          <PlanCard key={p.title} {...p} />
-        ))}
-      </div>
+      {error ? (
+        <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
+          {error}
+        </div>
+      ) : (
+        <>
+          <CountdownOffer days={7} color="#ef4444" />
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {plans.map((p) => (
+              <PlanCard key={p.title} {...p} />
+            ))}
+          </div>
+        </>
+      )}
     </MarketingLayout>
   );
 }
