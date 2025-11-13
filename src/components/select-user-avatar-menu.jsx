@@ -60,6 +60,9 @@ export default function SelectUserAvatarMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
+          <Link href="/account">Mi cuenta</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link href="/billing">Facturación</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

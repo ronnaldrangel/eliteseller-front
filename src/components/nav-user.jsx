@@ -100,7 +100,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href={withChatbotSegment('/account')}>
+                <Link href={'/account'}>
                   <UserCircleIcon />
                   Mi Cuenta
                 </Link>
