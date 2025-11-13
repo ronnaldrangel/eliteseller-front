@@ -3,7 +3,7 @@ import { buildStrapiUrl } from "@/lib/strapi";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import SelectUserAvatarMenu from "@/components/select-user-avatar-menu";
+import MarketingLayout from "@/components/marketing-layout";
 import { PlusIcon } from "lucide-react";
 import { buildChatbotIdentifiers } from "@/lib/utils/chatbot-route";
 
@@ -78,95 +78,64 @@ export default async function SelectPage() {
     : [];
 
   return (
-    <div className="min-h-screen w-full">
-      <div className="mx-auto max-w-6xl px-4 lg:px-6 py-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <Link href="/select" className="block" aria-label="Inicio">
-              <span className="inline-flex items-center">
-                <Image
-                  src="/images/logo-black.png"
-                  alt="Logo"
-                  width={140}
-                  height={24}
-                  priority
-                  className="h-8 w-auto dark:hidden"
-                />
-                <Image
-                  src="/images/logo-white.png"
-                  alt="Logo"
-                  width={140}
-                  height={24}
-                  priority
-                  className="hidden h-8 w-auto dark:block"
-                />
-              </span>
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <SelectUserAvatarMenu />
-          </div>
-        </div>
-
-        <div className="mt-10">
-          <h1 className="text-2xl font-semibold">Elige tu chatbot</h1>
-          <p className="text-sm text-muted-foreground mt-2">
-            Dale click a tu chatbot para gestionarlo.
-          </p>
-        </div>
-
-        <div className="mt-8 grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {error ? (
-            <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
-              {error}
-            </div>
-          ) : (
-            <>
-              {/* Crear chatbot como opción adicional (debajo del título) */}
-              <Link
-                href="/plans"
-                className="group rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
-                aria-label="Crear bot"
-                title="Crear bot"
-              >
-                <PlusIcon className="size-16 text-muted-foreground group-hover:text-primary transition-colors" />
-                <div className="mt-3 font-semibold">Crear bot</div>
-              </Link>
-
-              {cards.length > 0 ? (
-                <>
-                  {cards.map((c) => (
-                    <Link
-                      key={c.routeSegment}
-                      href={`/dashboard/${encodeURIComponent(c.routeSegment)}/home`}
-                      className="group relative rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
-                      aria-label={`Entrar a ${c.name}`}
-                    >
-                      <Image
-                        src="/images/bot.webp"
-                        alt={c.name}
-                        width={120}
-                        height={120}
-                        className="h-20 w-20 rounded-md object-cover grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0 transition-all duration-200"
-                      />
-                      <div className="mt-3 font-medium line-clamp-1 text-lg">
-                        {c.name}
-                      </div>
-                      {c.custom && (
-                        <span className="mt-2 rounded px-2 py-0.5 text-xs font-medium bg-purple-600 text-white shadow-sm">
-                          Personalizado
-                        </span>
-                      )}
-                    </Link>
-                  ))}
-                </>
-              ) : (
-                <div></div>
-              )}
-            </>
-          )}
-        </div>
+    <MarketingLayout>
+      <div className="mt-2">
+        <h1 className="text-2xl font-semibold">Elige tu chatbot</h1>
+        <p className="text-sm text-muted-foreground mt-2">
+          Dale click a tu chatbot para gestionarlo.
+        </p>
       </div>
-    </div>
+
+      <div className="mt-8 grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {error ? (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
+            {error}
+          </div>
+        ) : (
+          <>
+            <Link
+              href="/plans"
+              className="group rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
+              aria-label="Crear bot"
+              title="Crear bot"
+            >
+              <PlusIcon className="size-16 text-muted-foreground group-hover:text-primary transition-colors" />
+              <div className="mt-3 font-semibold">Crear bot</div>
+            </Link>
+
+            {cards.length > 0 ? (
+              <>
+                {cards.map((c) => (
+                  <Link
+                    key={c.routeSegment}
+                    href={`/dashboard/${encodeURIComponent(c.routeSegment)}/home`}
+                    className="group relative rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
+                    aria-label={`Entrar a ${c.name}`}
+                  >
+                    <Image
+                      src="/images/bot.webp"
+                      alt={c.name}
+                      width={120}
+                      height={120}
+                      className="h-20 w-20 rounded-md object-cover grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0 transition-all duration-200"
+                    />
+                    <div className="mt-3 font-medium line-clamp-1 text-lg">
+                      {c.name}
+                    </div>
+                    {c.custom && (
+                      <span className="mt-2 rounded px-2 py-0.5 text-xs font-medium bg-purple-600 text-white shadow-sm">
+                        Personalizado
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </>
+            ) : (
+              <div></div>
+            )}
+          </>
+        )}
+      </div>
+    </MarketingLayout>
   );
 }

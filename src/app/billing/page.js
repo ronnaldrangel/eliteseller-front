@@ -1,8 +1,7 @@
-import Image from "next/image"
+import MarketingLayout from "@/components/marketing-layout"
 import Link from "next/link"
 import AffiliatePaymentCta from "@/components/affiliate-payment-cta"
 import ChangeCardCta from "@/components/change-card-cta"
-import SelectUserAvatarMenu from "@/components/select-user-avatar-menu"
 import { auth } from "@/lib/auth"
 import { buildStrapiUrl } from "@/lib/strapi"
 
@@ -47,41 +46,11 @@ export default async function BillingPage() {
   })()
 
   return (
-    <div className="min-h-screen w-full">
-      <div className="mx-auto max-w-6xl px-4 lg:px-6 py-8">
-
-        <div className="flex items-center justify-between">
-          <div>
-            <Link href="/select" className="block" aria-label="Inicio">
-              <span className="inline-flex items-center">
-                <Image
-                  src="/images/logo-black.png"
-                  alt="Logo"
-                  width={140}
-                  height={24}
-                  priority
-                  className="h-8 w-auto dark:hidden"
-                />
-                <Image
-                  src="/images/logo-white.png"
-                  alt="Logo"
-                  width={140}
-                  height={24}
-                  priority
-                  className="hidden h-8 w-auto dark:block"
-                />
-              </span>
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <SelectUserAvatarMenu />
-          </div>
-        </div>
-
-        <div className="mt-10">
-          <h1 className="text-2xl font-semibold">Facturación</h1>
-          <p className="text-sm text-muted-foreground mt-2">Información de pagos y métodos de facturación.</p>
-        </div>
+    <MarketingLayout>
+      <div className="mt-2">
+        <h1 className="text-2xl font-semibold">Facturación</h1>
+        <p className="text-sm text-muted-foreground mt-2">Información de pagos y métodos de facturación.</p>
+      </div>
 
         {/* Estado vacío si no hay customer */}
         {!customersError && !customer ? (
@@ -141,21 +110,6 @@ export default async function BillingPage() {
             </div>
           </div>
         )}
-
-        {/* <div className="mt-8 rounded-lg border">
-          <div className="p-4 border-b">
-            <h2 className="text-base font-semibold">Debug: Customers GET</h2>
-            <p className="text-xs text-muted-foreground break-all">URL: {customersUrl}</p>
-            {customersError ? (
-              <p className="mt-2 text-xs text-destructive">{customersError}</p>
-            ) : null}
-          </div>
-          <pre className="mt-0 text-xs font-mono bg-muted/30 rounded-md p-3 overflow-auto whitespace-pre">
-{customersRawPayload ? JSON.stringify(customersRawPayload, null, 2) : '—'}
-          </pre>
-        </div> */}
-
-      </div>
-    </div>
+    </MarketingLayout>
   )
 }
