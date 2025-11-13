@@ -3,6 +3,8 @@ import { buildStrapiUrl } from "@/lib/strapi"
 import { getChatbotBySlug } from "@/lib/utils/chatbot-utils"
 import { redirect } from "next/navigation"
 import ConnectWhatsAppButton from "@/components/connect-whatsapp-button"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export default async function WhatsAppIntegrationPage({ params }) {
   const session = await auth()
@@ -53,8 +55,8 @@ export default async function WhatsAppIntegrationPage({ params }) {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-semibold">Integración de WhatsApp</h1>
-      <p className="text-sm text-muted-foreground mt-1">Cuentas relacionadas con tu chatbot</p>
+      <h1 className="text-2xl font-semibold">Integración de WhatsApp by Wazend</h1>
+      <p className="text-sm text-muted-foreground mt-1">Integra tu chatbot con WhatsApp sin necesidad de aprobacion de Meta.</p>
 
       {/* {error ? (
         <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
@@ -68,7 +70,7 @@ export default async function WhatsAppIntegrationPage({ params }) {
         </div>
       )} */}
 
-      <div className="mt-6">
+      <div className="mt-6 flex flex-col gap-3 md:flex-row">
         {(() => {
           const items = Array.isArray(payload)
             ? payload
@@ -80,6 +82,9 @@ export default async function WhatsAppIntegrationPage({ params }) {
           const accountDocumentId = attrs?.documentId || first?.documentId || null
           return <ConnectWhatsAppButton documentId={accountDocumentId} />
         })()}
+        <Button asChild variant="outline" className="w-full md:w-auto">
+          <Link href={`/dashboard/${encodeURIComponent(chatbotSlug)}/chats`}>Ver mis chats</Link>
+        </Button>
       </div>
     </div>
   )
