@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { CheckCircle2Icon } from "lucide-react"
+import { toast } from "sonner"
 
 export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }) {
   const base = initialData?.attributes || initialData || {}
@@ -77,12 +78,15 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
 
       if (!res.ok) {
         const msg = body?.error?.message || 'No se pudo actualizar el chatbot'
-        setStatus({ loading: false, type: 'error', message: msg })
+        setStatus({ loading: false, type: null, message: null })
+        toast.error(msg)
       } else {
-        setStatus({ loading: false, type: 'success', message: 'Guardado correctamente' })
+        setStatus({ loading: false, type: null, message: null })
+        toast.success('Guardado correctamente')
       }
     } catch (err) {
-      setStatus({ loading: false, type: 'error', message: 'Error de red al actualizar' })
+      setStatus({ loading: false, type: null, message: null })
+      toast.error('Error de red al actualizar')
     }
   }
 
@@ -227,11 +231,6 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
         <Button type="submit" disabled={status.loading}>
           {status.loading ? 'Guardando…' : 'Guardar cambios'}
         </Button>
-        {status.type && (
-          <span className={status.type === 'success' ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>
-            {status.message}
-          </span>
-        )}
       </div>
     </form>
   )
