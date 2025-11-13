@@ -7,7 +7,8 @@ import { columns } from "./columns";
 
 export default async function ContactsPage({ params }) {
   const session = await auth();
-  const chatbotSlug = String(params?.chatbot || "");
+  const p = await params;
+  const chatbotSlug = String(p?.chatbot || "");
 
   if (!session) {
     redirect(
