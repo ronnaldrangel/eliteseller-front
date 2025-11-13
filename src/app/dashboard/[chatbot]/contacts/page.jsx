@@ -25,11 +25,11 @@ export default async function ContactsPage({ params }) {
   if (!chatbot) redirect("/select");
 
   // Obtener Contacts del chatbot
-//   const qs = new URLSearchParams();
-//   qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
+  const qs = new URLSearchParams();
+  qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
 
-//   const url = buildStrapiUrl(`/api/contacts?${qs.toString()}`);
-  const url = buildStrapiUrl(`/api/contacts`);
+  const url = buildStrapiUrl(`/api/contacts?${qs.toString()}`);
+  // const url = buildStrapiUrl(`/api/contacts`);
 
   let contacts = [];
   let error = null;
