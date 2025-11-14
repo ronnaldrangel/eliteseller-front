@@ -33,7 +33,22 @@ export default async function EditProductPage({ params }) {
   try {
     const res = await fetch(
       buildStrapiUrl(
-        `/api/products/${documentId}?populate[media][fields][0]=url&populate[media][fields][1]=name&populate[media][fields][2]=id`
+        `/api/products/${documentId}?` +
+          `populate[media][fields][0]=url&` +
+          `populate[media][fields][1]=name&` +
+          `populate[media][fields][2]=id&` +
+          `populate[media][fields][3]=mime&` +
+          `populate[media][fields][4]=size&` +
+          `populate[product_options][fields][0]=name&` +
+          `populate[product_options][fields][1]=values&` +
+          `populate[product_options][fields][2]=documentId&` +
+          `populate[product_variants][fields][0]=combination&` +
+          `populate[product_variants][fields][1]=price&` +
+          `populate[product_variants][fields][2]=is_available&` +
+          `populate[product_variants][fields][3]=documentId&` +
+          `populate[product_variants][populate][image][fields][0]=url&` +
+          `populate[product_variants][populate][image][fields][1]=name&` +
+          `populate[product_variants][populate][image][fields][2]=id`
       ),
       {
         method: "GET",
