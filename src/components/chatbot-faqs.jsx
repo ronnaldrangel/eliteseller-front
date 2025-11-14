@@ -152,7 +152,7 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
   return (
     <div className="rounded-lg border bg-muted/20 p-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-4">
-        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Preguntas frecuentes</h4>
+        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" />Base de conocimiento</h4>
         <Button type="button" size="sm" className="w-full md:w-auto" onClick={openCreate} disabled={!token || !chatbotId}>
           <PlusIcon className="size-4" /> Añadir pregunta
         </Button>

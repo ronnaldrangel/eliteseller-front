@@ -98,8 +98,8 @@ export default async function AppsPage({ params }) {
         <div className="px-4 lg:px-6">
           <Tabs defaultValue="todo" className="w-full">
             <TabsList className="w-full grid grid-cols-3">
-              <TabsTrigger value="todo">Todo</TabsTrigger>
-              <TabsTrigger value="faqs">FAQs</TabsTrigger>
+              <TabsTrigger value="todo">Personalidad</TabsTrigger>
+              <TabsTrigger value="faqs">Base de conocimiento</TabsTrigger>
               <TabsTrigger value="pagos">Pagos</TabsTrigger>
             </TabsList>
 
