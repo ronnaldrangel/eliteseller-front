@@ -24,14 +24,30 @@ export async function GET(request) {
     if (location && redirectFlag) {
       return NextResponse.redirect(location)
     }
-    const data = await res.json().catch(() => ({}))
+    const contentType = res.headers.get("content-type") || ""
+    let data = null
+    let textBody = null
+    if (contentType.includes("application/json")) {
+      data = await res.json().catch(() => ({}))
+    } else {
+      textBody = await res.text().catch(() => null)
+    }
     if (!res.ok) {
+      if (textBody) {
+        return new NextResponse(textBody, { status: res.status, headers: { "Content-Type": "text/plain" } })
+      }
       const message = data?.error?.message || `Webhook respondió error (status ${res.status})`
       return NextResponse.json({ error: { message } }, { status: res.status })
     }
-    const url = data?.redirectUrl || data?.url || data?.href || null
+    let url = (data?.redirectUrl || data?.url || data?.href || null)
+    if (typeof url === "string" && url.startsWith("vhttp")) {
+      url = url.slice(1)
+    }
     if (redirectFlag && typeof url === "string" && url.length > 0) {
       return NextResponse.redirect(url)
+    }
+    if (textBody) {
+      return new NextResponse(textBody, { status: 200, headers: { "Content-Type": "text/plain" } })
     }
     return NextResponse.json({ ok: true, url })
   } catch (e) {

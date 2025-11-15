@@ -12,6 +12,7 @@ import CountdownOffer from "@/components/countdown-offer";
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
 import Link from "next/link";
+import SubscribePlanButton from "@/components/subscribe-plan-button";
 
 export const metadata = {
   title: "Planes",
@@ -72,8 +73,10 @@ export default async function PlansPage() {
     featureIconColor: "text-green-600",
   };
 
+  const sortedPlans = [...dynamicPlans].sort((a, b) => Number(a?.price ?? 0) - Number(b?.price ?? 0))
+
   const plans = [
-    ...dynamicPlans.map((plan, index) => {
+    ...sortedPlans.map((plan, index) => {
       const isPremium = plan.plan_id === "PREMIUM";
       return {
         title: plan.name,
@@ -148,9 +151,7 @@ export default async function PlansPage() {
           </ul>
           {planId ? (
             <div className="w-full mt-auto">
-              <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
-                <Link href={`/api/plans/subscribe?plan_id=${encodeURIComponent(planId)}&userId=${encodeURIComponent(session?.user?.strapiUserId || '')}&redirect=1`}>Empieza ahora</Link>
-              </Button>
+              <SubscribePlanButton planId={planId} userId={session?.user?.strapiUserId} />
             </div>
           ) : (
             <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
