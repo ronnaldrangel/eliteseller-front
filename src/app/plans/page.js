@@ -11,6 +11,7 @@ import { Check } from "lucide-react";
 import CountdownOffer from "@/components/countdown-offer";
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
+import Link from "next/link";
 
 export const metadata = {
   title: "Planes",
@@ -146,23 +147,11 @@ export default async function PlansPage() {
             ))}
           </ul>
           {planId ? (
-            <form
-              className="w-full mt-auto"
-              action={async () => {
-                "use server"
-                const userId = session?.user?.strapiUserId
-                const url = "https://n8n.eliteseller.app/webhook/flow/subscribe"
-                await fetch(url, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ plan_id: planId, userId }),
-                })
-              }}
-            >
-              <Button type="submit" size="lg" className="w-full mt-auto h-12 text-base">
-                Empieza ahora
+            <div className="w-full mt-auto">
+              <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
+                <Link href={`/api/plans/subscribe?plan_id=${encodeURIComponent(planId)}&userId=${encodeURIComponent(session?.user?.strapiUserId || '')}&redirect=1`}>Empieza ahora</Link>
               </Button>
-            </form>
+            </div>
           ) : (
             <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
               <a href={href}>Empieza ahora</a>
