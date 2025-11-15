@@ -61,9 +61,13 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       return;
     }
 
-    const validOptions = options.filter(
-      (opt) => opt.name.trim() && opt.values.length > 0
-    );
+    const validOptions = options
+      .filter((opt) => opt.name.trim() && opt.values.length > 0)
+      .map((opt) => ({
+        ...opt,
+        values: opt.values.filter((v) => v.trim()),
+      }))
+      .filter((opt) => opt.values.length > 0);
 
     if (validOptions.length === 0) {
       setVariants([]);
@@ -71,7 +75,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     }
 
     const combinations = [];
-    
+
     const generateCombinations = (currentIndex, currentCombination) => {
       if (currentIndex === validOptions.length) {
         combinations.push([...currentCombination]);
@@ -97,7 +101,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       });
 
       const variantName = combo.map((c) => c.value).join(" / ");
-      
+
       // Buscar si ya existe esta variante
       const existing = variants.find(
         (v) => JSON.stringify(v.combination) === JSON.stringify(combinationObj)
@@ -129,19 +133,22 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
   // Actualizar nombre de opción
   const updateOptionName = (id, name) => {
-    setOptions(
-      options.map((opt) => (opt.id === id ? { ...opt, name } : opt))
-    );
+    setOptions(options.map((opt) => (opt.id === id ? { ...opt, name } : opt)));
   };
 
   // Agregar valor a opción
   const addOptionValue = (id) => {
     setOptions(
-      options.map((opt) =>
-        opt.id === id
-          ? { ...opt, values: [...opt.values, ""] }
-          : opt
-      )
+      options.map((opt) => {
+        if (opt.id === id) {
+          const hasEmptyValues = opt.values.some((v) => !v.trim());
+          if (hasEmptyValues) {
+            return opt;
+          }
+          return { ...opt, values: [...opt.values, ""] };
+        }
+        return opt;
+      })
     );
   };
 
@@ -177,9 +184,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
   // Actualizar precio de variante
   const updateVariantPrice = (index, price) => {
-    setVariants(
-      variants.map((v, i) => (i === index ? { ...v, price } : v))
-    );
+    setVariants(variants.map((v, i) => (i === index ? { ...v, price } : v)));
   };
 
   // Actualizar disponibilidad de variante
@@ -208,7 +213,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     e.preventDefault();
     e.stopPropagation();
     const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file && file.type.startsWith("image/")) {
       updateVariantImage(index, file);
     }
   };
@@ -370,7 +375,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       const productId = productBody?.data?.documentId;
 
       // Si hay opciones, crearlas
-      if (options.length > 0) {
+      if (options.length > 0 && productId) {
         const validOptions = options.filter(
           (opt) => opt.name.trim() && opt.values.length > 0
         );
@@ -380,25 +385,31 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
             data: {
               name: option.name.trim(),
               values: option.values.filter((v) => v.trim()),
-              product: {
-                connect: [{ documentId: productId }],
-              },
+              product: productId,
             },
           };
 
-          await fetch(buildStrapiUrl(`/api/product-options`), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify(optionPayload),
-          });
+          const optionRes = await fetch(
+            buildStrapiUrl(`/api/product-options`),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify(optionPayload),
+            }
+          );
+
+          if (!optionRes.ok) {
+            const errorData = await optionRes.json().catch(() => ({}));
+            console.error("Error creating option:", errorData);
+          }
         }
       }
 
       // Si hay variantes, crearlas
-      if (variants.length > 0) {
+      if (variants.length > 0 && productId) {
         for (const variant of variants) {
           let imageId = null;
 
@@ -426,9 +437,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
               combination: variant.combination,
               price: Number(variant.price) || 0,
               is_available: variant.is_available,
-              product: {
-                connect: [{ documentId: productId }],
-              },
+              product: productId,
             },
           };
 
@@ -436,14 +445,22 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
             variantPayload.data.image = imageId;
           }
 
-          await fetch(buildStrapiUrl(`/api/product-variants`), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            },
-            body: JSON.stringify(variantPayload),
-          });
+          const variantRes = await fetch(
+            buildStrapiUrl(`/api/product-variants`),
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify(variantPayload),
+            }
+          );
+
+          if (!variantRes.ok) {
+            const errorData = await variantRes.json().catch(() => ({}));
+            console.error("Error creating variant:", errorData);
+          }
         }
       }
 
@@ -522,7 +539,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
               {/* Detalles principales - Nombre y Disponibilidad */}
               <FieldGroup className="gap-6">
                 <FieldLegend>Detalles principales</FieldLegend>
-                
+
                 <Field data-invalid={errors.name ? true : undefined}>
                   <FieldLabel htmlFor="product-name">
                     Nombre del producto
@@ -586,7 +603,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                   <FieldGroup className="gap-6">
                     <FieldLegend>Precio</FieldLegend>
                     <Field data-invalid={errors.price ? true : undefined}>
-                      <FieldLabel htmlFor="product-price">Precio base</FieldLabel>
+                      <FieldLabel htmlFor="product-price">
+                        Precio base
+                      </FieldLabel>
                       <FieldContent>
                         <Input
                           id="product-price"
@@ -666,7 +685,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                           Valores disponibles
                         </p>
                         {option.values.map((value, valueIndex) => (
-                          <div key={valueIndex} className="flex items-center gap-2">
+                          <div
+                            key={valueIndex}
+                            className="flex items-center gap-2"
+                          >
                             <Input
                               placeholder="Valor"
                               value={value}
@@ -677,6 +699,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                                   e.target.value
                                 )
                               }
+                              className={!value.trim() && value !== "" ? "border border-destructive" : ""}
                             />
                             <Button
                               type="button"
@@ -696,6 +719,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                           size="sm"
                           onClick={() => addOptionValue(option.id)}
                           className="w-full"
+                          disabled={option.values.some((v) => !v.trim())}
                         >
                           <Plus className="h-4 w-4 mr-2" />
                           Agregar valor
@@ -731,160 +755,190 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                       Define el precio e imagen para cada variante.
                     </FieldDescription>
 
-                    <div className="space-y-6">
-                      {groupedVariants.map((group) => (
-                        <div key={group.name} className="space-y-3">
-                          <h4 className="font-medium text-sm">
-                            {options[0]?.name}: {group.name}
-                          </h4>
-                          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                            {group.variants.map((variant, vIndex) => {
-                              const globalIndex = variants.indexOf(variant);
-                              const imagePreview = variant.image
-                                ? URL.createObjectURL(variant.image)
-                                : null;
+                    <div className="rounded-lg border border-muted-foreground/20 bg-background overflow-hidden">
+                      {/* Header de la tabla */}
+                      <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 bg-muted/50 border-b border-muted-foreground/20 text-sm font-medium">
+                        <div>Imagen</div>
+                        <div>Variante</div>
+                        <div>Precio</div>
+                        <div>Disponibilidad</div>
+                      </div>
 
-                              return (
-                                <div
-                                  key={vIndex}
-                                  className="flex flex-col gap-3 p-4 rounded-lg border border-muted-foreground/20 bg-muted/5"
-                                >
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    {Object.entries(variant.combination).map(
-                                      ([key, val]) => (
-                                        <span
-                                          key={key}
-                                          className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary font-medium"
-                                        >
-                                          {key}: {val}
-                                        </span>
-                                      )
-                                    )}
-                                  </div>
-                                  
-                                  <div className="space-y-2">
-                                    <Input
-                                      type="number"
-                                      min="0"
-                                      step="0.01"
-                                      placeholder="Precio"
-                                      value={variant.price}
-                                      onChange={(e) =>
-                                        updateVariantPrice(
-                                          globalIndex,
-                                          e.target.value
-                                        )
+                      {/* Filas agrupadas */}
+                      {groupedVariants.map((group) => (
+                        <div
+                          key={group.name}
+                          className="border-b border-muted-foreground/20 last:border-b-0"
+                        >
+                          {/* Título del grupo */}
+                          <div className="px-4 py-3 bg-muted/30 font-medium text-sm">
+                            {options[0]?.name}: {group.name}
+                            <span className="ml-2 text-xs text-muted-foreground font-normal">
+                              {group.variants.length} variante
+                              {group.variants.length !== 1 ? "s" : ""}
+                            </span>
+                          </div>
+
+                          {/* Variantes del grupo */}
+                          {group.variants.map((variant, vIndex) => {
+                            const globalIndex = variants.indexOf(variant);
+                            const imagePreview = variant.image
+                              ? URL.createObjectURL(variant.image)
+                              : null;
+
+                            return (
+                              <div
+                                key={vIndex}
+                                className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-4 hover:bg-muted/20 transition-colors items-center"
+                              >
+                                {/* Imagen */}
+                                <div className="relative">
+                                  {!imagePreview ? (
+                                    <div
+                                      onDrop={(e) =>
+                                        handleVariantImageDrop(globalIndex, e)
                                       }
-                                    />
-                                    
-                                    <div className="flex items-center gap-2">
-                                      <Switch
-                                        checked={variant.is_available}
-                                        onCheckedChange={(val) =>
-                                          updateVariantAvailability(
-                                            globalIndex,
-                                            val
-                                          )
-                                        }
+                                      onDragOver={handleDragOver}
+                                      className="relative w-20 h-20 border-2 border-dashed border-muted-foreground/40 rounded-lg hover:border-primary/50 transition-colors cursor-pointer bg-muted/10 flex items-center justify-center group"
+                                    >
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            updateVariantImage(
+                                              globalIndex,
+                                              file
+                                            );
+                                          }
+                                        }}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                                       />
-                                      <span className="text-xs text-muted-foreground">
-                                        Disponible
-                                      </span>
+                                      <svg
+                                        className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                        />
+                                      </svg>
                                     </div>
-                                    
-                                    <div>
-                                      <label className="text-xs text-muted-foreground block mb-2">
-                                        Imagen de la variante
-                                      </label>
-                                      
-                                      {!variant.image ? (
-                                        <div
-                                          onDrop={(e) => handleVariantImageDrop(globalIndex, e)}
-                                          onDragOver={handleDragOver}
-                                          className="relative border-2 border-dashed border-muted-foreground/40 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer bg-background"
-                                        >
-                                          <input
-                                            type="file"
-                                            accept="image/*"
-                                            onChange={(e) => {
+                                  ) : (
+                                    <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-muted-foreground/20 group">
+                                      <img
+                                        src={imagePreview}
+                                        alt={variant.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                        <Button
+                                          type="button"
+                                          variant="secondary"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={() => {
+                                            const input =
+                                              document.createElement("input");
+                                            input.type = "file";
+                                            input.accept = "image/*";
+                                            input.onchange = (e) => {
                                               const file = e.target.files?.[0];
                                               if (file) {
-                                                updateVariantImage(globalIndex, file);
+                                                updateVariantImage(
+                                                  globalIndex,
+                                                  file
+                                                );
                                               }
-                                            }}
-                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                          />
-                                          <div className="flex flex-col items-center justify-center gap-2 text-center">
-                                            <svg
-                                              className="w-8 h-8 text-muted-foreground"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                              />
-                                            </svg>
-                                            <div className="text-xs text-muted-foreground">
-                                              <span className="font-medium text-primary">
-                                                Examinar
-                                              </span>{" "}
-                                              o arrastra aquí
-                                            </div>
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <div className="relative rounded-lg overflow-hidden border border-muted-foreground/20">
-                                          <img
-                                            src={imagePreview}
-                                            alt={variant.name}
-                                            className="w-full h-32 object-cover"
-                                          />
-                                          <div className="absolute inset-0 bg-black/50 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                                            <Button
-                                              type="button"
-                                              variant="secondary"
-                                              size="sm"
-                                              onClick={() => {
-                                                const input = document.createElement('input');
-                                                input.type = 'file';
-                                                input.accept = 'image/*';
-                                                input.onchange = (e) => {
-                                                  const file = e.target.files?.[0];
-                                                  if (file) {
-                                                    updateVariantImage(globalIndex, file);
-                                                  }
-                                                };
-                                                input.click();
-                                              }}
-                                            >
-                                              Cambiar
-                                            </Button>
-                                            <Button
-                                              type="button"
-                                              variant="destructive"
-                                              size="sm"
-                                              onClick={() => removeVariantImage(globalIndex)}
-                                            >
-                                              Eliminar
-                                            </Button>
-                                          </div>
-                                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1">
-                                            <p className="text-xs text-white truncate">
-                                              {variant.image.name}
-                                            </p>
-                                          </div>
-                                        </div>
-                                      )}
+                                            };
+                                            input.click();
+                                          }}
+                                        >
+                                          <svg
+                                            className="w-4 h-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                            />
+                                          </svg>
+                                        </Button>
+                                        <Button
+                                          type="button"
+                                          variant="destructive"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={() =>
+                                            removeVariantImage(globalIndex)
+                                          }
+                                        >
+                                          <X className="w-4 h-4" />
+                                        </Button>
+                                      </div>
                                     </div>
-                                  </div>
+                                  )}
                                 </div>
-                              );
-                            })}
-                          </div>
+
+                                {/* Variante - Tags de combinación */}
+                                <div className="flex flex-wrap gap-2 items-center pr-4">
+                                  <span className="text-sm font-medium shrink-0">
+                                    {vIndex + 1}
+                                  </span>
+                                  {Object.entries(variant.combination).map(
+                                    ([key, val]) => (
+                                      <span
+                                        key={key}
+                                        className="text-xs px-2 py-1 rounded-md bg-muted text-foreground border border-muted-foreground/20 shrink-0"
+                                      >
+                                        {key}: {val}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+
+                                {/* Precio */}
+                                <div className="w-16 md:w-32">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    placeholder="0.00"
+                                    value={variant.price}
+                                    onChange={(e) =>
+                                      updateVariantPrice(
+                                        globalIndex,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="h-9"
+                                  />
+                                </div>
+
+                                {/* Disponibilidad */}
+                                <div className="flex items-center justify-center w-12 md:w-24">
+                                  <Switch
+                                    checked={variant.is_available}
+                                    onCheckedChange={(val) =>
+                                      updateVariantAvailability(
+                                        globalIndex,
+                                        val
+                                      )
+                                    }
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>
@@ -923,7 +977,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                           Se enviara en respuestas rapidas por WhatsApp.
                         </FieldDescription>
                         <span>
-                          {form.description_wsp.length}/{SHORT_DESCRIPTION_LIMIT}
+                          {form.description_wsp.length}/
+                          {SHORT_DESCRIPTION_LIMIT}
                         </span>
                       </div>
                       <FieldError>{errors.description_wsp}</FieldError>
