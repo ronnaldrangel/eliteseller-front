@@ -38,7 +38,7 @@ export default async function AppsPage({ params }) {
 
   try {
     const url = buildStrapiUrl(
-      `/api/chatbots/${encodeURIComponent(chatbot.slug)}?populate=*`
+      `/api/chatbots/${encodeURIComponent(chatbot.slug)}?populate[faqs]=true&populate[payments]=true`
     );
     const res = await fetch(url, {
       method: "GET",

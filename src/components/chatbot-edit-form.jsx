@@ -137,6 +137,20 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
       </div>
 
       <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
+        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Audiencia e instrucciones</h4>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="target">Público objetivo</FieldLabel>
+            <Input id="target" name="target" value={form.target} onChange={handleChange} />
+          </Field>
+          <Field>
+             <FieldLabel htmlFor="instructions">Instrucciones</FieldLabel>
+             <Input id="instructions" name="instructions" value={form.instructions} onChange={handleChange} />
+           </Field>
+        </div>
+      </div>
+
+      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Personalidad</h4>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
@@ -165,17 +179,15 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="emoji">Usar emojis</FieldLabel>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 rounded-full border bg-muted/30 px-4 py-2">
               <Switch id="emoji" checked={form.emoji} onCheckedChange={handleToggleEmoji} />
-              <span className="text-sm text-muted-foreground">Activa o desactiva el uso de emojis</span>
+              <span className="text-sm">¿Usar emojis?</span>
             </div>
           </Field>
           <Field>
-            <FieldLabel htmlFor="signs">Usar signos</FieldLabel>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 rounded-full border bg-muted/30 px-4 py-2">
               <Switch id="signs" checked={form.signs} onCheckedChange={handleToggleSigns} />
-              <span className="text-sm text-muted-foreground">Activa o desactiva signos</span>
+              <span className="text-sm">¿Usar signos?</span>
             </div>
           </Field>
 
@@ -192,20 +204,6 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
               onChange={(e) => setForm({ ...form, available_emojis: e.target.value })}
             />
           </Field>
-        </div>
-      </div>
-
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
-        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Audiencia e instrucciones</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="target">Público objetivo</FieldLabel>
-            <Input id="target" name="target" value={form.target} onChange={handleChange} />
-          </Field>
-          <Field>
-             <FieldLabel htmlFor="instructions">Instrucciones</FieldLabel>
-             <Input id="instructions" name="instructions" value={form.instructions} onChange={handleChange} />
-           </Field>
         </div>
       </div>
 
