@@ -9,29 +9,18 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Field,
-  FieldContent,
-  FieldDescription,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-  FieldLegend,
-  FieldSeparator,
-  FieldSet,
-} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import CardUpload from "@/components/card-upload";
-import { ChevronLeft, Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2 } from "lucide-react";
 
 const SHORT_DESCRIPTION_LIMIT = 500;
-const LONG_DESCRIPTION_LIMIT = 500;
+const LONG_DESCRIPTION_LIMIT = 1000;
+const NAME_LIMIT = 250;
 
 export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   const router = useRouter();
@@ -93,7 +82,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
     generateCombinations(0, []);
 
-    // Crear variantes con formato para Strapi
     const newVariants = combinations.map((combo) => {
       const combinationObj = {};
       combo.forEach((item) => {
@@ -102,7 +90,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
       const variantName = combo.map((c) => c.value).join(" / ");
 
-      // Buscar si ya existe esta variante
       const existing = variants.find(
         (v) => JSON.stringify(v.combination) === JSON.stringify(combinationObj)
       );
@@ -127,7 +114,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   // Eliminar opción
   const removeOption = (id) => {
     setOptions(options.filter((opt) => opt.id !== id));
-    // Regenerar variantes después de eliminar
     setTimeout(generateVariants, 0);
   };
 
@@ -178,7 +164,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           : opt
       )
     );
-    // Regenerar variantes después de eliminar valor
     setTimeout(generateVariants, 0);
   };
 
@@ -249,7 +234,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       nextErrors.name = "Ingresa el nombre del producto.";
     }
 
-    // Si no hay variantes, validar precio base
     if (variants.length === 0) {
       const priceNum = Number(form.price);
       if (form.price === "") {
@@ -319,7 +303,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         };
       }
 
-      // Subir imágenes principales del producto
       const newFiles = (uploadItems || [])
         .map((item) => item?.file)
         .filter((file) => typeof File !== "undefined" && file instanceof File);
@@ -354,7 +337,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         }
       }
 
-      // Crear el producto primero
       const response = await fetch(buildStrapiUrl(`/api/products`), {
         method: "POST",
         headers: {
@@ -374,7 +356,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
       const productId = productBody?.data?.documentId;
 
-      // Si hay opciones, crearlas
       if (options.length > 0 && productId) {
         const validOptions = options.filter(
           (opt) => opt.name.trim() && opt.values.length > 0
@@ -408,12 +389,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         }
       }
 
-      // Si hay variantes, crearlas
       if (variants.length > 0 && productId) {
         for (const variant of variants) {
           let imageId = null;
 
-          // Subir imagen de variante si existe
           if (variant.image) {
             const fd = new FormData();
             fd.append("files", variant.image);
@@ -483,7 +462,6 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     setUploadItems(items);
   }, []);
 
-  // Agrupar variantes por primera opción (ej: talla)
   const groupedVariants = useMemo(() => {
     if (variants.length === 0) return [];
 
@@ -506,653 +484,584 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   }, [variants, options]);
 
   return (
-    <div>
-      <section className="mb-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => {
-              const segment = chatbotSlug || chatbotId;
-              router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
-            }}
-            className="flex items-center text-sm opacity-75 transition-colors hover:text-primary hover:cursor-pointer"
-          >
-            <ChevronLeft className="inline size-5 mr-2" />
-            <span>Atrás</span>
-          </button>
-          <h3 className="font-medium text-lg">Nuevo Producto</h3>
-        </div>
-      </section>
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      {/* Título principal fuera del card */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Agregar nuevo producto
+        </h1>
+      </div>
 
-      <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
-        <CardHeader className="gap-1">
-          <CardTitle className="text-xl">Nuevo producto</CardTitle>
-          <CardDescription>
-            Organiza la informacion en secciones claras y anade recursos
-            visuales antes de publicar.
-          </CardDescription>
-        </CardHeader>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Información básica */}
+        <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <CardTitle className="text-xl font-semibold">
+                  Información básica
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  Agrega la información básica de tu producto
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
 
-        <form onSubmit={handleSubmit} className="contents">
-          <CardContent className="space-y-8">
-            <FieldSet className="gap-8">
-              {/* Detalles principales */}
-              {/* Detalles principales - Nombre y Disponibilidad */}
-              <FieldGroup className="gap-6">
-                <FieldLegend>Detalles principales</FieldLegend>
-
-                <Field data-invalid={errors.name ? true : undefined}>
-                  <FieldLabel htmlFor="product-name">
-                    Nombre del producto
-                  </FieldLabel>
-                  <FieldContent>
-                    <Input
-                      id="product-name"
-                      placeholder="Ej. Camiseta premium verano"
-                      value={form.name}
-                      onChange={(event) =>
-                        setForm((previous) => ({
-                          ...previous,
-                          name: event.target.value,
-                        }))
-                      }
-                      required
-                      autoComplete="off"
-                    />
-                    <FieldDescription>
-                      Este nombre sera visible en catalogos, respuestas
-                      automatizadas y reportes.
-                    </FieldDescription>
-                    <FieldError>{errors.name}</FieldError>
-                  </FieldContent>
-                </Field>
-
-                <Field>
-                  <FieldLabel>Disponibilidad</FieldLabel>
-                  <FieldContent>
-                    <div className="flex flex-col gap-3 rounded-lg border border-muted-foreground/20 bg-background px-4 py-3 md:flex-row md:items-center md:gap-4">
-                      <Switch
-                        id="product-available"
-                        checked={!!form.available}
-                        onCheckedChange={(value) =>
-                          setForm((previous) => ({
-                            ...previous,
-                            available: !!value,
-                          }))
-                        }
-                      />
-                      <div className="space-y-1">
-                        <p className="text-sm font-medium">
-                          {form.available
-                            ? "Producto visible"
-                            : "Producto oculto"}
-                        </p>
-                        <FieldDescription className="text-xs md:text-sm">
-                          Controla si el producto aparece en catalogos y
-                          respuestas automaticas sin eliminarlo.
-                        </FieldDescription>
-                      </div>
-                    </div>
-                  </FieldContent>
-                </Field>
-              </FieldGroup>
-
-              {/* Precio base - Solo visible sin variantes */}
-              {variants.length === 0 && (
-                <>
-                  <FieldSeparator />
-                  <FieldGroup className="gap-6">
-                    <FieldLegend>Precio</FieldLegend>
-                    <Field data-invalid={errors.price ? true : undefined}>
-                      <FieldLabel htmlFor="product-price">
-                        Precio base
-                      </FieldLabel>
-                      <FieldContent>
-                        <Input
-                          id="product-price"
-                          inputMode="decimal"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          placeholder="0.00"
-                          value={form.price}
-                          onChange={(event) =>
-                            setForm((previous) => ({
-                              ...previous,
-                              price: event.target.value,
-                            }))
-                          }
-                          required
-                        />
-                        <FieldDescription>
-                          Precio cuando no hay variantes definidas.
-                        </FieldDescription>
-                        <FieldError>{errors.price}</FieldError>
-                      </FieldContent>
-                    </Field>
-                  </FieldGroup>
-                </>
-              )}
-
-              <FieldSeparator />
-
-              {/* Opciones del producto (variantes) */}
-              <FieldGroup className="gap-6">
-                <div className="flex items-center justify-between">
-                  <FieldLegend>Opciones del producto</FieldLegend>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addOption}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Agregar opción
-                  </Button>
+          <CardContent className="space-y-6">
+            {/* Nombre del producto con Disponible inline */}
+            <div className="flex gap-4 items-start">
+              <div className="flex-1">
+                <label
+                  htmlFor="product-name"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Nombre del producto *
+                </label>
+                <div className="relative mt-2">
+                  <Input
+                    id="product-name"
+                    placeholder="Ej: Camiseta de algodón"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, name: e.target.value }))
+                    }
+                    maxLength={NAME_LIMIT}
+                    className="pr-16"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground bg-background px-1">
+                    {form.name.length}/{NAME_LIMIT}
+                  </div>
                 </div>
-                <FieldDescription>
-                  Define opciones como talla, color, etc. para crear variantes
-                  del producto.
-                </FieldDescription>
+                {errors.name && (
+                  <p className="text-sm text-destructive mt-1">{errors.name}</p>
+                )}
+              </div>
 
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                  {options.map((option, optIndex) => (
-                    <div
-                      key={option.id}
-                      className="rounded-lg border border-muted-foreground/20 bg-background p-4 space-y-4"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div className="flex-1">
+              <div className="flex items-center gap-2 mt-9">
+                <label
+                  htmlFor="product-available"
+                  className="text-sm font-medium whitespace-nowrap"
+                >
+                  Disponible
+                </label>
+                <Switch
+                  id="product-available"
+                  checked={!!form.available}
+                  onCheckedChange={(value) =>
+                    setForm((prev) => ({ ...prev, available: !!value }))
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Grid de descripciones */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <label
+                  htmlFor="description-wsp"
+                  className="text-sm font-medium leading-none"
+                >
+                  Descripción del producto en WhatsApp *
+                </label>
+                <div className="relative">
+                  <Textarea
+                    id="description-wsp"
+                    placeholder="Escribe tu mensaje aquí..."
+                    value={form.description_wsp}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        description_wsp: e.target.value,
+                      }))
+                    }
+                    maxLength={SHORT_DESCRIPTION_LIMIT}
+                    className="min-h-[100px] resize-none"
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background px-1">
+                    {form.description_wsp.length}/{SHORT_DESCRIPTION_LIMIT}
+                  </div>
+                </div>
+                {errors.description_wsp && (
+                  <p className="text-sm text-destructive">
+                    {errors.description_wsp}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="description-complete"
+                  className="text-sm font-medium leading-none"
+                >
+                  Descripción del producto
+                </label>
+                <div className="relative">
+                  <Textarea
+                    id="description-complete"
+                    placeholder="Escribe los detalles aquí..."
+                    value={form.description_complete}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        description_complete: e.target.value,
+                      }))
+                    }
+                    maxLength={LONG_DESCRIPTION_LIMIT}
+                    className="min-h-[100px] resize-none"
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background px-1">
+                    {form.description_complete.length}/{LONG_DESCRIPTION_LIMIT}
+                  </div>
+                </div>
+                {errors.description_complete && (
+                  <p className="text-sm text-destructive">
+                    {errors.description_complete}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Imágenes y videos */}
+        <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
+          <CardHeader>
+            <div className="flex flex-col gap-1">
+              <CardTitle className="text-xl font-semibold">
+                Imágenes y videos
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                Agrega imágenes y videos de tu producto
+              </CardDescription>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <CardUpload
+              key={uploadKey}
+              accept=".jpg,.jpeg,.png,.mp4,video/mp4"
+              multiple
+              simulateUpload={false}
+              defaultFilesEnabled={false}
+              onFilesChange={handleUploadChange}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Precio general */}
+        {variants.length === 0 && (
+          <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-1">
+                  <CardTitle className="text-xl font-semibold">
+                    Precio general
+                  </CardTitle>
+                  <CardDescription className="text-sm text-muted-foreground">
+                    Este precio se utilizará para la variante principal del
+                    producto
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <label
+                  htmlFor="base-price"
+                  className="text-sm font-medium leading-none"
+                >
+                  Precio base
+                </label>
+                <div className="relative">
+                  <Input
+                    id="base-price"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="0,00"
+                    value={form.price}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, price: e.target.value }))
+                    }
+                    className="h-12 text-base"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Este será el precio de tu producto. Se guardará internamente
+                  como una variante principal.
+                </p>
+                {errors.price && (
+                  <p className="text-sm text-destructive">{errors.price}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Agregar variaciones */}
+        <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1">
+                <CardTitle className="text-xl font-semibold">
+                  Agregar variaciones
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  Ofrece diferentes opciones de tu producto, como color, talla
+                  o material.
+                </CardDescription>
+              </div>
+              
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <button
+              type="button"
+              onClick={addOption}
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent h-10 px-4 py-2 text-primary"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Agregar opción
+            </button>
+
+            {/* Lista de opciones */}
+            {options.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+                {options.map((option) => (
+                  <div
+                    key={option.id}
+                    className="rounded-xl border border-muted-foreground/20 bg-background p-4 space-y-4"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <Input
+                          placeholder="Ej. Talla, Color..."
+                          value={option.name}
+                          onChange={(e) =>
+                            updateOptionName(option.id, e.target.value)
+                          }
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeOption(option.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Valores disponibles
+                      </p>
+                      {option.values.map((value, valueIndex) => (
+                        <div
+                          key={valueIndex}
+                          className="flex items-center gap-2"
+                        >
                           <Input
-                            placeholder="Ej. Talla, Color..."
-                            value={option.name}
+                            placeholder="Valor"
+                            value={value}
                             onChange={(e) =>
-                              updateOptionName(option.id, e.target.value)
+                              updateOptionValue(
+                                option.id,
+                                valueIndex,
+                                e.target.value
+                              )
+                            }
+                            className={
+                              !value.trim() && value !== ""
+                                ? "border border-destructive"
+                                : ""
                             }
                           />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeOption(option.id)}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-sm font-medium text-muted-foreground">
-                          Valores disponibles
-                        </p>
-                        {option.values.map((value, valueIndex) => (
-                          <div
-                            key={valueIndex}
-                            className="flex items-center gap-2"
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() =>
+                              removeOptionValue(option.id, valueIndex)
+                            }
                           >
-                            <Input
-                              placeholder="Valor"
-                              value={value}
-                              onChange={(e) =>
-                                updateOptionValue(
-                                  option.id,
-                                  valueIndex,
-                                  e.target.value
-                                )
-                              }
-                              className={!value.trim() && value !== "" ? "border border-destructive" : ""}
-                            />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() =>
-                                removeOptionValue(option.id, valueIndex)
-                              }
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => addOptionValue(option.id)}
-                          className="w-full"
-                          disabled={option.values.some((v) => !v.trim())}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Agregar valor
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {options.length > 0 && (
-                  <Button
-                    type="button"
-                    variant="default"
-                    onClick={() => {
-                      generateVariants();
-                      setShowVariants(true);
-                    }}
-                  >
-                    Generar variantes
-                  </Button>
-                )}
-              </FieldGroup>
-
-              {/* Variantes generadas */}
-              {showVariants && variants.length > 0 && (
-                <>
-                  <FieldSeparator />
-                  <FieldGroup className="gap-6">
-                    <FieldLegend>
-                      Variantes ({variants.length} combinaciones)
-                    </FieldLegend>
-                    <FieldDescription>
-                      Define el precio e imagen para cada variante.
-                    </FieldDescription>
-
-                    <div className="rounded-lg border border-muted-foreground/20 bg-background overflow-hidden">
-                      {/* Header de la tabla */}
-                      <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 bg-muted/50 border-b border-muted-foreground/20 text-sm font-medium">
-                        <div>Imagen</div>
-                        <div>Variante</div>
-                        <div>Precio</div>
-                        <div>Disponibilidad</div>
-                      </div>
-
-                      {/* Filas agrupadas */}
-                      {groupedVariants.map((group) => (
-                        <div
-                          key={group.name}
-                          className="border-b border-muted-foreground/20 last:border-b-0"
-                        >
-                          {/* Título del grupo */}
-                          <div className="px-4 py-3 bg-muted/30 font-medium text-sm">
-                            {options[0]?.name}: {group.name}
-                            <span className="ml-2 text-xs text-muted-foreground font-normal">
-                              {group.variants.length} variante
-                              {group.variants.length !== 1 ? "s" : ""}
-                            </span>
-                          </div>
-
-                          {/* Variantes del grupo */}
-                          {group.variants.map((variant, vIndex) => {
-                            const globalIndex = variants.indexOf(variant);
-                            const imagePreview = variant.image
-                              ? URL.createObjectURL(variant.image)
-                              : null;
-
-                            return (
-                              <div
-                                key={vIndex}
-                                className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-4 hover:bg-muted/20 transition-colors items-center"
-                              >
-                                {/* Imagen */}
-                                <div className="relative">
-                                  {!imagePreview ? (
-                                    <div
-                                      onDrop={(e) =>
-                                        handleVariantImageDrop(globalIndex, e)
-                                      }
-                                      onDragOver={handleDragOver}
-                                      className="relative w-20 h-20 border-2 border-dashed border-muted-foreground/40 rounded-lg hover:border-primary/50 transition-colors cursor-pointer bg-muted/10 flex items-center justify-center group"
-                                    >
-                                      <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => {
-                                          const file = e.target.files?.[0];
-                                          if (file) {
-                                            updateVariantImage(
-                                              globalIndex,
-                                              file
-                                            );
-                                          }
-                                        }}
-                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                      />
-                                      <svg
-                                        className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                        />
-                                      </svg>
-                                    </div>
-                                  ) : (
-                                    <div className="relative w-20 h-20 rounded-lg overflow-hidden border border-muted-foreground/20 group">
-                                      <img
-                                        src={imagePreview}
-                                        alt={variant.name}
-                                        className="w-full h-full object-cover"
-                                      />
-                                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                                        <Button
-                                          type="button"
-                                          variant="secondary"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={() => {
-                                            const input =
-                                              document.createElement("input");
-                                            input.type = "file";
-                                            input.accept = "image/*";
-                                            input.onchange = (e) => {
-                                              const file = e.target.files?.[0];
-                                              if (file) {
-                                                updateVariantImage(
-                                                  globalIndex,
-                                                  file
-                                                );
-                                              }
-                                            };
-                                            input.click();
-                                          }}
-                                        >
-                                          <svg
-                                            className="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path
-                                              strokeLinecap="round"
-                                              strokeLinejoin="round"
-                                              strokeWidth={2}
-                                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-                                            />
-                                          </svg>
-                                        </Button>
-                                        <Button
-                                          type="button"
-                                          variant="destructive"
-                                          size="icon"
-                                          className="h-7 w-7"
-                                          onClick={() =>
-                                            removeVariantImage(globalIndex)
-                                          }
-                                        >
-                                          <X className="w-4 h-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Variante - Tags de combinación */}
-                                <div className="flex flex-wrap gap-2 items-center pr-4">
-                                  <span className="text-sm font-medium shrink-0">
-                                    {vIndex + 1}
-                                  </span>
-                                  {Object.entries(variant.combination).map(
-                                    ([key, val]) => (
-                                      <span
-                                        key={key}
-                                        className="text-xs px-2 py-1 rounded-md bg-muted text-foreground border border-muted-foreground/20 shrink-0"
-                                      >
-                                        {key}: {val}
-                                      </span>
-                                    )
-                                  )}
-                                </div>
-
-                                {/* Precio */}
-                                <div className="w-16 md:w-32">
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    placeholder="0.00"
-                                    value={variant.price}
-                                    onChange={(e) =>
-                                      updateVariantPrice(
-                                        globalIndex,
-                                        e.target.value
-                                      )
-                                    }
-                                    className="h-9"
-                                  />
-                                </div>
-
-                                {/* Disponibilidad */}
-                                <div className="flex items-center justify-center w-12 md:w-24">
-                                  <Switch
-                                    checked={variant.is_available}
-                                    onCheckedChange={(val) =>
-                                      updateVariantAvailability(
-                                        globalIndex,
-                                        val
-                                      )
-                                    }
-                                  />
-                                </div>
-                              </div>
-                            );
-                          })}
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => addOptionValue(option.id)}
+                        className="w-full"
+                        disabled={option.values.some((v) => !v.trim())}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Agregar valor
+                      </Button>
                     </div>
-                  </FieldGroup>
-                </>
-              )}
-
-              <FieldSeparator />
-
-              {/* Descripciones */}
-              <FieldGroup className="gap-6">
-                <FieldLegend>Descripciones y mensajes</FieldLegend>
-                <div className="grid gap-6 md:grid-cols-2">
-                  <Field
-                    data-invalid={errors.description_wsp ? true : undefined}
-                  >
-                    <FieldLabel htmlFor="product-description-wsp">
-                      Texto corto para WhatsApp
-                    </FieldLabel>
-                    <FieldContent>
-                      <Textarea
-                        id="product-description-wsp"
-                        rows={4}
-                        maxLength={SHORT_DESCRIPTION_LIMIT}
-                        placeholder="Mensaje breve para compartir por WhatsApp."
-                        value={form.description_wsp}
-                        onChange={(event) =>
-                          setForm((previous) => ({
-                            ...previous,
-                            description_wsp: event.target.value,
-                          }))
-                        }
-                      />
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <FieldDescription className="text-xs">
-                          Se enviara en respuestas rapidas por WhatsApp.
-                        </FieldDescription>
-                        <span>
-                          {form.description_wsp.length}/
-                          {SHORT_DESCRIPTION_LIMIT}
-                        </span>
-                      </div>
-                      <FieldError>{errors.description_wsp}</FieldError>
-                    </FieldContent>
-                  </Field>
-
-                  <Field
-                    data-invalid={
-                      errors.description_complete ? true : undefined
-                    }
-                  >
-                    <FieldLabel htmlFor="product-description-complete">
-                      Descripcion extendida
-                    </FieldLabel>
-                    <FieldContent>
-                      <Textarea
-                        id="product-description-complete"
-                        rows={4}
-                        maxLength={LONG_DESCRIPTION_LIMIT}
-                        placeholder="Comparte caracteristicas, beneficios o instrucciones adicionales."
-                        value={form.description_complete}
-                        onChange={(event) =>
-                          setForm((previous) => ({
-                            ...previous,
-                            description_complete: event.target.value,
-                          }))
-                        }
-                      />
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <FieldDescription className="text-xs">
-                          Ideal para catalogos completos o fichas tecnicas.
-                        </FieldDescription>
-                        <span>
-                          {form.description_complete.length}/
-                          {LONG_DESCRIPTION_LIMIT}
-                        </span>
-                      </div>
-                      <FieldError>{errors.description_complete}</FieldError>
-                    </FieldContent>
-                  </Field>
-                </div>
-
-                <div className="grid gap-4">
-                  <Field>
-                    <FieldLabel>Entrega automática</FieldLabel>
-                    <FieldContent>
-                      <div className="flex items-center gap-3 rounded-lg border border-muted-foreground/20 bg-background px-4 py-3">
-                        <Switch
-                          id="product-auto-delivery"
-                          checked={!!form.is_auto_delivery}
-                          onCheckedChange={(val) =>
-                            setForm((p) => ({
-                              ...p,
-                              is_auto_delivery: !!val,
-                              auto_delivery_msg: val ? p.auto_delivery_msg : "",
-                            }))
-                          }
-                        />
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">
-                            {form.is_auto_delivery
-                              ? "Auto-entrega activada"
-                              : "Auto-entrega desactivada"}
-                          </p>
-                          <FieldDescription className="text-xs">
-                            Si está activo, enviaremos automáticamente el
-                            siguiente mensaje tras la compra/solicitud.
-                          </FieldDescription>
-                        </div>
-                      </div>
-                    </FieldContent>
-                  </Field>
-
-                  {form.is_auto_delivery && (
-                    <Field
-                      data-invalid={errors.auto_delivery_msg ? true : undefined}
-                    >
-                      <FieldLabel htmlFor="product-auto-delivery-msg">
-                        Mensaje de entrega automática
-                      </FieldLabel>
-                      <FieldContent>
-                        <Textarea
-                          id="product-auto-delivery-msg"
-                          rows={4}
-                          maxLength={LONG_DESCRIPTION_LIMIT}
-                          placeholder="Escribe el mensaje que recibirá el cliente automáticamente."
-                          value={form.auto_delivery_msg}
-                          onChange={(e) =>
-                            setForm((p) => ({
-                              ...p,
-                              auto_delivery_msg: e.target.value,
-                            }))
-                          }
-                        />
-                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                          <span>
-                            {form.auto_delivery_msg.length}/
-                            {LONG_DESCRIPTION_LIMIT}
-                          </span>
-                        </div>
-                        <FieldError>{errors.auto_delivery_msg}</FieldError>
-                      </FieldContent>
-                    </Field>
-                  )}
-                </div>
-              </FieldGroup>
-
-              <FieldSeparator />
-
-              {/* Contenido multimedia */}
-              <FieldGroup className="gap-6">
-                <FieldLegend>Contenido multimedia</FieldLegend>
-                <Field>
-                  <FieldLabel>Imagenes y videos</FieldLabel>
-                  <FieldContent>
-                    <FieldDescription>
-                      Arrastra tus archivos o seleccionalos desde tu equipo.
-                      Acepta JPG, PNG y MP4 (hasta 50&nbsp;MB por archivo).
-                    </FieldDescription>
-                    <CardUpload
-                      key={uploadKey}
-                      accept=".jpg,.jpeg,.png,.mp4,video/mp4"
-                      multiple
-                      simulateUpload={false}
-                      defaultFilesEnabled={false}
-                      onFilesChange={handleUploadChange}
-                    />
-                    {uploadItems.length > 0 && (
-                      <p className="text-xs text-muted-foreground">
-                        Archivos listos para subir: {uploadItems.length}
-                      </p>
-                    )}
-                  </FieldContent>
-                </Field>
-              </FieldGroup>
-            </FieldSet>
-
-            {status.error && (
-              <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {status.error}
+                  </div>
+                ))}
               </div>
             )}
-          </CardContent>
 
-          <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
-            <div className="text-xs text-muted-foreground md:text-sm">
-              Se publicara al confirmar y podras editarlo en cualquier momento.
-            </div>
-            <div className="flex w-full flex-col gap-3 md:w-auto md:flex-row">
+            {options.length > 0 && (
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 onClick={() => {
-                  const segment = chatbotSlug || chatbotId;
-                  router.push(
-                    `/dashboard/${encodeURIComponent(segment)}/products`
-                  );
+                  generateVariants();
+                  setShowVariants(true);
                 }}
-                className="w-full md:w-auto"
-                disabled={status.loading}
+                className="mt-4"
               >
-                Cancelar
+                Generar variantes
               </Button>
-              <Button
-                type="submit"
-                className="w-full md:w-auto"
-                disabled={status.loading || !token || !chatbotId}
-              >
-                {status.loading ? "Creando..." : "Crear producto"}
-              </Button>
-            </div>
-          </CardFooter>
-        </form>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Variantes generadas */}
+        {showVariants && variants.length > 0 && (
+          <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">
+                Variantes ({variants.length} combinaciones)
+              </CardTitle>
+              <CardDescription className="text-sm text-muted-foreground">
+                Define el precio e imagen para cada variante.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent>
+              <div className="rounded-xl border border-muted-foreground/20 bg-background overflow-hidden">
+                <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 bg-muted/40 border-b border-muted-foreground/20 text-sm font-medium">
+                  <div>Imagen</div>
+                  <div>Variante</div>
+                  <div>Precio</div>
+                  <div>Disponibilidad</div>
+                </div>
+
+                {groupedVariants.map((group) => (
+                  <div
+                    key={group.name}
+                    className="border-b border-muted-foreground/20 last:border-b-0"
+                  >
+                    <div className="px-4 py-3 bg-muted/20 font-medium text-sm">
+                      {options[0]?.name}: {group.name}
+                      <span className="ml-2 text-xs text-muted-foreground font-normal">
+                        {group.variants.length} variante
+                        {group.variants.length !== 1 ? "s" : ""}
+                      </span>
+                    </div>
+
+                    {group.variants.map((variant, vIndex) => {
+                      const globalIndex = variants.indexOf(variant);
+                      const imagePreview = variant.image
+                        ? URL.createObjectURL(variant.image)
+                        : null;
+
+                      return (
+                        <div
+                          key={vIndex}
+                          className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-4 hover:bg-muted/20 transition-colors items-center"
+                        >
+                          <div className="relative">
+                            {!imagePreview ? (
+                              <div
+                                onDrop={(e) =>
+                                  handleVariantImageDrop(globalIndex, e)
+                                }
+                                onDragOver={handleDragOver}
+                                className="relative w-20 h-20 border-2 border-dashed border-muted-foreground/40 rounded-xl hover:border-primary/50 transition-colors cursor-pointer bg-muted/10 flex items-center justify-center group"
+                              >
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      updateVariantImage(globalIndex, file);
+                                    }
+                                  }}
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                />
+                                <svg
+                                  className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                  />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-muted-foreground/20 group">
+                                <img
+                                  src={imagePreview}
+                                  alt={variant.name}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                                  <Button
+                                    type="button"
+                                    variant="secondary"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => {
+                                      const input =
+                                        document.createElement("input");
+                                      input.type = "file";
+                                      input.accept = "image/*";
+                                      input.onchange = (e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          updateVariantImage(globalIndex, file);
+                                        }
+                                      };
+                                      input.click();
+                                    }}
+                                  >
+                                    <svg
+                                      className="w-4 h-4"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                      />
+                                    </svg>
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() =>
+                                      removeVariantImage(globalIndex)
+                                    }
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 items-center pr-4">
+                            <span className="text-sm font-medium shrink-0">
+                              {vIndex + 1}
+                            </span>
+                            {Object.entries(variant.combination).map(
+                              ([key, val]) => (
+                                <span
+                                  key={key}
+                                  className="text-xs px-2 py-1 rounded-md bg-muted text-foreground border border-muted-foreground/20 shrink-0"
+                                >
+                                  {key}: {val}
+                                </span>
+                              )
+                            )}
+                          </div>
+
+                          <div className="w-16 md:w-32">
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="0.00"
+                              value={variant.price}
+                              onChange={(e) =>
+                                updateVariantPrice(globalIndex, e.target.value)
+                              }
+                              className="h-9"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-center w-12 md:w-24">
+                            <Switch
+                              checked={variant.is_available}
+                              onCheckedChange={(val) =>
+                                updateVariantAvailability(globalIndex, val)
+                              }
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Footer con botones */}
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-3 lg:hidden z-50">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const segment = chatbotSlug || chatbotId;
+              router.push(
+                `/dashboard/${encodeURIComponent(segment)}/products`
+              );
+            }}
+            className="flex-1"
+            disabled={status.loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            className="flex-1"
+            disabled={status.loading || !token || !chatbotId}
+          >
+            {status.loading ? "Guardando..." : "Guardar"}
+          </Button>
+        </div>
+
+        {/* Botones desktop (ocultos en mobile) */}
+        <div className="hidden lg:flex gap-3 justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              const segment = chatbotSlug || chatbotId;
+              router.push(
+                `/dashboard/${encodeURIComponent(segment)}/products`
+              );
+            }}
+            disabled={status.loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={status.loading || !token || !chatbotId}
+          >
+            {status.loading ? "Guardando..." : "Guardar"}
+          </Button>
+        </div>
+
+        {status.error && (
+          <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {status.error}
+          </div>
+        )}
+      </form>
     </div>
   );
 }

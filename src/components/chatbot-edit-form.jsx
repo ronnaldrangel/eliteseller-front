@@ -159,7 +159,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
           </Field>
           <Field>
             <FieldLabel htmlFor="style_sale">Estilo de venta</FieldLabel>
-            <Input id="style_sale" name="style_sale" value={form.style_sale} onChange={handleChange} placeholder="consultative" />
+            <Textarea id="style_sale" name="style_sale" value={form.style_sale} onChange={handleChange} placeholder="consultative" />
           </Field>
 
           <Field className="sm:col-span-2">
