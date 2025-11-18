@@ -22,7 +22,7 @@ export default function ChatsPage({ params }) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <Card className="w-full h-full flex flex-col">
               <CardHeader>
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <Image src="/images/chats/laptop.svg" width={64} height={64} alt="PC / Laptop" />
                   <div className="space-y-1">
                     <CardTitle>PC / Laptop</CardTitle>
@@ -48,7 +48,7 @@ export default function ChatsPage({ params }) {
             {/* Tarjeta Apple */}
             <Card className="w-full h-full flex flex-col">
               <CardHeader>
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <Image src="/images/chats/apple.svg" width={64} height={64} alt="Apple" />
                   <div className="space-y-1">
                     <CardTitle>Apple</CardTitle>
@@ -74,7 +74,7 @@ export default function ChatsPage({ params }) {
             {/* Tarjeta Android */}
             <Card className="w-full h-full flex flex-col">
               <CardHeader>
-                <div className="flex items-start gap-3">
+                <div className="flex items-center gap-3">
                   <Image src="/images/chats/android.svg" width={64} height={64} alt="Android" />
                   <div className="space-y-1">
                     <CardTitle>Android</CardTitle>
