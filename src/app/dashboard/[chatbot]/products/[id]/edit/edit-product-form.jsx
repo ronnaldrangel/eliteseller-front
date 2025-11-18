@@ -564,7 +564,7 @@ export default function EditProductForm({
     <div className="w-full max-w-7xl mx-auto space-y-10 px-2 md:px-4">
       {/* Título principal fuera del card */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+        <h1 className="text-2xl font-bold mb-2">
           Editar producto
         </h1>
       </div>

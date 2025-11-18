@@ -85,7 +85,7 @@ export default async function AppsPage({ params }) {
     <div className="flex flex-1 flex-col">
       <div className="@container/main flex flex-1 flex-col gap-2">
         <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="px-4 lg:px-6">
+          <div className="px-4 lg:px-6 w-full max-w-7xl mx-auto">
             <h1 className="text-2xl font-semibold">
               Configuración de tu vendedor
             </h1>
@@ -95,11 +95,11 @@ export default async function AppsPage({ params }) {
           </div>
         </div>
 
-        <div className="px-4 lg:px-6">
+        <div className="px-4 lg:px-6 w-full max-w-7xl mx-auto">
           <Tabs defaultValue="todo" className="w-full">
             <TabsList className="w-full grid grid-cols-3">
               <TabsTrigger value="todo">Personalidad</TabsTrigger>
-              <TabsTrigger value="faqs">Base de conocimiento</TabsTrigger>
+              <TabsTrigger value="faqs">Conocimiento</TabsTrigger>
               <TabsTrigger value="pagos">Pagos</TabsTrigger>
             </TabsList>
 
@@ -128,7 +128,7 @@ export default async function AppsPage({ params }) {
                             className="rounded-lg border bg-card p-4"
                           >
                             <div className="flex items-center justify-between">
-                              <h3 className="font-medium">{name}</h3>
+                              <h3 className="font-medium">Configuración de {name}</h3>
                               {attrs?.updatedAt && (
                                 <span className="text-xs text-muted-foreground">
                                   {new Date(

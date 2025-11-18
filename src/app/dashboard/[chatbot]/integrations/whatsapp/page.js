@@ -5,6 +5,8 @@ import { redirect } from "next/navigation"
 import ConnectWhatsAppButton from "@/components/connect-whatsapp-button"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card"
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion"
 
 export default async function WhatsAppIntegrationPage({ params }) {
   const session = await auth()
@@ -54,38 +56,95 @@ export default async function WhatsAppIntegrationPage({ params }) {
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-semibold">Integración de WhatsApp by Wazend</h1>
-      <p className="text-sm text-muted-foreground mt-1">Integra tu chatbot con WhatsApp sin necesidad de aprobacion de Meta.</p>
-
-      {/* {error ? (
-        <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
-          {error}
-        </div>
-      ) : (
-        <div className="mt-4">
-          <div className="rounded-md border bg-muted/10 p-4">
-            <pre className="text-xs whitespace-pre-wrap break-words">{JSON.stringify(payload, null, 2)}</pre>
+    <div className="w-full max-w-7xl mx-auto px-4 lg:px-6 py-6 space-y-8">
+      <Card className="bg-muted/20">
+        <CardContent className="py-6">
+          <div className="grid gap-6 md:grid-cols-[1fr_280px] items-center">
+            <div className="space-y-3">
+              <h1 className="text-2xl font-semibold">Conecta tu WhatsApp Business by Wazend</h1>
+              <p className="text-sm text-foreground/80 mb-6">Es el primer paso para empezar a vender con Eliteseller.</p>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                {(() => {
+                  const items = Array.isArray(payload) ? payload : Array.isArray(payload?.data) ? payload.data : []
+                  const first = items[0] || null
+                  const attrs = first?.attributes || first || {}
+                  const accountDocumentId = attrs?.documentId || first?.documentId || null
+                  return <ConnectWhatsAppButton documentId={accountDocumentId} />
+                })()}
+                <Button variant="outline">Contactar soporte</Button>
+              </div>
+            </div>
+            <div className="block">
+              <img
+                src="/images/wazend/bot-friends.png"
+                alt="WhatsApp Business API"
+              />
+            </div>
           </div>
-        </div>
-      )} */}
+        </CardContent>
+      </Card>
 
-      <div className="mt-6 flex flex-col gap-3 md:flex-row">
-        {(() => {
-          const items = Array.isArray(payload)
-            ? payload
-            : Array.isArray(payload?.data)
-            ? payload.data
-            : []
-          const first = items[0] || null
-          const attrs = first?.attributes || first || {}
-          const accountDocumentId = attrs?.documentId || first?.documentId || null
-          return <ConnectWhatsAppButton documentId={accountDocumentId} />
-        })()}
-        <Button asChild variant="outline" className="w-full md:w-auto">
-          <Link href={`/dashboard/${encodeURIComponent(chatbotSlug)}/chats`}>Ver mis chats</Link>
-        </Button>
+      {/* <Card className="bg-muted/20">
+        <CardContent className="py-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Pasos para conectar</h2>
+          </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            <div className="bg-background p-4">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground/10 text-sm font-semibold">1</span>
+                <div className="space-y-1">
+                  <div className="text-sm font-semibold">Dale click a Conectar WhatsApp: Conéctate con tu cuenta de Facebook Business.</div>
+                  <div className="text-sm text-muted-foreground">Inicia sesión en Meta: Conéctate con tu cuenta de Facebook Business.</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-background p-4">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground/10 text-sm font-semibold">2</span>
+                <div className="space-y-1">
+                  <div className="text-sm font-semibold">Completa la información: Nombre, sitio web y categoría del negocio.</div>
+                  <div className="text-sm text-muted-foreground">Completa la información: Nombre, sitio web y categoría del negocio.</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-background p-4">
+              <div className="flex items-start gap-3">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-foreground/10 text-sm font-semibold">3</span>
+                <div className="space-y-1">
+                  <div className="text-sm font-semibold">Activa tu número de WhatsApp: Selecciona 'Usar solo un nombre visible' y confirma.</div>
+                  <div className="text-sm text-muted-foreground">Activa tu número de WhatsApp: Selecciona 'Usar solo un nombre visible' y confirma.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card> */}
+
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Dudas frecuentes</h3>
       </div>
+
+      <Accordion type="single" collapsible className="rounded-xl border bg-muted/10">
+        <AccordionItem value="q1" className="px-4">
+          <AccordionTrigger className="gap-2">¿Necesito tener una cuenta en Meta Business?</AccordionTrigger>
+          <AccordionContent>
+            No, es necesario ya que gracias a Wazend API, puedes vincular tu WhatsApp solo escaneando el QR
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="q3" className="px-4">
+          <AccordionTrigger className="gap-2">¿Qué pasa si no conecto mi WhatsApp?</AccordionTrigger>
+          <AccordionContent>
+            No podrás enviar ni recibir mensajes desde tu vendedor inteligente vía WhatsApp.
+          </AccordionContent>
+        </AccordionItem>
+        <AccordionItem value="q5" className="px-4">
+          <AccordionTrigger className="gap-2">¿Cuánto cuesta usar la API de WhatsApp Business?</AccordionTrigger>
+          <AccordionContent>
+            No, tiene costo alguno, solo conecta, y ya puedes empezar a vender.
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
     </div>
   )
 }
