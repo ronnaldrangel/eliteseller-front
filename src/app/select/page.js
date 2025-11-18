@@ -22,7 +22,7 @@ export default async function SelectPage() {
     const url = buildStrapiUrl(
       `/api/chatbots?filters[users_permissions_user][id][$eq]=${encodeURIComponent(
         userId
-      )}`
+      )}&populate[subscription][populate]=plan`
     );
 
     const res = await fetch(url, {
@@ -57,6 +57,17 @@ export default async function SelectPage() {
   //   }
   // }
 
+  const getPlanColor = (planId) => {
+    if (!planId) return "bg-muted";
+
+    if (planId === "BASICO") {
+      return "bg-sky-600";
+    } else if (planId === "GALACTICO") {
+      return "bg-gradient-to-r from-purple-600 to-pink-600";
+    }
+    return "bg-muted";
+  };
+
   const cards = Array.isArray(chatbots)
     ? chatbots.map((item) => {
         const attrs = item?.attributes || {};
@@ -64,6 +75,8 @@ export default async function SelectPage() {
           item,
           session?.user?.strapiUserId || ""
         );
+        const planId = item.subscription?.plan?.plan_id || null;
+        const plan = item.subscription?.plan?.name || null;
         const description = attrs.description || "";
         const custom = !!(attrs.custom ?? item?.custom ?? false);
         return {
@@ -73,6 +86,8 @@ export default async function SelectPage() {
           routeSegment: meta.routeSegment,
           description,
           custom,
+          planId,
+          plan,
         };
       })
     : [];
@@ -108,7 +123,9 @@ export default async function SelectPage() {
                 {cards.map((c) => (
                   <Link
                     key={c.routeSegment}
-                    href={`/dashboard/${encodeURIComponent(c.routeSegment)}/home`}
+                    href={`/dashboard/${encodeURIComponent(
+                      c.routeSegment
+                    )}/home`}
                     className="group relative rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
                     aria-label={`Entrar a ${c.name}`}
                   >
@@ -119,8 +136,15 @@ export default async function SelectPage() {
                       height={120}
                       className="h-20 w-20 rounded-md object-cover grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0 transition-all duration-200"
                     />
-                    <div className="mt-3 font-medium line-clamp-1 text-lg">
-                      {c.name}
+                    <div className="mt-3 font-medium line-clamp-2 text-lg space-y-2">
+                      <span className="block">{c.name}</span>
+                      {c.plan && (
+                        <span
+                          className={`block py-1.5 px-2.5 rounded-md text-white text-xs font-medium capitalize ${getPlanColor(
+                            c.planId
+                          )}`}
+                        >{`plan ${c.plan}`}</span>
+                      )}
                     </div>
                     {c.custom && (
                       <span className="mt-2 rounded px-2 py-0.5 text-xs font-medium bg-purple-600 text-white shadow-sm">
