@@ -90,7 +90,7 @@ export default function VerifyEmail() {
           {/* Mensajes de éxito/error ahora se muestran con Sonner */}
 
           <div className="text-center space-y-2">
-            <Link href="/auth/login" className="text-sm text-muted-foreground hover:underline">
+            <Link href="/auth/login" className="text-sm text-white hover:underline">
               Ir al inicio
             </Link>
           </div>
