@@ -587,7 +587,7 @@ export default function EditProductForm({
 
           <CardContent className="space-y-8">
             {/* Nombre del producto con Disponible inline */}
-            <div className="flex gap-6 items-start">
+            <div className="flex flex-col md:flex-row gap-6 md:items-start">
               <div className="flex-1">
                 <label
                   htmlFor="product-name"
@@ -615,7 +615,7 @@ export default function EditProductForm({
                 )}
               </div>
 
-              <div className="flex items-center gap-2 mt-9">
+              <div className="flex items-center gap-2 mt-4 md:mt-9 md:shrink-0">
                 <label
                   htmlFor="product-available"
                   className="text-sm font-medium whitespace-nowrap"

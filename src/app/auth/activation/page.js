@@ -7,8 +7,8 @@ export default function ActivationPage() {
     <AuthLayout>
       <div className="w-full">
         <div className="space-y-1 text-left mb-6">
-          <h1 className="text-2xl font-extrabold">Email activado con éxito</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-extrabold">Email activado con éxito</h1>
+          <p className="text-xs text-muted-foreground">
             Tu cuenta ha sido verificada correctamente. Ya puedes iniciar sesión.
           </p>
         </div>

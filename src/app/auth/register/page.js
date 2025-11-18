@@ -203,8 +203,8 @@ export default function RegisterPage() {
     <AuthLayout>
       <div className="w-full">
         <div className="space-y-1 text-left mb-6">
-          <h1 className="text-2xl font-extrabold">Crear cuenta</h1>
-          <p className="text-sm text-black dark:text-white">Completa el formulario para crear tu cuenta</p>
+          <h1 className="text-xl font-extrabold">Crear cuenta</h1>
+          <p className="text-xs text-black dark:text-white">Completa el formulario para crear tu cuenta</p>
         </div>
 
         {/* Mensajes de éxito/error ahora se muestran con Sonner */}
@@ -213,7 +213,7 @@ export default function RegisterPage() {
           <FieldGroup>
             {/* Campo de nombre de usuario eliminado: se autogenera desde el email */}
             <Field>
-              <FieldLabel htmlFor="name">Nombre</FieldLabel>
+              <FieldLabel htmlFor="name" className="text-xs">Nombre</FieldLabel>
               <Input
                 id="name"
                 name="name"
@@ -226,7 +226,7 @@ export default function RegisterPage() {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="email">Correo electrónico</FieldLabel>
+              <FieldLabel htmlFor="email" className="text-xs">Correo electrónico</FieldLabel>
               <Input
                 id="email"
                 name="email"
@@ -245,7 +245,7 @@ export default function RegisterPage() {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="phone">Teléfono</FieldLabel>
+              <FieldLabel htmlFor="phone" className="text-xs">Teléfono</FieldLabel>
               <PhoneInput
                 id="phone"
                 name="phone"
@@ -260,7 +260,7 @@ export default function RegisterPage() {
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="password">Contraseña</FieldLabel>
+              <FieldLabel htmlFor="password" className="text-xs">Contraseña</FieldLabel>
               <div className="relative">
                 <Input
                   id="password"
@@ -397,7 +397,7 @@ export default function RegisterPage() {
           </FieldGroup>
           </form>
 
-        <p className="px-6 text-center text-sm text-muted-foreground mt-6">
+        <p className="px-6 text-center text-xs text-black dark:text-white mt-6">
           ¿Ya tienes una cuenta? {" "}
           <Link href="/auth/login" className="font-medium text-primary underline underline-offset-4">Inicia sesión</Link>
         </p>

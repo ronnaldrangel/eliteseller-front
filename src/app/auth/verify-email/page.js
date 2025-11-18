@@ -61,8 +61,8 @@ export default function VerifyEmail() {
     <AuthLayout>
       <div className="w-full">
         <div className="space-y-1 text-left mb-6">
-          <h1 className="text-2xl font-extrabold text-white">Verifica tu email</h1>
-          <p className="text-sm text-white">Revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta.</p>
+          <h1 className="text-xl font-extrabold text-white">Verifica tu email</h1>
+          <p className="text-xs text-white">Revisa tu bandeja de entrada y haz clic en el enlace de verificación para activar tu cuenta.</p>
         </div>
 
         {/* {email && (
@@ -72,7 +72,7 @@ export default function VerifyEmail() {
         <form onSubmit={(e) => e.preventDefault()} className="space-y-4 mt-6">
           
           <div className="space-y-2">
-            <Label className="text-white" htmlFor="email">Correo electrónico</Label>
+            <Label className="text-xs text-white" htmlFor="email">Correo electrónico</Label>
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@ejemplo.com" readOnly />
           </div>
 
@@ -90,7 +90,7 @@ export default function VerifyEmail() {
           {/* Mensajes de éxito/error ahora se muestran con Sonner */}
 
           <div className="text-center space-y-2">
-            <Link href="/auth/login" className="text-sm text-muted-foreground hover:underline">
+            <Link href="/auth/login" className="text-xs text-muted-foreground hover:underline">
               Ir al inicio
             </Link>
           </div>

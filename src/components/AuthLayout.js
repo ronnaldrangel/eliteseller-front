@@ -16,7 +16,7 @@ const AuthLayout = ({ children }) => {
   }, []);
 
   return (
-    <div className="relative h-screen w-full overflow-hidden">
+    <div className="relative min-h-[100dvh] w-full">
       {/* Video de fondo ocupando todo el viewport */}
       <video
         className="absolute inset-0 h-full w-full object-cover"
@@ -36,12 +36,14 @@ const AuthLayout = ({ children }) => {
         <ModeToggle />
       </div> */}
 
-      {/* Contenedor del formulario */}
-      <div className="relative z-10 flex h-full items-center justify-end px-4 sm:px-6 lg:px-8">
-        {/* Formulario con fondo desenfocado */}
-        <div className="w-full max-w-md lg:max-w-lg xl:max-w-xl mr-0 lg:mr-12 xl:mr-20">
-          <div className="backdrop-blur-md bg-white/10 dark:bg-black/20 rounded-2xl shadow-2xl p-8 sm:p-10 lg:p-12 border border-white/20">
-            <div className="space-y-4">
+      {/* Contenedor del formulario: ocupa la mitad derecha del viewport en desktop */}
+      <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 min-h-[100dvh]">
+        {/* Columna izquierda vacía (video de fondo cubre todo) */}
+        <div className="hidden md:block" />
+        {/* Columna derecha: sección del formulario */}
+        <div className="md:col-start-2 w-full">
+          <div className="backdrop-blur-md bg-white/10 dark:bg-black/20 shadow-2xl p-6 sm:p-8 lg:p-12 border border-white/20 text-white">
+            <div className="space-y-3 sm:space-y-4">
               {/* Logo */}
               <Link href="https://eliteseller.app/" className="block pb-4">
                 {mounted ? (

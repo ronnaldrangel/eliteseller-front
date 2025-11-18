@@ -106,10 +106,10 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
           </Field>
           <Field>
             <FieldLabel htmlFor="gender">Género</FieldLabel>
-            <ToggleGroup type="single" value={form.gender || ""} onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))} className="w-full flex-wrap gap-2 md:gap-3" variant="outline">
-              <ToggleGroupItem value="male" className="basis-1/2 sm:basis-auto flex-1">Masculino</ToggleGroupItem>
-              <ToggleGroupItem value="female" className="basis-1/2 sm:basis-auto flex-1">Femenino</ToggleGroupItem>
-              <ToggleGroupItem value="neutral" className="basis-1/2 sm:basis-auto flex-1">No especificado</ToggleGroupItem>
+            <ToggleGroup type="single" value={form.gender || ""} onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))} className="w-full grid grid-cols-2 sm:grid-cols-3 gap-0" variant="outline">
+              <ToggleGroupItem value="male" className="w-full border rounded-xl md:rounded-md">Masculino</ToggleGroupItem>
+              <ToggleGroupItem value="female" className="w-full border rounded-xl md:rounded-md">Femenino</ToggleGroupItem>
+              <ToggleGroupItem value="neutral" className="w-full border rounded-xl md:rounded-md">No especificado</ToggleGroupItem>
             </ToggleGroup>
           </Field>
           <Field>
@@ -164,14 +164,14 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
               type="single"
               value={form.response_length || "Balance"}
               onValueChange={(value) => setForm((prev) => ({ ...prev, response_length: value }))}
-              className="w-full flex-wrap gap-2 md:gap-3"
+              className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2"
               variant="outline"
             >
-              <ToggleGroupItem value="Very concise" className="basis-1/2 sm:basis-auto flex-1">Muy concisa</ToggleGroupItem>
-              <ToggleGroupItem value="Concise" className="basis-1/2 sm:basis-auto flex-1">Concisa</ToggleGroupItem>
-              <ToggleGroupItem value="Balance" className="basis-1/2 sm:basis-auto flex-1">Balanceada</ToggleGroupItem>
-              <ToggleGroupItem value="Detailed" className="basis-1/2 sm:basis-auto flex-1">Detallada</ToggleGroupItem>
-              <ToggleGroupItem value="Very detailed" className="basis-1/2 sm:basis-auto flex-1">Muy detallada</ToggleGroupItem>
+              <ToggleGroupItem value="Very concise" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Muy concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Concise" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Balance" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Balanceada</ToggleGroupItem>
+              <ToggleGroupItem value="Detailed" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Detallada</ToggleGroupItem>
+              <ToggleGroupItem value="Very detailed" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Muy detallada</ToggleGroupItem>
             </ToggleGroup>
           </Field>
 

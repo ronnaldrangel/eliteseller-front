@@ -3,9 +3,11 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 export default function SubscribePlanButton({ planId, userId }) {
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
 
   const handleClick = async () => {
     if (!planId || !userId || loading) return
@@ -35,6 +37,10 @@ export default function SubscribePlanButton({ planId, userId }) {
         const msg = (data && data.text) || text || "Error en el sistema."
         if (msg) toast.success(msg)
       } else {
+        if (res.status === 403) {
+          router.push("/billing")
+          return
+        }
         const msg = (data && (data.text || data?.error?.message)) || text || `No se pudo iniciar la suscripción (status ${res.status})`
         toast.error(msg)
       }

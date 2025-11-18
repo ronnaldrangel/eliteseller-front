@@ -37,19 +37,19 @@ export function LoginForm({
     <form className={cn("flex flex-col gap-6", className)} {...props}>
       <FieldGroup>
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-bold">Iniciar sesión</h1>
-          <p className="text-black dark:text-white text-sm text-balance">
+          <h1 className="text-xl font-bold">Iniciar sesión</h1>
+          <p className="text-black dark:text-white text-xs text-balance">
             Ingresa tu correo para acceder a tu cuenta
           </p>
         </div>
         <Field>
-          <FieldLabel htmlFor="email">Correo electrónico</FieldLabel>
+          <FieldLabel htmlFor="email" className="text-xs">Correo electrónico</FieldLabel>
           <Input id="email" name="email" type="email" placeholder="tu@ejemplo.com" required />
         </Field>
         <Field>
           <div className="flex items-center">
-            <FieldLabel htmlFor="password">Contraseña</FieldLabel>
-            <a href="/auth/forgot-password" className="ml-auto text-sm text-black dark:text-white underline-offset-4 hover:underline">
+            <FieldLabel htmlFor="password" className="text-xs">Contraseña</FieldLabel>
+            <a href="/auth/forgot-password" className="ml-auto text-xs text-black dark:text-white underline-offset-4 hover:underline">
               ¿Olvidaste tu contraseña?
             </a>
           </div>
@@ -116,7 +116,7 @@ export function LoginForm({
             </svg>
             Continuar con Google
           </Button>
-          <FieldDescription className="text-center pt-4">
+          <FieldDescription className="text-center text-black dark:text-white text-xs pt-4">
             ¿No tienes una cuenta?{" "}
             <a href="/auth/register" className="underline underline-offset-4  text-primary">
               Regístrate
