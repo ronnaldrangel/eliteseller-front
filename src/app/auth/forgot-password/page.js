@@ -102,8 +102,8 @@ export default function ForgotPasswordPage() {
     <AuthLayout>
       <div className="w-full">
         <div className="flex flex-col gap-1 mb-6">
-          <h1 className="text-xl font-bold">Recuperar contraseña</h1>
-          <p className="text-xs text-black dark:text-white">
+          <h1 className="text-2xl font-bold">Recuperar contraseña</h1>
+          <p className="text-sm text-muted-foreground">
             Ingresa tu email para recibir un enlace de recuperación
           </p>
         </div>
@@ -113,7 +113,7 @@ export default function ForgotPasswordPage() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <FieldGroup>
             <Field>
-              <FieldLabel htmlFor="email" className="text-xs">Correo electrónico</FieldLabel>
+              <FieldLabel htmlFor="email">Correo electrónico</FieldLabel>
               <Input
                 id="email"
                 name="email"
@@ -160,7 +160,7 @@ export default function ForgotPasswordPage() {
               </Button>
             </Field>
 
-            <p className="px-6 text-center text-xs text-muted-foreground mt-6">
+            <p className="px-6 text-center text-sm text-muted-foreground mt-6">
               ¿Ya tienes una cuenta? {" "}
               <Link href="/auth/login" className="font-medium text-primary underline underline-offset-4">Inicia sesión</Link>
             </p>
