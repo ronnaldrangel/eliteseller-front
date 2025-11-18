@@ -103,10 +103,10 @@ export default function TriggerManagement({
   };
 
   return (
-    <div className="grid gap-6 pb-6">
-      <div className="overflow-hidden rounded-md border">
+    <div className="grid gap-8 pb-6">
+      <div className="overflow-x-auto rounded-xl border">
         <Table className="min-w-max">
-          <TableHeader>
+          <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead className="min-w-[200px] ml-1">Nombre</TableHead>
               <TableHead className="min-w-[280px]">Palabras clave</TableHead>
@@ -127,7 +127,7 @@ export default function TriggerManagement({
                 </TableRow>
               ) : (
                 triggers.map((trigger) => (
-                  <TableRow key={trigger.id}>
+                  <TableRow key={trigger.id} className="even:bg-muted/10">
                     <TableCell>
                       <div
                         className="truncate max-w-[180px]"

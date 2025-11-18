@@ -561,7 +561,7 @@ export default function EditProductForm({
   }, [variants, options]);
 
   return (
-    <div className="w-full max-w-7xl mx-auto space-y-8">
+    <div className="w-full max-w-7xl mx-auto space-y-10 px-2 md:px-4">
       {/* Título principal fuera del card */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -569,7 +569,7 @@ export default function EditProductForm({
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-8">
         {/* Información básica */}
         <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
           <CardHeader>
@@ -585,9 +585,9 @@ export default function EditProductForm({
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             {/* Nombre del producto con Disponible inline */}
-            <div className="flex gap-4 items-start">
+            <div className="flex gap-6 items-start">
               <div className="flex-1">
                 <label
                   htmlFor="product-name"
@@ -633,11 +633,11 @@ export default function EditProductForm({
             </div>
 
             {/* Grid de descripciones */}
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
                 <label
                   htmlFor="description-wsp"
-                  className="text-sm font-medium leading-none"
+                  className="text-sm font-medium leading-none block min-h-[40px]"
                 >
                   Descripción del producto en WhatsApp *
                 </label>
@@ -669,7 +669,7 @@ export default function EditProductForm({
               <div className="space-y-2">
                 <label
                   htmlFor="description-complete"
-                  className="text-sm font-medium leading-none"
+                  className="text-sm font-medium leading-none block min-h-[40px]"
                 >
                   Descripción del producto
                 </label>
@@ -714,7 +714,7 @@ export default function EditProductForm({
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-8">
             <CardUpload
               accept=".jpg,.jpeg,.png,.mp4,video/mp4"
               multiple
@@ -749,7 +749,7 @@ export default function EditProductForm({
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
               <div className="space-y-2">
                 <label
                   htmlFor="base-price"
@@ -799,7 +799,7 @@ export default function EditProductForm({
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <button
               type="button"
               onClick={addOption}
@@ -811,11 +811,11 @@ export default function EditProductForm({
 
             {/* Lista de opciones */}
             {options.length > 0 && (
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-4">
                 {options.map((option) => (
                   <div
                     key={option.id}
-                    className="rounded-xl border border-muted-foreground/20 bg-background p-4 space-y-4"
+                    className="rounded-xl border border-muted-foreground/20 bg-background p-5 space-y-4"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex-1">
@@ -921,7 +921,7 @@ export default function EditProductForm({
 
             <CardContent>
               <div className="rounded-xl border border-muted-foreground/20 bg-background overflow-hidden">
-                <div className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-3 bg-muted/40 border-b border-muted-foreground/20 text-sm font-medium">
+                <div className="hidden md:grid grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-3 bg-muted/40 border-b border-muted-foreground/20 text-sm font-medium">
                   <div>Imagen</div>
                   <div>Variante</div>
                   <div>Precio</div>
@@ -953,7 +953,7 @@ export default function EditProductForm({
                       return (
                         <div
                           key={vIndex}
-                          className="grid grid-cols-[auto_1fr_auto_auto] gap-4 px-4 py-4 hover:bg-muted/20 transition-colors items-center"
+                          className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto_auto] gap-4 px-5 py-4 hover:bg-muted/20 even:bg-muted/10 transition-colors md:items-center"
                         >
                           <div className="relative">
                             {!imagePreview ? (
@@ -1047,6 +1047,7 @@ export default function EditProductForm({
                           </div>
 
                           <div className="flex flex-wrap gap-2 items-center pr-4">
+                            <span className="text-xs text-muted-foreground md:hidden">Variante</span>
                             <span className="text-sm font-medium shrink-0">
                               {vIndex + 1}
                             </span>
@@ -1062,7 +1063,8 @@ export default function EditProductForm({
                             )}
                           </div>
 
-                          <div className="w-16 md:w-32">
+                          <div className="w-full md:w-32">
+                            <span className="text-xs text-muted-foreground md:hidden">Precio</span>
                             <Input
                               type="number"
                               min="0"
@@ -1076,7 +1078,8 @@ export default function EditProductForm({
                             />
                           </div>
 
-                          <div className="flex items-center justify-center w-12 md:w-24">
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-center w-full md:w-24">
+                            <span className="text-xs text-muted-foreground md:hidden mb-1">Disponibilidad</span>
                             <Switch
                               checked={variant.is_available}
                               onCheckedChange={(val) =>

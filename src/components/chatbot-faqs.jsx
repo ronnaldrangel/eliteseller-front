@@ -150,7 +150,7 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
   }
 
   return (
-    <div className="rounded-lg border bg-muted/20 p-4">
+    <div className="rounded-xl border bg-card p-5 space-y-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-4">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" />Base de conocimiento</h4>
         <Button type="button" size="sm" className="w-full md:w-auto" onClick={openCreate} disabled={!token || !chatbotId}>
@@ -160,9 +160,9 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
       {faqs.length === 0 ? (
         <p className="text-sm text-muted-foreground">Sin FAQs configuradas.</p>
       ) : (
-        <div className="grid grid-cols-1 gap-3">
+        <div className="grid grid-cols-1 gap-4">
           {faqs.map((f) => (
-            <div key={f.documentId || f.id || f.question} className="rounded-md border bg-background p-3">
+            <div key={f.documentId || f.id || f.question} className="rounded-xl border bg-background p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="font-medium">{f.question}</div>
                 <div className="flex items-center gap-2">
@@ -192,16 +192,16 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
           <DialogHeader>
             <DialogTitle>Editar FAQ</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-3">
-            <div className="grid gap-2">
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="grid gap-3">
               <label htmlFor="faq-question" className="text-sm font-medium">Pregunta</label>
               <Input id="faq-question" value={form.question} onChange={(e) => setForm((p) => ({ ...p, question: e.target.value }))} />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="faq-response" className="text-sm font-medium">Respuesta</label>
               <Textarea id="faq-response" rows={4} value={form.response} onChange={(e) => setForm((p) => ({ ...p, response: e.target.value }))} />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="faq-category" className="text-sm font-medium">Categoría</label>
               <Select value={form.category || undefined} onValueChange={(val) => setForm((p) => ({ ...p, category: val }))}>
                 <SelectTrigger id="faq-category" className="w-full">
@@ -247,16 +247,16 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
           <DialogHeader>
             <DialogTitle>Nueva pregunta frecuente</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-3">
-            <div className="grid gap-2">
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="grid gap-3">
               <label htmlFor="new-faq-question" className="text-sm font-medium">Pregunta</label>
               <Input id="new-faq-question" value={createForm.question} onChange={(e) => setCreateForm((p) => ({ ...p, question: e.target.value }))} />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="new-faq-response" className="text-sm font-medium">Respuesta</label>
               <Textarea id="new-faq-response" rows={4} value={createForm.response} onChange={(e) => setCreateForm((p) => ({ ...p, response: e.target.value }))} />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="new-faq-category" className="text-sm font-medium">Categoría</label>
               <Select value={createForm.category || undefined} onValueChange={(val) => setCreateForm((p) => ({ ...p, category: val }))}>
                 <SelectTrigger id="new-faq-category" className="w-full">

@@ -150,7 +150,7 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
   }
 
   return (
-    <div className="rounded-lg border bg-muted/20 p-4">
+    <div className="rounded-xl border bg-card p-5 space-y-4">
       <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-4">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Métodos de pago</h4>
         <Button type="button" size="sm" className="w-full md:w-auto" onClick={openCreate} disabled={!token || !chatbotId}>
@@ -160,9 +160,9 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
       {payments.length === 0 ? (
         <p className="text-sm text-muted-foreground">Sin medios de pago configurados.</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-4">
           {payments.map((p) => (
-            <div key={p.documentId || p.id || p.name} className="rounded-md border bg-background p-3">
+            <div key={p.documentId || p.id || p.name} className="rounded-xl border bg-background p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="font-medium">{p.name}</div>
                 <div className="flex items-center gap-2">
@@ -192,12 +192,12 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
           <DialogHeader>
             <DialogTitle>Editar método de pago</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSave} className="space-y-3">
-            <div className="grid gap-2">
+          <form onSubmit={handleSave} className="space-y-4">
+            <div className="grid gap-3">
               <label htmlFor="pay-name" className="text-sm font-medium">Nombre</label>
               <Input id="pay-name" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="pay-type" className="text-sm font-medium">Tipo</label>
               <Select value={form.type} onValueChange={(v) => setForm((p) => ({ ...p, type: v }))}>
                 <SelectTrigger id="pay-type" className="w-full">
@@ -209,7 +209,7 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="pay-instructions" className="text-sm font-medium">Instrucciones</label>
               <Textarea id="pay-instructions" rows={4} value={form.instructions} onChange={(e) => setForm((p) => ({ ...p, instructions: e.target.value }))} />
             </div>
@@ -244,12 +244,12 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
           <DialogHeader>
             <DialogTitle>Nuevo método de pago</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-3">
-            <div className="grid gap-2">
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="grid gap-3">
               <label htmlFor="new-pay-name" className="text-sm font-medium">Nombre</label>
               <Input id="new-pay-name" value={createForm.name} onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))} />
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="new-pay-type" className="text-sm font-medium">Tipo</label>
               <Select value={createForm.type} onValueChange={(v) => setCreateForm((p) => ({ ...p, type: v }))}>
                 <SelectTrigger id="new-pay-type" className="w-full">
@@ -261,7 +261,7 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               <label htmlFor="new-pay-instructions" className="text-sm font-medium">Instrucciones</label>
               <Textarea id="new-pay-instructions" rows={4} value={createForm.instructions} onChange={(e) => setCreateForm((p) => ({ ...p, instructions: e.target.value }))} />
             </div>

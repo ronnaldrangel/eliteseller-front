@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -699,9 +699,9 @@ export default function NewTriggerForm({
 
   // [Cambio] Layout en dos columnas con un Card lateral para mensajes/multimedia
   return (
-    <div>
+    <div className="w-full max-w-7xl mx-auto space-y-10 px-2 md:px-4">
       {/* Este es un tipo de header para mostrar el título del formulario y un botón hacia atrás */}
-      <section className="mb-6">
+      <section className="mb-8">
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
@@ -718,9 +718,9 @@ export default function NewTriggerForm({
           </h3>
         </div>
       </section>
-      <div className="xl:grid xl:items-start gap-6 space-y-6 xl:space-y-0 xl:grid-cols-2">
+      <div className="xl:grid xl:items-start gap-8 space-y-8 xl:space-y-0 xl:grid-cols-2">
         {/* [Cambio] Card lateral independiente para Mensajes/Multimedia (2da columna en desktop) */}
-        <Card className="border-dashed border-muted-foreground/20 bg-muted/10">
+        <Card className="rounded-xl border-dashed border-muted-foreground/20 bg-card">
           <CardHeader>
             <CardTitle>Respuestas</CardTitle>
             <CardDescription>
@@ -728,7 +728,7 @@ export default function NewTriggerForm({
               como una columna aparte.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             {/* Contenidos existentes/edición */}
             {messages.map((msg, index) => {
               const hasAnyMedia =
@@ -738,7 +738,7 @@ export default function NewTriggerForm({
               return (
                 <div
                   key={msg.id}
-                  className="rounded-lg border border-muted-foreground/20 bg-background p-3"
+                  className="rounded-xl border border-muted-foreground/20 bg-background p-4"
                 >
                   <div className="flex items-start gap-2 min-w-0">
                     <div className="flex-1 w-0 min-w-0">
@@ -858,7 +858,7 @@ export default function NewTriggerForm({
             })}
 
             {/* Nuevo contenido */}
-            <div className="rounded-lg border border-dashed border-muted-foreground/20 bg-muted/10 p-3">
+            <div className="rounded-xl border border-dashed border-muted-foreground/20 bg-card p-4">
               <div className="mb-2 flex items-center gap-4 text-sm">
                 <label className="inline-flex items-center gap-2">
                   <input
@@ -958,7 +958,7 @@ export default function NewTriggerForm({
         </Card>
         {/* [/Cambio] */}
 
-        <Card className="w-full border-dashed border-muted-foreground/20 bg-muted/10">
+        <Card className="w-full rounded-xl border-dashed border-muted-foreground/20 bg-card">
           <form onSubmit={handleSubmit} className="contents">
             <CardHeader className="flex items-start justify-between">
               <div>
@@ -987,7 +987,7 @@ export default function NewTriggerForm({
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
               <FieldSet className="gap-6">
                 <FieldGroup className="gap-6">
                   <Field data-invalid={errors.name ? true : undefined}>
@@ -1080,10 +1080,7 @@ export default function NewTriggerForm({
                             }
                           }}
                           onKeyDown={(e) => {
-                            const isSeparator =
-                              e.key === " " ||
-                              e.key === "Enter" ||
-                              e.key === ",";
+                            const isSeparator = e.key === "Enter";
                             if (isSeparator) {
                               e.preventDefault();
                               const next = keywordInput.trim();

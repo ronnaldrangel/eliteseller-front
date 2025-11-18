@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { CheckCircle2Icon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -91,10 +92,10 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="rounded-xl border bg-card p-5 space-y-6">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Información básica</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="chatbot_name">Nombre del chatbot</FieldLabel>
             <Input id="chatbot_name" name="chatbot_name" value={form.chatbot_name} onChange={handleChange} />
@@ -105,16 +106,11 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
           </Field>
           <Field>
             <FieldLabel htmlFor="gender">Género</FieldLabel>
-            <Select value={form.gender || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))}>
-              <SelectTrigger id="gender" className="w-full">
-                <SelectValue placeholder="Selecciona género" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="male">Masculino</SelectItem>
-                <SelectItem value="female">Femenino</SelectItem>
-                <SelectItem value="neutral">Neutral</SelectItem>
-              </SelectContent>
-            </Select>
+            <ToggleGroup type="single" value={form.gender || ""} onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))} className="w-full" variant="outline">
+              <ToggleGroupItem value="male">Masculino</ToggleGroupItem>
+              <ToggleGroupItem value="female">Femenino</ToggleGroupItem>
+              <ToggleGroupItem value="neutral">No especificado</ToggleGroupItem>
+            </ToggleGroup>
           </Field>
           <Field>
              <FieldLabel htmlFor="country">País</FieldLabel>
@@ -136,9 +132,9 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
         </div>
       </div>
 
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
+      <div className="rounded-xl border bg-card p-5 space-y-6">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Audiencia e instrucciones</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="target">Público objetivo</FieldLabel>
             <Input id="target" name="target" value={form.target} onChange={handleChange} />
@@ -150,9 +146,9 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
         </div>
       </div>
 
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
+      <div className="rounded-xl border bg-card p-5 space-y-6">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Personalidad</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="style_communication">Estilo de comunicación</FieldLabel>
             <Textarea id="style_communication" name="style_communication" value={form.style_communication} onChange={handleChange} rows={3} placeholder="friendly, concise, and clear" />
@@ -164,18 +160,19 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
 
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="response_length">Longitud de respuesta</FieldLabel>
-            <Select value={form.response_length || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, response_length: value }))}>
-              <SelectTrigger id="response_length" className="w-full">
-                <SelectValue placeholder="Selecciona longitud" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Very concise">Very concise</SelectItem>
-                <SelectItem value="Concise">Concise</SelectItem>
-                <SelectItem value="Balance">Balance</SelectItem>
-                <SelectItem value="Detailed">Detailed</SelectItem>
-                <SelectItem value="Very detailed">Very detailed</SelectItem>
-              </SelectContent>
-            </Select>
+            <ToggleGroup
+              type="single"
+              value={form.response_length || "Balance"}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, response_length: value }))}
+              className="w-full"
+              variant="outline"
+            >
+              <ToggleGroupItem value="Very concise">Muy concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Concise">Concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Balance">Balanceada</ToggleGroupItem>
+              <ToggleGroupItem value="Detailed">Detallada</ToggleGroupItem>
+              <ToggleGroupItem value="Very detailed">Muy detallada</ToggleGroupItem>
+            </ToggleGroup>
           </Field>
 
           <Field>
@@ -207,9 +204,9 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
         </div>
       </div>
 
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
+      <div className="rounded-xl border bg-card p-5 space-y-6">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Mensajes</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="welcome_message">Mensaje de bienvenida</FieldLabel>
             <Textarea id="welcome_message" name="welcome_message" value={form.welcome_message} onChange={handleChange} rows={3} />
