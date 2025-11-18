@@ -106,10 +106,15 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
           </Field>
           <Field>
             <FieldLabel htmlFor="gender">Género</FieldLabel>
-            <ToggleGroup type="single" value={form.gender || ""} onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))} className="w-full grid grid-cols-2 sm:grid-cols-3 gap-0" variant="outline">
-              <ToggleGroupItem value="male" className="w-full border rounded-xl md:rounded-md">Masculino</ToggleGroupItem>
-              <ToggleGroupItem value="female" className="w-full border rounded-xl md:rounded-md">Femenino</ToggleGroupItem>
-              <ToggleGroupItem value="neutral" className="w-full border rounded-xl md:rounded-md">No especificado</ToggleGroupItem>
+            <ToggleGroup
+              type="single"
+              value={form.gender || ""}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))}
+              className="w-full grid grid-cols-1 gap-2 md:inline-flex md:w-fit md:overflow-hidden md:rounded-md md:border md:p-0"
+              variant="outline">
+              <ToggleGroupItem value="male" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">Masculino</ToggleGroupItem>
+              <ToggleGroupItem value="female" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">Femenino</ToggleGroupItem>
+              <ToggleGroupItem value="neutral" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">No especificado</ToggleGroupItem>
             </ToggleGroup>
           </Field>
           <Field>
@@ -164,14 +169,14 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
               type="single"
               value={form.response_length || "Balance"}
               onValueChange={(value) => setForm((prev) => ({ ...prev, response_length: value }))}
-              className="w-full grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2"
+              className="w-full grid grid-cols-1 gap-2 md:gap-0 md:inline-flex md:w-fit md:overflow-hidden md:rounded-md md:border md:p-0"
               variant="outline"
             >
-              <ToggleGroupItem value="Very concise" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Muy concisa</ToggleGroupItem>
-              <ToggleGroupItem value="Concise" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Concisa</ToggleGroupItem>
-              <ToggleGroupItem value="Balance" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Balanceada</ToggleGroupItem>
-              <ToggleGroupItem value="Detailed" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Detallada</ToggleGroupItem>
-              <ToggleGroupItem value="Very detailed" className="w-full border rounded-xl md:rounded-md text-xs sm:text-sm">Muy detallada</ToggleGroupItem>
+              <ToggleGroupItem value="Very concise" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Muy concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Concise" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Balance" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Balanceada</ToggleGroupItem>
+              <ToggleGroupItem value="Detailed" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Detallada</ToggleGroupItem>
+              <ToggleGroupItem value="Very detailed" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Muy detallada</ToggleGroupItem>
             </ToggleGroup>
           </Field>
 
