@@ -48,8 +48,8 @@ const AuthLayout = ({ children }) => {
                   <Image
                     src={
                       theme === "dark"
-                        ? "/images/logo-white.png"
-                        : "/images/logo-white.png" // Usa logo blanco para mejor contraste
+                      ? "/images/logo-white.png" // Usa logo blanco para mejor contraste
+                        : "/images/logo-black.png"
                     }
                     alt="Logo"
                     width={140}

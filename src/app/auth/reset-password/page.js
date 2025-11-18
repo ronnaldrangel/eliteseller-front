@@ -134,8 +134,8 @@ function ResetPasswordContent() {
     <AuthLayout>
       <div className="w-full">
         <div className="space-y-1">
-          <h1 className="text-2xl font-extrabold text-white">Restablecer contraseña</h1>
-          <p className="text-sm text-white">Ingresa tu nueva contraseña</p>
+          <h1 className="text-2xl font-extrabold">Restablecer contraseña</h1>
+          <p className="text-sm text-black dark:text-white">Ingresa tu nueva contraseña</p>
         </div>
 
         <div className="space-y-6 mt-6">
@@ -143,7 +143,7 @@ function ResetPasswordContent() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-6">
             <FieldGroup>
               <Field>
-                <FieldLabel className="text-white" htmlFor="password">Nueva contraseña</FieldLabel>
+                <FieldLabel htmlFor="password">Nueva contraseña</FieldLabel>
                 <Input
                   id="password"
                   name="password"
@@ -157,7 +157,7 @@ function ResetPasswordContent() {
               </Field>
 
               <Field>
-                <FieldLabel className="text-white" htmlFor="confirmPassword">Confirmar contraseña</FieldLabel>
+                <FieldLabel htmlFor="confirmPassword">Confirmar contraseña</FieldLabel>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"

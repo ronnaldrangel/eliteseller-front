@@ -157,7 +157,7 @@ function FieldSeparator({ children, className, ...props }) {
         <div className="flex items-center gap-3">
           <Separator className="flex-1" />
           <span
-            className="text-white/90 whitespace-nowrap text-sm"
+            className="whitespace-nowrap text-sm"
             data-slot="field-separator-content"
           >
             {children}
