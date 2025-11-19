@@ -59,10 +59,13 @@ export default function SelectUserAvatarMenu() {
           {email && <div className="text-xs text-muted-foreground">{email}</div>}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
+          <Link href="/select">Inicio</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
           <Link href="/account">Mi cuenta</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
+        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
           <Link href="/billing">Facturación</Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
