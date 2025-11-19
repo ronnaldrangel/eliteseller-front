@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
-import { isValidPhoneNumber } from "react-phone-number-input";
+import { isValidPhoneNumber } from "libphonenumber-js";
 
 export async function POST(request) {
   try {
