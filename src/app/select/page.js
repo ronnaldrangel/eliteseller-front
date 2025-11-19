@@ -115,7 +115,7 @@ export default async function SelectPage() {
               title="Crear bot"
             >
               <PlusIcon className="size-16 text-muted-foreground group-hover:text-primary transition-colors" />
-              <div className="mt-3 font-semibold">Crear bot</div>
+              <div className="mt-3 text-sm md:text-base font-semibold">Crear bot</div>
             </Link>
 
             {cards.length > 0 ? (
@@ -136,7 +136,7 @@ export default async function SelectPage() {
                       height={120}
                       className="h-20 w-20 rounded-md object-cover grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0 transition-all duration-200"
                     />
-                    <div className="mt-3 font-medium line-clamp-2 text-lg space-y-2">
+                    <div className="mt-3 font-medium md:line-clamp-2 text-sm md:text-lg space-y-2">
                       <span className="block">{c.name}</span>
                       {c.plan && (
                         <span
