@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { buildStrapiUrl } from "@/lib/strapi";
@@ -15,8 +15,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import CardUpload from "@/components/card-upload";
 import { Plus, X, Trash2 } from "lucide-react";
+import { useTranslation } from "@/contexts/language-context";
+import { CURRENCY_OPTIONS, DEFAULT_CURRENCY } from "@/constants/currencies";
 
 const SHORT_DESCRIPTION_LIMIT = 500;
 const LONG_DESCRIPTION_LIMIT = 1000;
@@ -24,9 +33,11 @@ const NAME_LIMIT = 250;
 
 export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   const router = useRouter();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     name: "",
     price: "",
+    currency: DEFAULT_CURRENCY,
     available: true,
     description_wsp: "",
     description_complete: "",
@@ -94,17 +105,28 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         (v) => JSON.stringify(v.combination) === JSON.stringify(combinationObj)
       );
 
+      const inheritProductPrice = existing?.inheritProductPrice ?? true;
+      const existingCustomPrice =
+        typeof existing?.customPrice !== "undefined"
+          ? existing.customPrice
+          : !inheritProductPrice
+            ? existing?.price || ""
+            : "";
+
       return {
         combination: combinationObj,
         name: variantName,
-        price: existing?.price || "",
+        price: inheritProductPrice ? form.price : existing?.price || "",
+        customPrice: existingCustomPrice,
+        currency: form.currency,
+        inheritProductPrice,
         image: existing?.image || null,
         is_available: existing?.is_available ?? true,
       };
     });
 
     setVariants(newVariants);
-  }, [options, variants]);
+  }, [options, variants, form.price, form.currency]);
 
   // Agregar nueva opción
   const addOption = () => {
@@ -169,27 +191,59 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
   // Actualizar precio de variante
   const updateVariantPrice = (index, price) => {
-    setVariants(variants.map((v, i) => (i === index ? { ...v, price } : v)));
+    setVariants((current) =>
+      current.map((variant, i) =>
+        i === index
+          ? {
+              ...variant,
+              customPrice: price,
+              price,
+              inheritProductPrice: false,
+            }
+          : variant
+      )
+    );
   };
 
   // Actualizar disponibilidad de variante
   const updateVariantAvailability = (index, is_available) => {
-    setVariants(
-      variants.map((v, i) => (i === index ? { ...v, is_available } : v))
+    setVariants((current) =>
+      current.map((variant, i) => (i === index ? { ...variant, is_available } : variant))
     );
   };
 
   // Actualizar imagen de variante
   const updateVariantImage = (index, file) => {
-    setVariants(
-      variants.map((v, i) => (i === index ? { ...v, image: file } : v))
+    setVariants((current) =>
+      current.map((variant, i) => (i === index ? { ...variant, image: file } : variant))
     );
   };
 
   // Eliminar imagen de variante
   const removeVariantImage = (index) => {
-    setVariants(
-      variants.map((v, i) => (i === index ? { ...v, image: null } : v))
+    setVariants((current) =>
+      current.map((variant, i) =>
+        i === index
+          ? {
+              ...variant,
+              image: null,
+            }
+          : variant
+      )
+    );
+  };
+
+  const updateVariantInheritance = (index, inheritProductPrice) => {
+    setVariants((current) =>
+      current.map((variant, i) =>
+        i === index
+          ? {
+              ...variant,
+              inheritProductPrice,
+              price: inheritProductPrice ? form.price : variant.customPrice || "",
+            }
+          : variant
+      )
     );
   };
 
@@ -213,6 +267,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     setForm({
       name: "",
       price: "",
+      currency: DEFAULT_CURRENCY,
       available: true,
       description_wsp: "",
       description_complete: "",
@@ -227,38 +282,84 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     setShowVariants(false);
   };
 
+  useEffect(() => {
+    setVariants((current) =>
+      current.map((variant) => ({
+        ...variant,
+        price: variant.inheritProductPrice ? form.price : variant.price,
+        currency: form.currency,
+      }))
+    );
+  }, [form.price, form.currency]);
+
   const validateForm = () => {
     const nextErrors = {};
 
     if (!form.name.trim()) {
-      nextErrors.name = "Ingresa el nombre del producto.";
+      nextErrors.name = t('product.form.errors.nameRequired', {
+        fallback: 'Ingresa el nombre del producto.',
+      });
     }
 
-    if (variants.length === 0) {
-      const priceNum = Number(form.price);
-      if (form.price === "") {
-        nextErrors.price = "Define un precio para el producto.";
-      } else if (Number.isNaN(priceNum)) {
-        nextErrors.price = "Ingresa un valor numerico valido.";
-      } else if (priceNum < 0) {
-        nextErrors.price = "El precio no puede ser negativo.";
-      }
+    const priceNum = Number(form.price);
+    if (form.price === '') {
+      nextErrors.price = t('product.form.errors.priceRequired', {
+        fallback: 'Define un precio para el producto.',
+      });
+    } else if (Number.isNaN(priceNum)) {
+      nextErrors.price = t('product.form.errors.priceNumber', {
+        fallback: 'Ingresa un valor numerico valido.',
+      });
+    } else if (priceNum < 0) {
+      nextErrors.price = t('product.form.errors.pricePositive', {
+        fallback: 'El precio no puede ser negativo.',
+      });
+    }
+
+    if (!form.currency) {
+      nextErrors.currency = t('product.form.errors.currencyRequired', {
+        fallback: 'Selecciona una moneda.',
+      });
+    }
+
+    const invalidVariant = variants.find(
+      (variant) =>
+        !variant.inheritProductPrice &&
+        (variant.customPrice === '' ||
+          Number.isNaN(Number(variant.customPrice)) ||
+          Number(variant.customPrice) < 0)
+    );
+
+    if (invalidVariant) {
+      nextErrors.variantPricing = t('product.form.errors.variantPrice', {
+        fallback: 'Verifica los precios personalizados de las variantes.',
+      });
     }
 
     if (form.description_wsp.length > SHORT_DESCRIPTION_LIMIT) {
-      nextErrors.description_wsp = `Maximo ${SHORT_DESCRIPTION_LIMIT} caracteres permitidos.`;
+      nextErrors.description_wsp = t('product.form.errors.shortDescriptionMax', {
+        fallback: "Maximo {{limit}} caracteres permitidos.",
+        values: { limit: SHORT_DESCRIPTION_LIMIT },
+      });
     }
 
     if (form.description_complete.length > LONG_DESCRIPTION_LIMIT) {
-      nextErrors.description_complete = `Maximo ${LONG_DESCRIPTION_LIMIT} caracteres permitidos.`;
+      nextErrors.description_complete = t('product.form.errors.longDescriptionMax', {
+        fallback: "Maximo {{limit}} caracteres permitidos.",
+        values: { limit: LONG_DESCRIPTION_LIMIT },
+      });
     }
 
     if (form.is_auto_delivery) {
       if (!form.auto_delivery_msg.trim()) {
-        nextErrors.auto_delivery_msg =
-          "Ingresa el mensaje de entrega automática.";
+        nextErrors.auto_delivery_msg = t('product.form.errors.autoDeliveryRequired', {
+          fallback: 'Ingresa el mensaje de entrega automatica.',
+        });
       } else if (form.auto_delivery_msg.length > LONG_DESCRIPTION_LIMIT) {
-        nextErrors.auto_delivery_msg = `Maximo ${LONG_DESCRIPTION_LIMIT} caracteres permitidos.`;
+        nextErrors.auto_delivery_msg = t('product.form.errors.autoDeliveryMax', {
+          fallback: "Maximo {{limit}} caracteres permitidos.",
+          values: { limit: LONG_DESCRIPTION_LIMIT },
+        });
       }
     }
 
@@ -287,6 +388,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         data: {
           name: form.name.trim(),
           price: Number.isFinite(priceNum) ? priceNum : 0,
+          currency: form.currency,
           available: Boolean(form.available),
           description_wsp: form.description_wsp?.trim() || "",
           description_complete: form.description_complete?.trim() || "",
@@ -414,7 +516,11 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           const variantPayload = {
             data: {
               combination: variant.combination,
-              price: Number(variant.price) || 0,
+              price: Number(
+                variant.inheritProductPrice ? form.price || 0 : variant.customPrice || 0
+              ),
+              inherit_product_price: !!variant.inheritProductPrice,
+              currency: form.currency,
               is_available: variant.is_available,
               product: productId,
             },
@@ -650,29 +756,34 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         </Card>
 
         {/* Precio general */}
-        {variants.length === 0 && (
-          <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
-            <CardHeader>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex flex-col gap-1">
-                  <CardTitle className="text-xl font-semibold">
-                    Precio general
-                  </CardTitle>
-                  <CardDescription className="text-sm text-muted-foreground">
-                    Este precio se utilizará para la variante principal del
-                    producto
-                  </CardDescription>
-                </div>
+        <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-1">
+                <CardTitle className="text-xl font-semibold">
+                  {t("product.form.sections.basePrice.title", { fallback: "Precio general" })}
+                </CardTitle>
+                <CardDescription className="text-sm text-muted-foreground">
+                  {variants.length > 0
+                    ? t("product.form.sections.basePrice.withVariants", {
+                        fallback: "Este precio se utilizara como referencia para todas las variantes.",
+                      })
+                    : t("product.form.sections.basePrice.description", {
+                        fallback: "Este precio se utilizara para la variante principal del producto.",
+                      })}
+                </CardDescription>
               </div>
-            </CardHeader>
+            </div>
+          </CardHeader>
 
-            <CardContent className="space-y-6">
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
               <div className="space-y-2">
                 <label
                   htmlFor="base-price"
                   className="text-sm font-medium leading-none"
                 >
-                  Precio base
+                  {t("product.form.fields.basePrice", { fallback: "Precio base" })}
                 </label>
                 <div className="relative">
                   <Input
@@ -688,16 +799,49 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Este será el precio de tu producto. Se guardará internamente
-                  como una variante principal.
+                  {t("product.form.fields.basePriceHelper", {
+                    fallback: "Este sera el precio principal de tu producto.",
+                  })}
                 </p>
                 {errors.price && (
                   <p className="text-sm text-destructive">{errors.price}</p>
                 )}
               </div>
-            </CardContent>
-          </Card>
-        )}
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none">
+                  {t("product.form.fields.currency", { fallback: "Moneda" })}
+                </label>
+                <Select
+                  value={form.currency}
+                  onValueChange={(value) =>
+                    setForm((prev) => ({ ...prev, currency: value }))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={t("product.form.fields.currencyPlaceholder", {
+                        fallback: "Selecciona una moneda",
+                      })}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCY_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.currency && (
+                  <p className="text-sm text-destructive">{errors.currency}</p>
+                )}
+              </div>
+            </div>
+            {errors.variantPricing && (
+              <p className="text-sm text-destructive">{errors.variantPricing}</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Agregar variaciones */}
         <Card className="border border-border bg-card shadow-sm overflow-hidden rounded-xl">
@@ -977,19 +1121,36 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                             )}
                           </div>
 
-                          <div className="w-full md:w-32">
-                            <span className="text-xs text-muted-foreground md:hidden">Precio</span>
+                          <div className="w-full md:w-56 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">
+                                {t("product.form.variant.priceLabel", { fallback: "Precio" })}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[11px] text-muted-foreground">
+                                  {t("product.form.variant.useBase", { fallback: "Usar precio base" })}
+                                </span>
+                                <Switch
+                                  checked={variant.inheritProductPrice}
+                                  onCheckedChange={(checked) =>
+                                    updateVariantInheritance(globalIndex, checked)
+                                  }
+                                />
+                              </div>
+                            </div>
                             <Input
                               type="number"
                               min="0"
                               step="0.01"
                               placeholder="0.00"
-                              value={variant.price}
-                              onChange={(e) =>
-                                updateVariantPrice(globalIndex, e.target.value)
+                              value={
+                                variant.inheritProductPrice ? form.price : variant.customPrice || ""
                               }
+                              onChange={(e) => updateVariantPrice(globalIndex, e.target.value)}
                               className="h-9"
+                              disabled={variant.inheritProductPrice}
                             />
+                            <p className="text-xs text-muted-foreground">{form.currency}</p>
                           </div>
 
                           <div className="flex flex-col md:flex-row md:items-center md:justify-center w-full md:w-24">

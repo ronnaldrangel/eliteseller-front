@@ -53,13 +53,23 @@ export const columns = [
     cell: ({ row }) => {
       const val = row.getValue("price")
       const n = typeof val === "number" ? val : Number(val)
-      return (
-        <span>
-          {Number.isFinite(n)
-            ? n.toLocaleString("es-ES", { style: "currency", currency: "USD" })
-            : "-"}
-        </span>
-      )
+      const currency =
+        row.original?.currency ||
+        row.original?.attributes?.currency ||
+        "USD"
+      if (!Number.isFinite(n)) {
+        return <span>-</span>
+      }
+      let formatted = ""
+      try {
+        formatted = new Intl.NumberFormat("es-ES", {
+          style: "currency",
+          currency: currency || "USD",
+        }).format(n)
+      } catch (_) {
+        formatted = n.toFixed(2)
+      }
+      return <span>{formatted}</span>
     },
   },
   {

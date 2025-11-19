@@ -1,6 +1,7 @@
 "use client";
 
 import { ChatbotProvider } from "@/contexts/chatbot-context";
+import { LanguageProvider } from "@/contexts/language-context";
 import { SWRConfig } from "swr";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
@@ -113,11 +114,13 @@ const Providers = ({ children }) => {
   return (
     <>
       {loading && <CenteredSpinner />}
-      <SWRConfig
-        value={{ fetcher, revalidateOnFocus: false, dedupingInterval: 30000 }}
-      >
-        <ChatbotProvider>{children}</ChatbotProvider>
-      </SWRConfig>
+      <LanguageProvider>
+        <SWRConfig
+          value={{ fetcher, revalidateOnFocus: false, dedupingInterval: 30000 }}
+        >
+          <ChatbotProvider>{children}</ChatbotProvider>
+        </SWRConfig>
+      </LanguageProvider>
     </>
   );
 };

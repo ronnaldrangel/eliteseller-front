@@ -1,0 +1,101 @@
+{
+  "common": {
+    "languageSelector": "Seleccionar idioma",
+    "currentLanguage": "Idioma actual: {{language}}",
+    "saving": "Guardando..."
+  },
+  "account": {
+    "tabs": {
+      "profile": "Perfil",
+      "security": "Seguridad"
+    },
+    "profile": {
+      "title": "Editar perfil",
+      "subtitle": "Actualiza tu nombre y telefono.",
+      "fields": {
+        "name": "Nombre",
+        "phone": "Telefono"
+      },
+      "placeholders": {
+        "name": "Tu nombre",
+        "phone": "Tu telefono"
+      },
+      "errors": {
+        "invalidPhone": "Ingresa un numero telefonico valido.",
+        "validation": "Revisa los campos marcados para continuar.",
+        "generic": "No se pudo actualizar el perfil.",
+        "network": "Error de red al actualizar el perfil."
+      },
+      "success": "Perfil actualizado correctamente.",
+      "actions": {
+        "submit": "Guardar cambios"
+      }
+    },
+    "security": {
+      "title": "Cambiar contrasena",
+      "subtitle": "Introduce tu contrasena actual y la nueva.",
+      "fields": {
+        "current": "Contrasena actual",
+        "new": "Nueva contrasena",
+        "confirm": "Confirmar nueva contrasena"
+      },
+      "placeholders": {
+        "current": "Tu contrasena actual",
+        "new": "Nueva contrasena",
+        "confirm": "Confirmar nueva contrasena"
+      },
+      "rules": {
+        "length": "Al menos 8 caracteres.",
+        "uppercase": "Incluye una letra mayuscula.",
+        "number": "Incluye un numero.",
+        "symbol": "Incluye un simbolo.",
+        "match": "La confirmacion debe coincidir.",
+        "different": "La nueva contrasena debe ser distinta a la actual."
+      },
+      "errors": {
+        "currentRequired": "Ingresa tu contrasena actual.",
+        "newRequired": "Ingresa una nueva contrasena.",
+        "validation": "Revisa la informacion ingresada.",
+        "generic": "No se pudo cambiar la contrasena.",
+        "network": "Error de red al cambiar la contrasena."
+      },
+      "success": "Contrasena actualizada correctamente.",
+      "actions": {
+        "submit": "Cambiar contrasena"
+      }
+    }
+  },
+  "product": {
+    "form": {
+      "sections": {
+        "basePrice": {
+          "title": "Precio general",
+          "description": "Este precio se utilizara para la variante principal del producto.",
+          "withVariants": "Este precio se utilizara como referencia para todas las variantes."
+        }
+      },
+      "fields": {
+        "basePrice": "Precio base",
+        "basePriceHelper": "Este sera el precio principal de tu producto.",
+        "currency": "Moneda",
+        "currencyPlaceholder": "Selecciona una moneda"
+      },
+      "errors": {
+        "nameRequired": "Ingresa el nombre del producto.",
+        "priceRequired": "Define un precio para el producto.",
+        "priceNumber": "Ingresa un valor numerico valido.",
+        "pricePositive": "El precio no puede ser negativo.",
+        "currencyRequired": "Selecciona una moneda.",
+        "variantPrice": "Verifica los precios personalizados de las variantes.",
+        "shortDescriptionMax": "Maximo {{limit}} caracteres permitidos.",
+        "longDescriptionMax": "Maximo {{limit}} caracteres permitidos.",
+        "autoDeliveryRequired": "Ingresa el mensaje de entrega automatica.",
+        "autoDeliveryMax": "Maximo {{limit}} caracteres permitidos."
+      },
+      "variant": {
+        "priceLabel": "Precio",
+        "useBase": "Usar precio base"
+      }
+    }
+  }
+}

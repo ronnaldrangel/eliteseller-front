@@ -46,6 +46,8 @@ export default async function EditProductPage({ params }) {
           `populate[product_variants][fields][1]=price&` +
           `populate[product_variants][fields][2]=is_available&` +
           `populate[product_variants][fields][3]=documentId&` +
+          `populate[product_variants][fields][4]=currency&` +
+          `populate[product_variants][fields][5]=inherit_product_price&` +
           `populate[product_variants][populate][image][fields][0]=url&` +
           `populate[product_variants][populate][image][fields][1]=name&` +
           `populate[product_variants][populate][image][fields][2]=id`

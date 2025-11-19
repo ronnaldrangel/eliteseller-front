@@ -1,0 +1,101 @@
+{
+  "common": {
+    "languageSelector": "Select language",
+    "currentLanguage": "Current language: {{language}}",
+    "saving": "Saving..."
+  },
+  "account": {
+    "tabs": {
+      "profile": "Profile",
+      "security": "Security"
+    },
+    "profile": {
+      "title": "Edit profile",
+      "subtitle": "Update your name and phone number.",
+      "fields": {
+        "name": "Name",
+        "phone": "Phone"
+      },
+      "placeholders": {
+        "name": "Your name",
+        "phone": "Your phone number"
+      },
+      "errors": {
+        "invalidPhone": "Enter a valid phone number.",
+        "validation": "Review the highlighted fields to continue.",
+        "generic": "Profile update failed.",
+        "network": "Network error while updating the profile."
+      },
+      "success": "Profile updated successfully.",
+      "actions": {
+        "submit": "Save changes"
+      }
+    },
+    "security": {
+      "title": "Change password",
+      "subtitle": "Enter your current password and the new one.",
+      "fields": {
+        "current": "Current password",
+        "new": "New password",
+        "confirm": "Confirm new password"
+      },
+      "placeholders": {
+        "current": "Your current password",
+        "new": "New password",
+        "confirm": "Confirm new password"
+      },
+      "rules": {
+        "length": "At least 8 characters.",
+        "uppercase": "Include an uppercase letter.",
+        "number": "Include a number.",
+        "symbol": "Include a symbol.",
+        "match": "Confirmation must match.",
+        "different": "The new password must differ from the current one."
+      },
+      "errors": {
+        "currentRequired": "Enter your current password.",
+        "newRequired": "Enter a new password.",
+        "validation": "Review the information provided.",
+        "generic": "Unable to change password.",
+        "network": "Network error while changing password."
+      },
+      "success": "Password updated successfully.",
+      "actions": {
+        "submit": "Change password"
+      }
+    }
+  },
+  "product": {
+    "form": {
+      "sections": {
+        "basePrice": {
+          "title": "General price",
+          "description": "This price will be used for the primary variant of the product.",
+          "withVariants": "This price will act as a reference for every variant."
+        }
+      },
+      "fields": {
+        "basePrice": "Base price",
+        "basePriceHelper": "This will be the main price of your product.",
+        "currency": "Currency",
+        "currencyPlaceholder": "Select a currency"
+      },
+      "errors": {
+        "nameRequired": "Enter the product name.",
+        "priceRequired": "Define a price for the product.",
+        "priceNumber": "Enter a valid numeric value.",
+        "pricePositive": "The price cannot be negative.",
+        "currencyRequired": "Select a currency.",
+        "variantPrice": "Check the custom prices of the variants.",
+        "shortDescriptionMax": "Maximum {{limit}} characters allowed.",
+        "longDescriptionMax": "Maximum {{limit}} characters allowed.",
+        "autoDeliveryRequired": "Enter the automatic delivery message.",
+        "autoDeliveryMax": "Maximum {{limit}} characters allowed."
+      },
+      "variant": {
+        "priceLabel": "Price",
+        "useBase": "Use base price"
+      }
+    }
+  }
+}
