@@ -1,59 +1,123 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { toast } from "sonner"
-import { useRouter } from "next/navigation"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export default function SubscribePlanButton({ planId, userId }) {
-  const [loading, setLoading] = useState(false)
-  const router = useRouter()
+  const [loading, setLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const router = useRouter();
 
-  const handleClick = async () => {
-    if (!planId || !userId || loading) return
-    setLoading(true)
+  const handleClick = () => {
+    if (!planId || !userId || loading) return;
+    setShowModal(true);
+  };
+
+  const handleConfirm = async () => {
+    setShowModal(false);
+    setLoading(true);
     try {
-      const url = `/api/plans/subscribe?plan_id=${encodeURIComponent(planId)}&userId=${encodeURIComponent(userId)}`
-      const res = await fetch(url, { method: "GET" })
-      const contentType = res.headers.get("content-type") || ""
-      let data = null
-      let text = null
+      const url = `/api/plans/subscribe?plan_id=${encodeURIComponent(
+        planId
+      )}&userId=${encodeURIComponent(userId)}`;
+      const res = await fetch(url, { method: "GET" });
+      const contentType = res.headers.get("content-type") || "";
+
+      let data = null;
+      let text = null;
       if (contentType.includes("application/json")) {
-        try { data = await res.json() } catch {}
+        try {
+          data = await res.json();
+        } catch {}
       } else {
-        try { text = await res.text() } catch {}
+        try {
+          text = await res.text();
+        } catch {}
       }
+      // console.log("Subscription response data:", data);
+      // return;
 
       if (res.ok) {
-        let target = data?.url || data?.redirectUrl || data?.href || null
+        let target = data?.url || data?.redirectUrl || data?.href || null;
         if (typeof target === "string" && target.startsWith("vhttp")) {
-          target = target.slice(1)
+          target = target.slice(1);
         }
         if (typeof target === "string" && target.length > 0) {
-          toast.success("Suscripción iniciada")
-          window.location.href = target
-          return
+          toast.success("Suscripción iniciada");
+          router.push(target);
+          return;
         }
-        const msg = (data && data.text) || text || "Error en el sistema."
-        if (msg) toast.success(msg)
+        const msg = (data && data.text) || text || "Error en el sistema.";
+        if (msg) toast.success(msg);
       } else {
         if (res.status === 403) {
-          router.push("/billing")
-          return
+          router.push("/billing");
+          return;
         }
-        const msg = (data && (data.text || data?.error?.message)) || text || `No se pudo iniciar la suscripción (status ${res.status})`
-        toast.error(msg)
+        const msg =
+          (data && (data.text || data?.error?.message)) ||
+          text ||
+          `No se pudo iniciar la suscripción, inténtalo de nuevo (status ${res.status})`;
+        toast.error(msg);
       }
     } catch (_) {
-      toast.error("Error conectando con el servicio")
+      toast.error("Error conectando con el servicio");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
+  };
 
   return (
-    <Button type="button" size="lg" className="w-full mt-auto h-12 text-base" onClick={handleClick} disabled={loading || !planId || !userId}>
-      {loading ? "Procesando…" : "Empieza ahora"}
-    </Button>
-  )
+    <>
+      <Button
+        type="button"
+        size="lg"
+        className="w-full mt-auto h-12 text-base"
+        onClick={handleClick}
+        disabled={loading || !planId || !userId}
+      >
+        {loading ? "Procesando…" : "Empieza ahora"}
+      </Button>
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar suscripción</DialogTitle>
+            <DialogDescription>
+              ¿Estás seguro de que deseas suscribirte a este plan? Serás
+              redirigido al proceso de pago.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer"
+              onClick={handleCancel}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+            <Button type="button" className="cursor-pointer" onClick={handleConfirm} disabled={loading}>
+              Confirmar suscripción
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
