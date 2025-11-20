@@ -59,9 +59,9 @@ export default function AccountAnimatedTabs({
               <h2 className="text-lg font-semibold">
                 {t("account.profile.title", { fallback: "Editar perfil" })}
               </h2>
-              <p className="text-sm text-muted-foreground">
+              {/* <p className="text-sm text-muted-foreground">
                 {t("account.profile.subtitle", { fallback: "Actualiza tu nombre y telefono." })}
-              </p>
+              </p> */}
               <AccountProfileForm initialName={initialName} initialPhone={initialPhone} />
             </motion.div>
           </AnimatePresence>

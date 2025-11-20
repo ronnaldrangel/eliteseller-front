@@ -44,22 +44,30 @@ export default function SubscribePlanButton({ planId, userId }) {
           text = await res.text();
         } catch {}
       }
-      // console.log("Subscription response data:", data);
-      // return;
 
       if (res.ok) {
+        let hasValidMethod = data?.statusCode ?? null;
         let target = data?.url || data?.redirectUrl || data?.href || null;
+        if (!hasValidMethod || hasValidMethod === 401) {
+          toast.error(
+            "No se pudo iniciar la suscripción. Redirigiendo a facturación..."
+          );
+          router.push(target ?? "/billing");
+          return;
+        }
         if (typeof target === "string" && target.startsWith("vhttp")) {
           target = target.slice(1);
         }
         if (typeof target === "string" && target.length > 0) {
-          toast.success("Suscripción iniciada");
+          toast.success("Suscripción iniciada. Redirigiendo...");
           router.push(target);
           return;
         }
         const msg = (data && data.text) || text || "Error en el sistema.";
         if (msg) toast.success(msg);
-      } else {
+      }
+      // Todo esto se ejecuta cuando n8n responde con un error
+      else {
         if (res.status === 403) {
           router.push("/billing");
           return;
@@ -112,7 +120,12 @@ export default function SubscribePlanButton({ planId, userId }) {
             >
               Cancelar
             </Button>
-            <Button type="button" className="cursor-pointer" onClick={handleConfirm} disabled={loading}>
+            <Button
+              type="button"
+              className="cursor-pointer"
+              onClick={handleConfirm}
+              disabled={loading}
+            >
               Confirmar suscripción
             </Button>
           </DialogFooter>

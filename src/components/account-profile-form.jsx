@@ -10,7 +10,10 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useTranslation } from "@/contexts/language-context";
 
-export default function AccountProfileForm({ initialName = "", initialPhone = "" }) {
+export default function AccountProfileForm({
+  initialName = "",
+  initialPhone = "",
+}) {
   const router = useRouter();
   const { t } = useTranslation();
   const [name, setName] = useState(initialName || "");
@@ -58,15 +61,28 @@ export default function AccountProfileForm({ initialName = "", initialPhone = ""
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error(data?.error || t("account.profile.errors.generic", { fallback: "No se pudo actualizar el perfil." }));
+        toast.error(
+          data?.error ||
+            t("account.profile.errors.generic", {
+              fallback: "No se pudo actualizar el perfil.",
+            })
+        );
       } else {
         setName(data?.user?.name || payload.name);
         setPhone(data?.user?.phone || payload.phone || "");
-        toast.success(t("account.profile.success", { fallback: "Perfil actualizado correctamente." }));
+        toast.success(
+          t("account.profile.success", {
+            fallback: "Perfil actualizado correctamente.",
+          })
+        );
         router.refresh();
       }
     } catch (err) {
-      toast.error(t("account.profile.errors.network", { fallback: "Error de red al actualizar el perfil." }));
+      toast.error(
+        t("account.profile.errors.network", {
+          fallback: "Error de red al actualizar el perfil.",
+        })
+      );
     } finally {
       setLoading(false);
     }
@@ -84,18 +100,27 @@ export default function AccountProfileForm({ initialName = "", initialPhone = ""
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder={t("account.profile.placeholders.name", { fallback: "Tu nombre" })}
+            placeholder={t("account.profile.placeholders.name", {
+              fallback: "Tu nombre",
+            })}
           />
         </Field>
 
         <Field>
-          <FieldLabel htmlFor="phone">
-            {t("account.profile.fields.phone", { fallback: "Telefono" })}
-          </FieldLabel>
+          <div className="flex justify-between items-center">
+            <FieldLabel htmlFor="phone">
+              {t("account.profile.fields.phone", { fallback: "Telefono" })}
+            </FieldLabel>
+            <span className="text-xs text-muted-foreground">
+              Este es solo un campo informativo.
+            </span>
+          </div>
           <PhoneInput
             id="phone"
             name="phone"
-            placeholder={t("account.profile.placeholders.phone", { fallback: "Tu telefono" })}
+            placeholder={t("account.profile.placeholders.phone", {
+              fallback: "Tu telefono",
+            })}
             value={phone}
             onChange={(value) => setPhone(value || "")}
             international
@@ -111,7 +136,9 @@ export default function AccountProfileForm({ initialName = "", initialPhone = ""
           <Button type="submit" disabled={loading} className="w-full">
             {loading
               ? t("common.saving", { fallback: "Guardando..." })
-              : t("account.profile.actions.submit", { fallback: "Guardar cambios" })}
+              : t("account.profile.actions.submit", {
+                  fallback: "Guardar cambios",
+                })}
           </Button>
         </Field>
       </FieldGroup>
