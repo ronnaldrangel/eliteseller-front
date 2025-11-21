@@ -46,13 +46,13 @@ export default function SubscribePlanButton({ planId, userId }) {
       }
 
       if (res.ok) {
-        let hasValidMethod = data?.statusCode ?? null;
+        let hasValidMethod = data?.statusCode;
         let target = data?.url || data?.redirectUrl || data?.href || null;
-        if (!hasValidMethod || hasValidMethod === 401) {
+        if (hasValidMethod && hasValidMethod === 401) {
           toast.error(
             "No se pudo iniciar la suscripción. Redirigiendo a facturación..."
           );
-          router.push(target ?? "/billing");
+          router.push("/billing");
           return;
         }
         if (typeof target === "string" && target.startsWith("vhttp")) {

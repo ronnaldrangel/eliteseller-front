@@ -37,11 +37,10 @@ export default function ChangeCardCta({ userId, className = "" }) {
       }
       const url = typeof data?.url === "string" ? data.url : null;
 
-      // console.log("Change card response data:", data);
-      // return;
       if (res.ok && url) {
         if (typeof window !== "undefined") {
-          window.location.href = url;
+          // Aquí se abre la URL de flow en una nueva pestaña
+          window.open(url, "_blank", "noopener,noreferrer");
           return;
         }
       } else {

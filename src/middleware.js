@@ -6,7 +6,7 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
 
   // Define protected routes
-  const protectedRoutes = ["/dashboard", "/billing"]
+  const protectedRoutes = ["/dashboard", "/billing", "/order-confirmation"]
   const authRoutes = ["/auth/login", "/auth/register"]
 
   // Check if the current path is a protected route
