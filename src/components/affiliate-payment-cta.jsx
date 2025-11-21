@@ -34,10 +34,9 @@ export default function AffiliatePaymentCta({ userId }) {
       }
       const url = typeof data?.url === "string" ? data.url : null
       if (res.ok && url) {
-        // Redirigir a la URL entregada por el webhook en una nueva ventana (externa)
         if (typeof window !== "undefined") {
-          window.open(url, "_blank", "noopener,noreferrer")
-          return
+          window.location.href = url;
+          return;
         }
       } else {
         toast.error("No se pudo iniciar la afiliación", {

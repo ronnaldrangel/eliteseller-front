@@ -39,8 +39,7 @@ export default function ChangeCardCta({ userId, className = "" }) {
 
       if (res.ok && url) {
         if (typeof window !== "undefined") {
-          // Aquí se abre la URL de flow en una nueva pestaña
-          window.open(url, "_blank", "noopener,noreferrer");
+          window.location.href = url;
           return;
         }
       } else {
