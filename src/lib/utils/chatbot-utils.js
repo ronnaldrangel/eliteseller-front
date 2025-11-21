@@ -17,6 +17,7 @@ export async function getChatbotBySlug(segment, token, userId = null) {
   params.set("fields[1]", "id")
   params.set("fields[2]", "slug")
   params.set("fields[3]", "chatbot_name")
+  params.set("fields[4]", "isWhatsAppConnected")
 
   if (userId) {
     params.set("filters[users_permissions_user][id][$eq]", userId)
@@ -68,5 +69,6 @@ export async function getChatbotBySlug(segment, token, userId = null) {
     slug: meta.slug || meta.documentId,
     routeSegment: meta.routeSegment,
     name: meta.name || meta.routeSegment,
+    isWhatsAppConnected: items[0].isWhatsAppConnected || false,
   }
 }
