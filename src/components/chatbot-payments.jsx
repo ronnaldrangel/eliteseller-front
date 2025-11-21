@@ -1,6 +1,7 @@
 "use client"
 
 import React, { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { CheckCircle2Icon, PencilIcon, Trash2Icon, PlusIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner"
 
 export default function ChatbotPayments({ items = [], token, chatbotId }) {
+  const router = useRouter()
   const normalize = (p) => {
     const a = p?.attributes || p || {}
     return {
@@ -78,7 +80,8 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
 -      setTimeout(() => closeEdit(), 400)
       toast.success("Actualizado")
       setStatus({ loading: false, type: null, message: null })
-      setTimeout(() => closeEdit(), 300)
+      closeEdit()
+      router.refresh()
     } catch (err) {
       setStatus({ loading: false, type: "error", message: "Error de red al actualizar" })
     }
@@ -104,6 +107,7 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
       setPayments((prev) => prev.filter((p) => ((p.documentId || p.id) !== docId)))
       setDeleteStatus({ loading: false, error: null })
       setToDelete(null)
+      router.refresh()
     } catch (e) {
       setDeleteStatus({ loading: false, error: "Error de red al eliminar" })
     }
@@ -143,37 +147,42 @@ export default function ChatbotPayments({ items = [], token, chatbotId }) {
 -      setTimeout(() => closeCreate(), 400)
       toast.success("Creado")
       setCreateStatus({ loading: false, type: null, message: null })
-      setTimeout(() => closeCreate(), 300)
+      closeCreate()
+      router.refresh()
     } catch (err) {
       setCreateStatus({ loading: false, type: "error", message: "Error de red al crear" })
     }
   }
 
   return (
-    <div className="rounded-xl border bg-card p-5 space-y-4">
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-4">
-        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Métodos de pago</h4>
-        <Button type="button" size="sm" className="w-full md:w-auto" onClick={openCreate} disabled={!token || !chatbotId}>
+    <div className="rounded-xl border bg-card p-5 space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-2">
+        <h4 className="text-lg font-semibold flex items-center gap-2">
+          <CheckCircle2Icon className="size-4 text-muted-foreground" /> Métodos de pago
+        </h4>
+        <Button type="button" size="sm" className="w-full sm:w-auto" onClick={openCreate} disabled={!token || !chatbotId}>
           <PlusIcon className="size-4" /> Añadir método
         </Button>
       </div>
       {payments.length === 0 ? (
         <p className="text-sm text-muted-foreground">Sin medios de pago configurados.</p>
       ) : (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {payments.map((p) => (
             <div key={p.documentId || p.id || p.name} className="rounded-xl border bg-background p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="font-medium">{p.name}</div>
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <div className="font-medium leading-tight break-words">{p.name}</div>
                   {p.type && (
-                    <span className="text-xs rounded-md border px-2 py-0.5 text-muted-foreground">{p.type}</span>
+                    <span className="inline-flex text-xs rounded-md border px-2 py-0.5 text-muted-foreground w-fit">{p.type}</span>
                   )}
-                  <Button type="button" variant="outline" size="sm" onClick={() => openEdit(p)}>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full sm:w-auto">
+                  <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => openEdit(p)}>
                     <PencilIcon className="size-4" />
                     Editar
                   </Button>
-                  <Button type="button" variant="destructive" size="sm" onClick={() => setToDelete(p)}>
+                  <Button type="button" variant="destructive" size="sm" className="w-full sm:w-auto" onClick={() => setToDelete(p)}>
                     <Trash2Icon className="size-4" />
                     Eliminar
                   </Button>

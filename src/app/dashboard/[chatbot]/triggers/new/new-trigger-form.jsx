@@ -54,7 +54,12 @@ export default function NewTriggerForm({
   const initialMessages = useMemo(() => {
     const contents =
       initialTrigger?.trigger_contents || initialTrigger?.messages || [];
-    return contents.map((tc, index) => {
+    const sorted = [...contents].sort((a, b) => {
+      const aOrder = (a.attributes || a || {}).order ?? 0;
+      const bOrder = (b.attributes || b || {}).order ?? 0;
+      return aOrder - bOrder;
+    });
+    return sorted.map((tc, index) => {
       const attrs = tc.attributes || tc;
       const mediaNodes = attrs?.messageMedia?.data || [];
       const existingMedia = mediaNodes.map((m) => ({
@@ -78,6 +83,7 @@ export default function NewTriggerForm({
         mediaExisting: existingMedia,
         mediaNew: [],
         type: inferredType,
+        order: attrs?.order ?? index,
       };
     });
   }, [initialTrigger]);
@@ -170,6 +176,32 @@ export default function NewTriggerForm({
     return (Array.isArray(data) ? data : []).map((asset) => asset.id);
   }
 
+  const saveContentWithFallback = async (url, method, payload) => {
+    const attempt = async (body) =>
+      fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+
+    let response = await attempt(payload);
+
+    if (
+      !response.ok &&
+      response.status === 400 &&
+      payload?.data?.order !== undefined
+    ) {
+      const clone = { ...payload, data: { ...payload.data } };
+      delete clone.data.order;
+      response = await attempt(clone);
+    }
+
+    return response;
+  };
+
   const handleAddMessage = () => {
     const hasText = !!newMessage.trim();
     const hasMedia = newMediaFiles.length > 0;
@@ -193,6 +225,7 @@ export default function NewTriggerForm({
         mediaExisting: [],
         mediaNew: newType === "media" ? [...newMediaFiles] : [],
         type: newType,
+        order: prev.length,
       },
     ]);
     setNewMessage("");
@@ -326,6 +359,8 @@ export default function NewTriggerForm({
         // Gestionar contenidos
         let hasErrors = false;
 
+        messages.forEach((msg, idx) => (msg.__order = idx));
+
         for (const msg of messages) {
           let uploadedIds = [];
           try {
@@ -342,21 +377,16 @@ export default function NewTriggerForm({
             const contentPayload = {
               data: {
                 type: msg.type,
+                order: msg.__order ?? 0,
                 message:
                   msg.type === "message" ? (msg.message || "").trim() : "",
                 messageMedia: msg.type === "media" ? allMediaIds : [],
               },
             };
-            const contentRes = await fetch(
+            const contentRes = await saveContentWithFallback(
               buildStrapiUrl(`/api/trigger-contents/${msg.documentId}`),
-              {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify(contentPayload),
-              }
+              "PUT",
+              contentPayload
             );
             if (!contentRes.ok) {
               const body = await contentRes.json().catch(() => ({}));
@@ -367,22 +397,17 @@ export default function NewTriggerForm({
             const contentPayload = {
               data: {
                 type: msg.type,
+                order: msg.__order ?? 0,
                 message:
                   msg.type === "message" ? (msg.message || "").trim() : "",
                 messageMedia: msg.type === "media" ? allMediaIds : [],
                 trigger: { connect: [{ documentId: triggerDocId }] },
               },
             };
-            const contentRes = await fetch(
+            const contentRes = await saveContentWithFallback(
               buildStrapiUrl(`/api/trigger-contents`),
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-                },
-                body: JSON.stringify(contentPayload),
-              }
+              "POST",
+              contentPayload
             );
             if (!contentRes.ok) {
               const body = await contentRes.json().catch(() => ({}));
@@ -460,6 +485,8 @@ export default function NewTriggerForm({
         const triggerDocId = createdTrigger.documentId || createdTrigger.id;
 
         let hasErrors = false;
+        messages.forEach((msg, idx) => (msg.__order = idx));
+
         for (const msg of messages) {
           let uploadedIds = [];
           try {
@@ -474,22 +501,17 @@ export default function NewTriggerForm({
           const contentPayload = {
             data: {
               type: msg.type,
+              order: msg.__order ?? 0,
               message: msg.type === "message" ? (msg.message || "").trim() : "",
               messageMedia: msg.type === "media" ? allMediaIds : [],
               trigger: { connect: [{ documentId: triggerDocId }] },
             },
           };
 
-          const contentResponse = await fetch(
+          const contentResponse = await saveContentWithFallback(
             buildStrapiUrl(`/api/trigger-contents`),
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: `Bearer ${token}` } : {}),
-              },
-              body: JSON.stringify(contentPayload),
-            }
+            "POST",
+            contentPayload
           );
 
           if (!contentResponse.ok) {

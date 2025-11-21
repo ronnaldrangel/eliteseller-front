@@ -15,6 +15,12 @@ import { toast } from "sonner"
 
 export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }) {
   const base = initialData?.attributes || initialData || {}
+  const initialBanWords = Array.isArray(base.ban_words)
+    ? base.ban_words.map((w) => (typeof w === "string" ? w.trim() : "")).filter(Boolean)
+    : String(base.ban_words || "")
+        .split(/[,;\n]/)
+        .map((w) => w.trim())
+        .filter(Boolean)
 
   const [form, setForm] = useState({
     chatbot_name: base.chatbot_name ?? "EliteSellet",
@@ -26,7 +32,6 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
     target: base.target ?? "broad consumer audience",
     emoji: typeof base.emoji === 'boolean' ? base.emoji : !!base.emoji,
     signs: typeof base.signs === 'boolean' ? base.signs : !!base.signs,
-    ban_words: base.ban_words ?? "",
     available_emojis: base.available_emojis ?? "",
     style_sale: base.style_sale ?? "consultative",
     style_communication: base.style_communication ?? "friendly, concise, and clear",
@@ -37,8 +42,8 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
   })
 
   const [status, setStatus] = useState({ loading: false, type: null, message: null })
-
-
+  const [banWordsList, setBanWordsList] = useState(initialBanWords)
+  const [banWordInput, setBanWordInput] = useState("")
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -62,7 +67,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
         ...form,
         emoji: !!form.emoji,
         signs: !!form.signs,
-        ban_words: form.ban_words === "" ? null : form.ban_words,
+        ban_words: banWordsList.length === 0 ? null : banWordsList,
         available_emojis: form.available_emojis === "" ? null : form.available_emojis,
       }
 
@@ -195,7 +200,57 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
 
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="ban_words">Palabras prohibidas</FieldLabel>
-            <Textarea id="ban_words" name="ban_words" value={form.ban_words} onChange={handleChange} rows={3} placeholder="ej. estafa, gratis" />
+            <div>
+              <div className="flex flex-wrap gap-2">
+                {banWordsList.map((word, index) => (
+                  <span
+                    key={`${word}-${index}`}
+                    className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
+                  >
+                    {word}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBanWordsList((prev) => prev.filter((_, i) => i !== index))
+                      }
+                      className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
+                      aria-label={`Quitar palabra ${word}`}
+                    >
+                      x
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input
+                id="ban_words"
+                placeholder="Escribe una palabra y presiona enter"
+                value={banWordInput}
+                onChange={(e) => setBanWordInput(e.target.value)}
+                onBlur={() => {
+                  const next = banWordInput.trim()
+                  if (next) {
+                    setBanWordsList((prev) => (prev.includes(next) ? prev : [...prev, next]))
+                    setBanWordInput("")
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    const next = banWordInput.trim()
+                    if (next) {
+                      setBanWordsList((prev) => (prev.includes(next) ? prev : [...prev, next]))
+                      setBanWordInput("")
+                    }
+                  } else if (e.key === "Backspace" && banWordInput.length === 0) {
+                    setBanWordsList((prev) => prev.slice(0, -1))
+                  }
+                }}
+                className="mt-2"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                Se guardan al presionar Enter o al salir del campo.
+              </p>
+            </div>
           </Field>
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="available_emojis">Emojis disponibles</FieldLabel>
