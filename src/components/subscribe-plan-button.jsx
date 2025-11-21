@@ -99,7 +99,7 @@ export default function SubscribePlanButton({ planId, userId }) {
       <Button
         type="button"
         size="lg"
-        className="w-full mt-auto h-12 text-base"
+        className="w-full mt-auto h-12 text-base cursor-pointer"
         onClick={handleClick}
         disabled={loading || !planId || !userId}
       >

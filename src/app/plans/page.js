@@ -154,7 +154,7 @@ export default async function PlansPage() {
               <SubscribePlanButton planId={planId} userId={session?.user?.strapiUserId} />
             </div>
           ) : (
-            <Button size="lg" className="w-full mt-auto h-12 text-base" asChild>
+            <Button size="lg" className="w-full mt-auto h-12 text-base cursor-pointer" asChild>
               <a href={href}>Empieza ahora</a>
             </Button>
           )}
