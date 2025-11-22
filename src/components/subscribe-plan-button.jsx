@@ -111,12 +111,11 @@ export default function SubscribePlanButton({ planId, userId }) {
           <DialogHeader>
             <DialogTitle>Confirmar suscripción</DialogTitle>
             <DialogDescription>
-              ¿Estás seguro de que deseas suscribirte a este plan? Serás
-              redirigido al proceso de pago.
+              Al darle a confirmar, serás redirigido al proceso de pago.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button
+          <DialogFooter className="mt-4 gap-2">
+            {/* <Button
               type="button"
               variant="outline"
               className="cursor-pointer"
@@ -124,10 +123,10 @@ export default function SubscribePlanButton({ planId, userId }) {
               disabled={loading}
             >
               Cancelar
-            </Button>
+            </Button> */}
             <Button
               type="button"
-              className="cursor-pointer"
+              className="w-full h-12 cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white"
               onClick={handleConfirm}
               disabled={loading}
             >
