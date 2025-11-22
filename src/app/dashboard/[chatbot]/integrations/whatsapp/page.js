@@ -73,7 +73,7 @@ export default async function WhatsAppIntegrationPage({ params }) {
           <div className="grid gap-6 md:grid-cols-[1fr_280px] items-center">
             <div className="space-y-4">
               <h1 className="text-2xl font-semibold">
-                Conecta tu WhatsApp Business by Wazend
+                Conecta tu WhatsApp Business
               </h1>
               <p className="text-sm text-foreground/80">
                 Es el primer paso para empezar a vender con Eliteseller.
@@ -187,6 +187,11 @@ export default async function WhatsAppIntegrationPage({ params }) {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
+      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+        <span>Powered by</span>
+        <img src="/images/wazend/logo-dark.svg" alt="Wazend" className="h-5 mb-2 dark:hidden" />
+        <img src="/images/wazend/logo-light.svg" alt="Wazend" className="h-5 mb-2 hidden dark:block" />
+      </div>
     </div>
   );
 }
