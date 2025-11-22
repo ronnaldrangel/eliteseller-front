@@ -187,11 +187,16 @@ export default async function WhatsAppIntegrationPage({ params }) {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+      <a
+        href="https://wazend.net/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+      >
         <span>Powered by</span>
         <img src="/images/wazend/logo-dark.svg" alt="Wazend" className="h-5 mb-2 dark:hidden" />
         <img src="/images/wazend/logo-light.svg" alt="Wazend" className="h-5 mb-2 hidden dark:block" />
-      </div>
+      </a>
     </div>
   );
 }
