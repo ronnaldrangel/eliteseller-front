@@ -140,7 +140,7 @@ export default async function SelectPage() {
                       <span className="block">{c.name}</span>
                       {c.plan && (
                         <span
-                          className={`block py-1.5 px-2.5 rounded-md text-white text-xs font-medium capitalize ${getPlanColor(
+                          className={`inline py-1.5 px-2.5 rounded-md text-white text-xs font-medium capitalize ${getPlanColor(
                             c.planId
                           )}`}
                         >{`plan ${c.plan}`}</span>

@@ -88,18 +88,18 @@ export default function OrderConfirmationPage() {
 
           {/* Botones de acción */}
           <div className="space-y-3">
-            <Link href="/dashboard" className="block">
+            <Link href="/select" className="block">
               <Button className="w-full text-sm">
-                Ir al dashboard
+                Continuar
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
 
-            <Link href="/billing" className="block">
+            {/* <Link href="/billing" className="block">
               <Button variant="outline" className="w-full text-sm">
                 Ver facturación
               </Button>
-            </Link>
+            </Link> */}
           </div>
         </CardContent>
       </Card>

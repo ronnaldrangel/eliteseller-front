@@ -45,6 +45,32 @@ export default function ChatsPage({ params }) {
               </CardFooter>
             </Card>
 
+                        {/* Tarjeta Android */}
+            <Card className="w-full h-full flex flex-col">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <Image src="/images/chats/android.svg" width={64} height={64} alt="Android" />
+                  <div className="space-y-1">
+                    <CardTitle>Android</CardTitle>
+                    <CardDescription>
+                      Descarga la app en Google Play.
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardFooter className="mt-auto">
+                <Button className="w-full" asChild>
+                  <Link
+                    href="https://play.google.com/store/apps/details?id=crm.eliteseller.app"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Abrir Google Play
+                  </Link>
+                </Button>
+              </CardFooter>
+            </Card>
+
             {/* Tarjeta Apple */}
             <Card className="w-full h-full flex flex-col">
               <CardHeader>
@@ -65,37 +91,12 @@ export default function ChatsPage({ params }) {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Abrir App Store
+                    Proximamente
                   </Link>
                 </Button>
               </CardFooter>
             </Card>
 
-            {/* Tarjeta Android */}
-            <Card className="w-full h-full flex flex-col">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <Image src="/images/chats/android.svg" width={64} height={64} alt="Android" />
-                  <div className="space-y-1">
-                    <CardTitle>Android</CardTitle>
-                    <CardDescription>
-                      Descarga la app en Google Play.
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardFooter className="mt-auto">
-                <Button className="w-full" asChild>
-                  <Link
-                    href="https://play.google.com/store"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Abrir Google Play
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
           </div>
           
       </div>
