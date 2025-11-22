@@ -59,7 +59,7 @@ export default function SubscribePlanButton({ planId, userId }) {
         if (typeof target === "string" && target.length > 0) {
           if (target === "/billing") {
             toast.error(
-              "No se pudo iniciar la suscripción. Redirigiendo a facturación..."
+              "Primero añade un metodo de pago valido"
             );
             router.push("/billing");
             return;
