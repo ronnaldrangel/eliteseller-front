@@ -9,11 +9,16 @@ import LanguageSelector from "./language-selector";
 
 const AuthLayout = ({ children }) => {
   const [mounted, setMounted] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
   const { theme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleVideoError = () => {
+    setVideoFailed(true);
+  };
 
   return (
     <div className="h-screen bg-background">
@@ -56,16 +61,28 @@ const AuthLayout = ({ children }) => {
           </div>
         </div>
 
-        {/* Lado derecho - Video de fondo */}
+        {/* Lado derecho - Video de fondo con fallback a imagen */}
         <div className="relative hidden w-1/2 lg:block">
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            src="/videos/bg-auth.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-          />
+          {!videoFailed ? (
+            <video
+              className="absolute inset-0 h-full w-full object-cover"
+              src="/videos/bg-auth.mp4"
+              autoPlay
+              loop
+              muted
+              playsInline
+              onError={handleVideoError}
+            />
+          ) : null}
+          {videoFailed && (
+            <Image
+              src="/imagefallback.png"
+              alt="Background"
+              fill
+              className="object-cover"
+              priority
+            />
+          )}
         </div>
       </div>
     </div>
