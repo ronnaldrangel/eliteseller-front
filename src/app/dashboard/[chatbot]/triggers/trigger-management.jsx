@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Trash2Icon } from "lucide-react";
@@ -51,6 +52,7 @@ export default function TriggerManagement({
   chatbotId,
   chatbotSlug,
 }) {
+  const router = useRouter();
   const [triggers, setTriggers] = useState(
     Array.isArray(initialTriggers)
       ? initialTriggers.map(normalizeTrigger).filter(Boolean)
@@ -61,6 +63,20 @@ export default function TriggerManagement({
     if (!Array.isArray(initialTriggers)) return;
     setTriggers(initialTriggers.map(normalizeTrigger).filter(Boolean));
   }, [initialTriggers]);
+
+  // Escuchar evento de actualización de disparadores
+  useEffect(() => {
+    const handleTriggersUpdated = () => {
+      if (typeof router.refresh === 'function') {
+        router.refresh();
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('triggers:updated', handleTriggersUpdated);
+      return () => window.removeEventListener('triggers:updated', handleTriggersUpdated);
+    }
+  }, [router]);
 
   const handleDelete = async (trigger) => {
     if (!token) {

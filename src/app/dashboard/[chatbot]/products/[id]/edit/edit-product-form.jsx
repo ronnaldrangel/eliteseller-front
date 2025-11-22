@@ -636,6 +636,21 @@ export default function EditProductForm({
       toast.success("Producto actualizado correctamente.");
       setStatus({ loading: false, error: null });
 
+      // Notify any listeners and refresh server cache immediately
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('products:updated', {
+            detail: { productId: body?.data?.id || documentId },
+          }));
+        }
+      } catch (e) {
+        // ignore dispatch errors
+      }
+
+      if (typeof router.refresh === 'function') {
+        router.refresh();
+      }
+
       const segment = chatbotSlug || chatbotId;
       router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
     } catch (error) {
@@ -676,7 +691,22 @@ export default function EditProductForm({
     <div className="w-full max-w-7xl mx-auto space-y-10 px-2 md:px-4">
       {/* Título principal fuera del card */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">
+        {/* Botón atrás visible solo en mobile */}
+        <div className="flex items-center justify-between mb-2 lg:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const segment = chatbotSlug || chatbotId;
+              router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
+            }}
+          >
+            Atrás
+          </Button>
+          <h1 className="text-lg font-semibold">Editar producto</h1>
+        </div>
+        <h1 className="hidden text-2xl font-bold mb-2 lg:block">
           Editar producto
         </h1>
       </div>
@@ -1270,8 +1300,8 @@ export default function EditProductForm({
           </Card>
         )}
 
-        {/* Footer con botones */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-3 lg:hidden z-50">
+        {/* Footer con botones (mobile) */}
+        <div className="bg-background border-t p-4 flex gap-3 lg:hidden">
           <Button
             type="button"
             variant="outline"

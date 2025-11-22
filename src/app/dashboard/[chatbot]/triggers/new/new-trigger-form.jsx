@@ -445,6 +445,21 @@ export default function NewTriggerForm({
         }
 
         setStatus({ loading: false, error: null });
+
+        // Notify any listeners and refresh server cache immediately
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('triggers:updated', {
+              detail: { triggerId: initialTrigger?.documentId || initialTrigger?.id },
+            }));
+          }
+        } catch (e) {
+          // ignore dispatch errors
+        }
+
+        if (typeof router.refresh === 'function') {
+          router.refresh();
+        }
       } else {
         // Crear nuevo trigger
         const triggerPayload = {
@@ -526,6 +541,21 @@ export default function NewTriggerForm({
         else toast.success("Disparador creado correctamente.");
 
         setStatus({ loading: false, error: null });
+
+        // Notify any listeners and refresh server cache immediately
+        try {
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('triggers:updated', {
+              detail: { triggerId: triggerBody?.data?.id || triggerBody?.data?.documentId },
+            }));
+          }
+        } catch (e) {
+          // ignore dispatch errors
+        }
+
+        if (typeof router.refresh === 'function') {
+          router.refresh();
+        }
       }
 
       const segment = chatbotSlug || chatbotId;
@@ -982,9 +1012,26 @@ export default function NewTriggerForm({
 
         <Card className="w-full rounded-xl border-dashed border-muted-foreground/20 bg-card">
           <form onSubmit={handleSubmit} className="contents">
-            <CardHeader className="flex items-start justify-between">
+            <CardHeader className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
-                <CardTitle>
+                {/* Botón atrás visible solo en mobile */}
+                <div className="flex items-center gap-2 mb-2 lg:hidden">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      const segment = chatbotSlug || chatbotId;
+                      router.push(`/dashboard/${encodeURIComponent(segment)}/triggers`);
+                    }}
+                  >
+                    Atrás
+                  </Button>
+                  <CardTitle className="text-lg font-semibold">
+                    {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
+                  </CardTitle>
+                </div>
+                <CardTitle className="hidden lg:block">
                   {mode === "edit" ? "Editar disparador" : "Nuevo disparador"}
                 </CardTitle>
                 <CardDescription>
@@ -1140,7 +1187,7 @@ export default function NewTriggerForm({
               )}
             </CardContent>
 
-            <CardFooter className="flex flex-col-reverse gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
+            <CardFooter className="flex flex-col gap-3 border-t border-dashed border-muted-foreground/20 px-6 py-4 md:flex-row md:items-center md:justify-between">
               <div className="text-xs text-muted-foreground md:text-sm">
                 {messages.length > 0
                   ? `${messages.length} mensaje${

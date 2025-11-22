@@ -553,6 +553,21 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       setStatus({ loading: false, error: null });
       resetForm();
 
+      // Notify any listeners and refresh server cache immediately
+      try {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('products:updated', {
+            detail: { productId: productBody?.data?.id || productBody?.data?.documentId },
+          }));
+        }
+      } catch (e) {
+        // ignore dispatch errors
+      }
+
+      if (typeof router.refresh === 'function') {
+        router.refresh();
+      }
+
       const segment = chatbotSlug || chatbotId;
       router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
     } catch (error) {
