@@ -608,7 +608,23 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     <div className="w-full max-w-7xl mx-auto space-y-10 px-2 md:px-4">
       {/* Título principal fuera del card */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">
+        {/* Botón atrás visible solo en mobile */}
+        <div className="flex items-center justify-between mb-2 lg:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              const segment = chatbotSlug || chatbotId;
+              router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
+            }}
+            className="pl-0"
+          >
+            Atrás
+          </Button>
+          <h1 className="text-lg font-semibold">Agregar nuevo producto</h1>
+        </div>
+        <h1 className="hidden text-2xl font-bold mb-2 lg:block">
           Agregar nuevo producto
         </h1>
       </div>
@@ -1187,8 +1203,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           </Card>
         )}
 
-        {/* Footer con botones */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-3 lg:hidden z-50">
+        {/* Footer con botones (mobile) - no sticky */}
+        <div className="bg-background border-t p-4 flex gap-3 lg:hidden">
           <Button
             type="button"
             variant="outline"
@@ -1198,14 +1214,14 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                 `/dashboard/${encodeURIComponent(segment)}/products`
               );
             }}
-            className="flex-1"
+            className="flex-1 py-3 text-base"
             disabled={status.loading}
           >
             Cancelar
           </Button>
           <Button
             type="submit"
-            className="flex-1"
+            className="flex-1 py-3 text-base"
             disabled={status.loading || !token || !chatbotId}
           >
             {status.loading ? "Guardando..." : "Guardar"}
