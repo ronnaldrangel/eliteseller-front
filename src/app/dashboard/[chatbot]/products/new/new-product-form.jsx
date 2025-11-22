@@ -608,8 +608,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     <div className="w-full max-w-7xl mx-auto space-y-10 px-2 md:px-4">
       {/* Título principal fuera del card */}
       <div className="mb-8">
-        {/* Botón atrás visible solo en mobile */}
-        <div className="flex items-center justify-between mb-2 lg:hidden">
+        {/* Botón atrás visible solo en mobile - replicando layout de triggers */}
+        <div className="flex items-center gap-2 mb-2 lg:hidden">
           <Button
             type="button"
             variant="ghost"
@@ -622,11 +622,11 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           >
             Atrás
           </Button>
-          <h1 className="text-lg font-semibold">Agregar nuevo producto</h1>
+          <CardTitle className="text-lg font-semibold">Agregar nuevo producto</CardTitle>
         </div>
-        <h1 className="hidden text-2xl font-bold mb-2 lg:block">
+        <CardTitle className="hidden lg:block text-2xl font-bold mb-2">
           Agregar nuevo producto
-        </h1>
+        </CardTitle>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
