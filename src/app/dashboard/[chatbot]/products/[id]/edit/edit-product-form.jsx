@@ -790,12 +790,14 @@ export default function EditProductForm({
                     id="description-wsp"
                     placeholder="Escribe tu mensaje aquí..."
                     value={form.description_wsp}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const truncated = value.substring(0, SHORT_DESCRIPTION_LIMIT);
                       setForm((prev) => ({
                         ...prev,
-                        description_wsp: e.target.value,
-                      }))
-                    }
+                        description_wsp: truncated,
+                      }));
+                    }}
                     maxLength={SHORT_DESCRIPTION_LIMIT}
                     className="min-h-[100px] resize-none"
                   />
@@ -822,12 +824,14 @@ export default function EditProductForm({
                     id="description-complete"
                     placeholder="Escribe los detalles aquí..."
                     value={form.description_complete}
-                    onChange={(e) =>
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const truncated = value.substring(0, LONG_DESCRIPTION_LIMIT);
                       setForm((prev) => ({
                         ...prev,
-                        description_complete: e.target.value,
-                      }))
-                    }
+                        description_complete: truncated,
+                      }));
+                    }}
                     maxLength={LONG_DESCRIPTION_LIMIT}
                     className="min-h-[100px] resize-none"
                   />
