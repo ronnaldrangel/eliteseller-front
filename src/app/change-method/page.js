@@ -23,19 +23,19 @@ export default function CardUpdateSuccessPage() {
       <Card className="max-w-2xl w-full">
         <CardHeader className="text-center">
           <Image
-            src="/images/wazend/bot-friends.png"
+            src="/images/robot/card.webp"
             alt="Cambio de tarjeta exitoso"
             width={180}
             height={90}
             className="mx-auto"
             priority
           />
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl mb-4">
             ¡Tarjeta actualizada correctamente!
           </CardTitle>
-          <CardDescription className="text-sm mt-2">
+          {/* <CardDescription className="text-sm mt-2 mb-6">
             Tu método de pago se ha actualizado exitosamente
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -86,34 +86,23 @@ export default function CardUpdateSuccessPage() {
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <div className="mt-1">
-                  <CheckCircle className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="font-medium">Suscripción activa</p>
-                  <p className="text-xs text-muted-foreground">
-                    Tu suscripción continúa sin interrupciones
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
 
           {/* Botones de acción */}
           <div className="space-y-3">
-            <Link href="/billing" className="block">
+            <Link href="/plans" className="block">
               <Button className="w-full text-sm">
-                Ver métodos de pago
+                Continuar
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
 
-            <Link href="/dashboard" className="block">
+            {/* <Link href="/dashboard" className="block">
               <Button variant="outline" className="w-full text-sm">
                 Volver al dashboard
               </Button>
-            </Link>
+            </Link> */}
           </div>
         </CardContent>
       </Card>
