@@ -8,13 +8,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 
 // Personalizar las imágenes por paso
 const STEP_IMAGES = [
-  "/images/affiliates/step1.png",
-  "/images/affiliates/step2.png",
-  "/images/affiliates/step3.png",
+  "/images/affiliates/step1.webp",
+  "/images/affiliates/step2.webp",
+  "/images/affiliates/step3.webp",
 ];
 
 const STEPS = [
@@ -66,11 +67,13 @@ export default function AffiliatePage() {
                 className="flex flex-col items-center text-center gap-4"
               >
                 <div className="w-40 h-40 md:w-44 md:h-44">
-                  <img
+                  <Image
                     src={STEP_IMAGES[idx]}
                     alt={`Paso ${idx + 1}`}
+                    width={100}
+                    height={100}
                     className="h-full w-full object-contain"
-                    loading="lazy"
+                    priority={true}
                   />
                 </div>
 

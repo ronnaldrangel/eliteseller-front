@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, LifeBuoy } from "lucide-react";
+import Image from "next/image";
 
 
 export default function HelpClient({ initialNewsItems = [], helpError }) {
@@ -66,12 +67,14 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
               <CardContent className="space-y-2 text-left flex flex-1 flex-col">
 
                 {item.image ? (
-                  <div className="w-[100px] h-auto">
-                    <img
+                  <div className="w-[100px] h-auto mx-auto">
+                    <Image
                       src={item.image}
                       alt={item.imageAlt || item.title || "Ayuda"}
-                      loading="lazy"
+                      width={100}
+                      height={100}
                       className="h-full w-full object-cover"
+                      priority={true}
                     />
                   </div>
                 ) : null}

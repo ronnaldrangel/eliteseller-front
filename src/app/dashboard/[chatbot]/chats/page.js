@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import Link from "next/link"
-import IframeWithPreloader from "@/components/iframe-with-preloader"
 import Image from "next/image"
 
 export default function ChatsPage({ params }) {
@@ -23,7 +22,7 @@ export default function ChatsPage({ params }) {
             <Card className="w-full h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <Image src="/images/chats/laptop.svg" width={64} height={64} alt="PC / Laptop" />
+                  <Image src="/images/chats/laptop.webp" width={64} height={64} alt="PC / Laptop" priority={true} />
                   <div className="space-y-1">
                     <CardTitle>PC / Laptop</CardTitle>
                     <CardDescription>
@@ -49,7 +48,7 @@ export default function ChatsPage({ params }) {
             <Card className="w-full h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <Image src="/images/chats/android.svg" width={64} height={64} alt="Android" />
+                  <Image src="/images/chats/android.webp" width={64} height={64} alt="Android" priority={true} />
                   <div className="space-y-1">
                     <CardTitle>Android</CardTitle>
                     <CardDescription>
@@ -75,7 +74,7 @@ export default function ChatsPage({ params }) {
             <Card className="w-full h-full flex flex-col">
               <CardHeader>
                 <div className="flex items-center gap-3">
-                  <Image src="/images/chats/apple.svg" width={64} height={64} alt="Apple" />
+                  <Image src="/images/chats/apple.webp" width={64} height={64} alt="Apple" priority={true} />
                   <div className="space-y-1">
                     <CardTitle>Apple</CardTitle>
                     <CardDescription>
