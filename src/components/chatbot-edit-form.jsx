@@ -39,6 +39,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
     welcome_message: base.welcome_message ?? "",
     confirmation_message: base.confirmation_message ?? "",
     human_derivation_message: base.human_derivation_message ?? "",
+    catalog_message: base.catalog_message ?? "",
   })
 
   const [status, setStatus] = useState({ loading: false, type: null, message: null })
@@ -278,6 +279,10 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="human_derivation_message">Mensaje de derivación a humano</FieldLabel>
             <Textarea id="human_derivation_message" name="human_derivation_message" value={form.human_derivation_message} onChange={handleChange} rows={3} />
+          </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="catalog_message">Mensaje del catálogo</FieldLabel>
+            <Textarea id="catalog_message" name="catalog_message" value={form.catalog_message} onChange={handleChange} rows={4} />
           </Field>
         </div>
       </div>

@@ -4,6 +4,21 @@ import { ArrowUpDown } from "lucide-react";
 
 export const columns = [
   {
+    accessorKey: "contact_id",
+    header: ({ column }) => (
+      <div
+        className="inline-flex items-center gap-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        ID <ArrowUpDown className="ml-1 h-3 w-3" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const val = row.getValue("contact_id")
+      return <span className="text-muted-foreground">{val || "-"}</span>
+    },
+  },
+  {
     accessorKey: "name",
     header: ({ column }) => (
       <div
@@ -16,21 +31,6 @@ export const columns = [
     cell: ({ row }) => (
       <span className="font-medium pl-4">{row.getValue("name") || "-"}</span>
     ),
-  },
-  {
-    accessorKey: "contact_id",
-    header: ({ column }) => (
-      <div
-        className="inline-flex items-center gap-1 cursor-pointer select-none"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-      >
-        ID de contacto <ArrowUpDown className="ml-1 h-3 w-3" />
-      </div>
-    ),
-    cell: ({ row }) => {
-      const val = row.getValue("contact_id")
-      return <span className="text-muted-foreground">{val || "-"}</span>
-    },
   },
   {
     accessorKey: "customer_phone_name",
