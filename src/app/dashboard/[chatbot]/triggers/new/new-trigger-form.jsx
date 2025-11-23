@@ -90,7 +90,7 @@ export default function NewTriggerForm({
 
   const initialKeywordsString = (initialTrigger?.keywords ?? "").trim();
   const initialKeywordsList = useMemo(
-    () => initialKeywordsString.split(/[\,\s]+/).filter(Boolean),
+    () => initialKeywordsString.split(/\s*,\s*/).filter(Boolean),
     [initialKeywordsString]
   );
 
