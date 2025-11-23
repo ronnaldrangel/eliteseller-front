@@ -18,6 +18,21 @@ export const columns = [
     ),
   },
   {
+    accessorKey: "contact_id",
+    header: ({ column }) => (
+      <div
+        className="inline-flex items-center gap-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        ID de contacto <ArrowUpDown className="ml-1 h-3 w-3" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const val = row.getValue("contact_id")
+      return <span className="text-muted-foreground">{val || "-"}</span>
+    },
+  },
+  {
     accessorKey: "customer_phone_name",
     header: ({ column }) => (
       <div
@@ -47,6 +62,23 @@ export const columns = [
       return (
         <span className="truncate max-w-[280px] block">{text || "-"}</span>
       );
+    },
+  },
+  {
+    accessorKey: "fb_ads_id",
+    header: ({ column }) => (
+      <div
+        className="inline-flex items-center gap-1 cursor-pointer select-none"
+        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+      >
+        FB Ads ID <ArrowUpDown className="ml-1 h-3 w-3" />
+      </div>
+    ),
+    cell: ({ row }) => {
+      const val = row.getValue("fb_ads_id")
+      return (
+        <span className="truncate max-w-[220px] block text-muted-foreground">{val || "-"}</span>
+      )
     },
   },
   {
