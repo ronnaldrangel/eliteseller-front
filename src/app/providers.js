@@ -6,10 +6,12 @@ import { SWRConfig } from "swr";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const CenteredSpinner = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-black/80 backdrop-blur-sm">
-    <div className="loader"></div>
+    {/* <div className="loader"></div> */}
+    <Loader2 className="animate-spin h-8 w-8 text-primary dark:text-white/80" />
   </div>
 );
 
