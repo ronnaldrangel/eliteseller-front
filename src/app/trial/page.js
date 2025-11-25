@@ -8,27 +8,24 @@ import {
 import { Button } from "@/components/ui/button";
 import MarketingLayout from "@/components/marketing-layout";
 import { Check } from "lucide-react";
-import CountdownOffer from "@/components/countdown-offer";
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
-import Link from "next/link";
 import SubscribePlanButton from "@/components/subscribe-plan-button";
 
 export const metadata = {
-  title: "Planes",
-  description: "Elige el plan que mejor se adapte a tu negocio.",
+  title: "Planes de Prueba",
+  description: "Prueba nuestros planes con período de prueba gratuito.",
 };
 
-export default async function PlansPage() {
+export default async function TrialPlansPage() {
   const session = await auth();
-  
 
   let dynamicPlans = [];
   let error = null;
 
-  // Obtener los planes con flag "has_trial" en false
+  // Obtener los planes con flag "has_trial" en true
   const qs = new URLSearchParams();
-  qs.set("filters[has_trial][$eq]", "false");
+  qs.set("filters[has_trial][$eq]", "true");
 
   try {
     const url = buildStrapiUrl(`/api/plans?${qs.toString()}`);
@@ -49,60 +46,35 @@ export default async function PlansPage() {
     } else {
       const data = await res.json();
       dynamicPlans = Array.isArray(data) ? data : data?.data || [];
-      console.log("Fetched plans:", dynamicPlans);
+      console.log("Fetched trial plans:", dynamicPlans);
     }
   } catch (e) {
-    console.error("Error fetching plans:", e);
+    console.error("Error fetching trial plans:", e);
     error = "Error al conectar con Strapi. Verifica tu conexión.";
   }
 
-  // Este plan rompe el patrón de los demás por el precio y personalización
-  const empresarialPlan = {
-    title: "Empresarial",
-    price: "Precio a medida",
-    priceClass: "text-3xl font-bold",
-    perText: "",
-    beforePrice: "",
-    features: [
-      "Todas las funciones incluidas",
-      "Multiples número de WhatsApp",
-      "Ilimitados miembros del equipo",
-      "Flujos automatizados ilimitados",
-      "Reportes avanzados y analytics",
-      "Soporte 24/7 dedicado",
-      "Integraciones personalizadas",
-    ],
-    href: "https://www.instagram.com/elitecode.es/",
-    delay: "300ms",
-    highlight: false,
-    featureIconColor: "text-green-600",
-  };
+  const sortedPlans = [...dynamicPlans].sort(
+    (a, b) => Number(a?.price ?? 0) - Number(b?.price ?? 0)
+  );
 
-  const sortedPlans = [...dynamicPlans].sort((a, b) => Number(a?.price ?? 0) - Number(b?.price ?? 0))
-
-  const plans = [
-    ...sortedPlans.map((plan, index) => {
-      const isPremium = plan.plan_id === "PREMIUM";
-      return {
-        title: plan.name,
-        price: `${plan.price}$`,
-        priceClass: isPremium
-          ? "text-4xl font-extrabold"
-          : "text-3xl font-bold",
-        perText: `al ${plan.billing_period}`,
-        beforePrice: plan.regular_price
-          ? `${plan.regular_price}$/${plan.billing_period}`
-          : "",
-        features: plan.features || [],
-        planId: plan.plan_id,
-        delay: `${index * 150}ms`,
-        highlight: isPremium,
-        badgeText: isPremium ? "Mejor opción" : undefined,
-        featureIconColor: isPremium ? "text-cyan-600" : "text-green-600",
-      };
-    }),
-    empresarialPlan,
-  ];
+  const plans = sortedPlans.map((plan, index) => {
+    const isPremium = plan.plan_id === "PREMIUM";
+    return {
+      title: plan.name,
+      price: `${plan.price}$`,
+      priceClass: isPremium ? "text-4xl font-extrabold" : "text-3xl font-bold",
+      perText: `al ${plan.billing_period}`,
+      beforePrice: plan.regular_price
+        ? `${plan.regular_price}$/${plan.billing_period}`
+        : "",
+      features: plan.features || [],
+      planId: plan.plan_id,
+      delay: `${index * 150}ms`,
+      highlight: isPremium,
+      badgeText: isPremium ? "Mejor opción" : undefined,
+      featureIconColor: isPremium ? "text-cyan-600" : "text-green-600",
+    };
+  });
 
   const PlanCard = ({
     title,
@@ -111,7 +83,6 @@ export default async function PlansPage() {
     perText,
     beforePrice,
     features,
-    href,
     planId,
     delay,
     highlight,
@@ -154,15 +125,12 @@ export default async function PlansPage() {
               </li>
             ))}
           </ul>
-          {planId ? (
-            <div className="w-full mt-auto">
-              <SubscribePlanButton planId={planId} userId={session?.user?.strapiUserId} />
-            </div>
-          ) : (
-            <Button size="lg" className="w-full mt-auto h-12 text-base cursor-pointer" asChild>
-              <a href={href}>Empieza ahora</a>
-            </Button>
-          )}
+          <div className="w-full mt-auto">
+            <SubscribePlanButton
+              planId={planId}
+              userId={session?.user?.strapiUserId}
+            />
+          </div>
         </CardContent>
       </Card>
     );
@@ -171,24 +139,26 @@ export default async function PlansPage() {
   return (
     <MarketingLayout>
       <div className="mt-2">
-        <h1 className="text-2xl font-semibold">🤖 Obtén tu plan ideal</h1>
+        <h1 className="text-2xl font-semibold">🎉 Empieza tus 7 días gratis</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          Elige el plan que mejor se adapte a tu negocio.
+          Elige el plan que mejor se adapte a tu negocio y comienza tu prueba
+          gratuita.
         </p>
       </div>
       {error ? (
         <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
           {error}
         </div>
+      ) : dynamicPlans.length === 0 ? (
+        <div className="mt-8 text-center text-muted-foreground">
+          No hay planes de prueba disponibles en este momento.
+        </div>
       ) : (
-        <>
-          <CountdownOffer days={7} color="#ef4444" />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {plans.map((p) => (
-              <PlanCard key={p.title} {...p} />
-            ))}
-          </div>
-        </>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {plans.map((p) => (
+            <PlanCard key={p.title} {...p} />
+          ))}
+        </div>
       )}
     </MarketingLayout>
   );
