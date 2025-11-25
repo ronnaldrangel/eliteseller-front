@@ -54,13 +54,8 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   const [variants, setVariants] = useState([]);
   const [showVariants, setShowVariants] = useState(false);
 
-  // Generar combinaciones de variantes automáticamente
   const generateVariants = useCallback(() => {
-    if (options.length === 0) {
-      setVariants([]);
-      return;
-    }
-
+    // 1. Validar si hay opciones útiles
     const validOptions = options
       .filter((opt) => opt.name.trim() && opt.values.length > 0)
       .map((opt) => ({
@@ -69,19 +64,21 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
       }))
       .filter((opt) => opt.values.length > 0);
 
+    // 2. Si no hay opciones válidas, limpiamos las variantes y salimos
     if (validOptions.length === 0) {
       setVariants([]);
+      // Opcional: Si quieres ocultar la sección automáticamente:
+      // setShowVariants(false);
       return;
     }
 
+    // 3. Generar las combinaciones puras basadas en las opciones actuales
     const combinations = [];
-
     const generateCombinations = (currentIndex, currentCombination) => {
       if (currentIndex === validOptions.length) {
         combinations.push([...currentCombination]);
         return;
       }
-
       const option = validOptions[currentIndex];
       for (const value of option.values) {
         generateCombinations(currentIndex + 1, [
@@ -90,43 +87,46 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
         ]);
       }
     };
-
     generateCombinations(0, []);
 
-    const newVariants = combinations.map((combo) => {
-      const combinationObj = {};
-      combo.forEach((item) => {
-        combinationObj[item.name] = item.value;
-      });
+    // 4. Actualizar el estado comparando con las variantes PREVIAS (prevVariants)
+    // Esto es clave: al usar la función dentro de setVariants, no necesitamos 'variants' en las dependencias
+    setVariants((prevVariants) => {
+      return combinations.map((combo) => {
+        const combinationObj = {};
+        combo.forEach((item) => {
+          combinationObj[item.name] = item.value;
+        });
 
-      const variantName = combo.map((c) => c.value).join(" / ");
+        const variantName = combo.map((c) => c.value).join(" / ");
 
-      const existing = variants.find(
-        (v) => JSON.stringify(v.combination) === JSON.stringify(combinationObj)
-      );
+        // Buscamos si esta combinación ya existía en el estado anterior para conservar sus datos
+        const existing = prevVariants.find(
+          (v) =>
+            JSON.stringify(v.combination) === JSON.stringify(combinationObj)
+        );
 
-      const inheritProductPrice = existing?.inheritProductPrice ?? true;
-      const existingCustomPrice =
-        typeof existing?.customPrice !== "undefined"
-          ? existing.customPrice
-          : !inheritProductPrice
+        const inheritProductPrice = existing?.inheritProductPrice ?? true;
+        const existingCustomPrice =
+          typeof existing?.customPrice !== "undefined"
+            ? existing.customPrice
+            : !inheritProductPrice
             ? existing?.price || ""
             : "";
 
-      return {
-        combination: combinationObj,
-        name: variantName,
-        price: inheritProductPrice ? form.price : existing?.price || "",
-        customPrice: existingCustomPrice,
-        currency: form.currency,
-        inheritProductPrice,
-        image: existing?.image || null,
-        is_available: existing?.is_available ?? true,
-      };
+        return {
+          combination: combinationObj,
+          name: variantName,
+          price: inheritProductPrice ? form.price : existing?.price || "",
+          customPrice: existingCustomPrice,
+          currency: form.currency,
+          inheritProductPrice,
+          image: existing?.image || null,
+          is_available: existing?.is_available ?? true,
+        };
+      });
     });
-
-    setVariants(newVariants);
-  }, [options, variants, form.price, form.currency]);
+  }, [options, form.price, form.currency]);
 
   // Agregar nueva opción
   const addOption = () => {
@@ -135,8 +135,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
   // Eliminar opción
   const removeOption = (id) => {
-    setOptions(options.filter((opt) => opt.id !== id));
-    setTimeout(generateVariants, 0);
+    const newOptions = options.filter((opt) => opt.id !== id);
+    setOptions(newOptions);
+    // setOptions(options.filter((opt) => opt.id !== id));
+    // setTimeout(generateVariants, 0);
   };
 
   // Actualizar nombre de opción
@@ -186,7 +188,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           : opt
       )
     );
-    setTimeout(generateVariants, 0);
+    // setTimeout(generateVariants, 0);
   };
 
   // Actualizar precio de variante
@@ -208,14 +210,18 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   // Actualizar disponibilidad de variante
   const updateVariantAvailability = (index, is_available) => {
     setVariants((current) =>
-      current.map((variant, i) => (i === index ? { ...variant, is_available } : variant))
+      current.map((variant, i) =>
+        i === index ? { ...variant, is_available } : variant
+      )
     );
   };
 
   // Actualizar imagen de variante
   const updateVariantImage = (index, file) => {
     setVariants((current) =>
-      current.map((variant, i) => (i === index ? { ...variant, image: file } : variant))
+      current.map((variant, i) =>
+        i === index ? { ...variant, image: file } : variant
+      )
     );
   };
 
@@ -240,7 +246,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           ? {
               ...variant,
               inheritProductPrice,
-              price: inheritProductPrice ? form.price : variant.customPrice || "",
+              price: inheritProductPrice
+                ? form.price
+                : variant.customPrice || "",
             }
           : variant
       )
@@ -292,74 +300,103 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
     );
   }, [form.price, form.currency]);
 
+  useEffect(() => {
+    const hasValidOptions = options.some(
+      (opt) => opt.name.trim() !== "" && opt.values.some((v) => v.trim() !== "")
+    );
+
+    if (!hasValidOptions && variants.length > 0) {
+      setVariants([]);
+      setShowVariants(false);
+    }
+  }, [options, variants.length]);
+
+  useEffect(() => {
+    if (showVariants || variants.length > 0) {
+      generateVariants();
+    }
+  }, [options, generateVariants, showVariants]);
+
   const validateForm = () => {
     const nextErrors = {};
 
     if (!form.name.trim()) {
-      nextErrors.name = t('product.form.errors.nameRequired', {
-        fallback: 'Ingresa el nombre del producto.',
+      nextErrors.name = t("product.form.errors.nameRequired", {
+        fallback: "Ingresa el nombre del producto.",
       });
     }
 
     const priceNum = Number(form.price);
-    if (form.price === '') {
-      nextErrors.price = t('product.form.errors.priceRequired', {
-        fallback: 'Define un precio para el producto.',
+    if (form.price === "") {
+      nextErrors.price = t("product.form.errors.priceRequired", {
+        fallback: "Define un precio para el producto.",
       });
     } else if (Number.isNaN(priceNum)) {
-      nextErrors.price = t('product.form.errors.priceNumber', {
-        fallback: 'Ingresa un valor numerico valido.',
+      nextErrors.price = t("product.form.errors.priceNumber", {
+        fallback: "Ingresa un valor numerico valido.",
       });
     } else if (priceNum < 0) {
-      nextErrors.price = t('product.form.errors.pricePositive', {
-        fallback: 'El precio no puede ser negativo.',
+      nextErrors.price = t("product.form.errors.pricePositive", {
+        fallback: "El precio no puede ser negativo.",
       });
     }
 
     if (!form.currency) {
-      nextErrors.currency = t('product.form.errors.currencyRequired', {
-        fallback: 'Selecciona una moneda.',
+      nextErrors.currency = t("product.form.errors.currencyRequired", {
+        fallback: "Selecciona una moneda.",
       });
     }
 
     const invalidVariant = variants.find(
       (variant) =>
         !variant.inheritProductPrice &&
-        (variant.customPrice === '' ||
+        (variant.customPrice === "" ||
           Number.isNaN(Number(variant.customPrice)) ||
           Number(variant.customPrice) < 0)
     );
 
     if (invalidVariant) {
-      nextErrors.variantPricing = t('product.form.errors.variantPrice', {
-        fallback: 'Verifica los precios personalizados de las variantes.',
+      nextErrors.variantPricing = t("product.form.errors.variantPrice", {
+        fallback: "Verifica los precios personalizados de las variantes.",
       });
     }
 
     if (form.description_wsp.length > SHORT_DESCRIPTION_LIMIT) {
-      nextErrors.description_wsp = t('product.form.errors.shortDescriptionMax', {
-        fallback: "Maximo {{limit}} caracteres permitidos.",
-        values: { limit: SHORT_DESCRIPTION_LIMIT },
-      });
+      nextErrors.description_wsp = t(
+        "product.form.errors.shortDescriptionMax",
+        {
+          fallback: "Maximo {{limit}} caracteres permitidos.",
+          values: { limit: SHORT_DESCRIPTION_LIMIT },
+        }
+      );
     }
 
     if (form.description_complete.length > LONG_DESCRIPTION_LIMIT) {
-      nextErrors.description_complete = t('product.form.errors.longDescriptionMax', {
-        fallback: "Maximo {{limit}} caracteres permitidos.",
-        values: { limit: LONG_DESCRIPTION_LIMIT },
-      });
+      nextErrors.description_complete = t(
+        "product.form.errors.longDescriptionMax",
+        {
+          fallback: "Maximo {{limit}} caracteres permitidos.",
+          values: { limit: LONG_DESCRIPTION_LIMIT },
+        }
+      );
     }
 
     if (form.is_auto_delivery) {
       if (!form.auto_delivery_msg.trim()) {
-        nextErrors.auto_delivery_msg = t('product.form.errors.autoDeliveryRequired', {
-          fallback: 'Ingresa el mensaje de entrega automatica.',
-        });
+        nextErrors.auto_delivery_msg = t(
+          "product.form.errors.autoDeliveryRequired",
+          {
+            fallback: "Ingresa el mensaje de entrega automatica.",
+          }
+        );
       } else if (form.auto_delivery_msg.length > LONG_DESCRIPTION_LIMIT) {
-        nextErrors.auto_delivery_msg = t('product.form.errors.autoDeliveryMax', {
-          fallback: "Maximo {{limit}} caracteres permitidos.",
-          values: { limit: LONG_DESCRIPTION_LIMIT },
-        });
+        nextErrors.auto_delivery_msg = t(
+          "product.form.errors.autoDeliveryMax",
+          {
+            fallback: "Maximo {{limit}} caracteres permitidos.",
+            values: { limit: LONG_DESCRIPTION_LIMIT },
+          }
+        );
       }
     }
 
@@ -517,7 +554,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
             data: {
               combination: variant.combination,
               price: Number(
-                variant.inheritProductPrice ? form.price || 0 : variant.customPrice || 0
+                variant.inheritProductPrice
+                  ? form.price || 0
+                  : variant.customPrice || 0
               ),
               inherit_product_price: !!variant.inheritProductPrice,
               currency: form.currency,
@@ -555,16 +594,21 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
 
       // Notify any listeners and refresh server cache immediately
       try {
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('products:updated', {
-            detail: { productId: productBody?.data?.id || productBody?.data?.documentId },
-          }));
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("products:updated", {
+              detail: {
+                productId:
+                  productBody?.data?.id || productBody?.data?.documentId,
+              },
+            })
+          );
         }
       } catch (e) {
         // ignore dispatch errors
       }
 
-      if (typeof router.refresh === 'function') {
+      if (typeof router.refresh === "function") {
         router.refresh();
       }
 
@@ -586,16 +630,29 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
   const groupedVariants = useMemo(() => {
     if (variants.length === 0) return [];
 
-    const firstOptionName = options[0]?.name;
-    if (!firstOptionName) return [];
+    // CORRECCIÓN: Buscamos la primera opción que REALMENTE tenga valores.
+    // Antes usabas: const firstOptionName = options[0]?.name;
+    // Ahora buscamos la que se usó para generar:
+    const activeOption = options.find(
+      (opt) => opt.name.trim() && opt.values.some((v) => v.trim())
+    );
+
+    const groupByKey = activeOption?.name;
+
+    // Si por alguna razón no encontramos la key (raro si hay variantes), salimos
+    if (!groupByKey) return [];
 
     const groups = {};
     variants.forEach((variant) => {
-      const groupKey = variant.combination[firstOptionName];
-      if (!groups[groupKey]) {
-        groups[groupKey] = [];
+      // Ahora usamos la key correcta (ej: "color" en vez de "talla")
+      const groupKey = variant.combination[groupByKey];
+      
+      if (groupKey) { // Validación extra para evitar undefined keys
+        if (!groups[groupKey]) {
+          groups[groupKey] = [];
+        }
+        groups[groupKey].push(variant);
       }
-      groups[groupKey].push(variant);
     });
 
     return Object.entries(groups).map(([key, items]) => ({
@@ -622,7 +679,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
           >
             Atrás
           </Button>
-          <CardTitle className="text-lg font-semibold">Agregar nuevo producto</CardTitle>
+          <CardTitle className="text-lg font-semibold">
+            Agregar nuevo producto
+          </CardTitle>
         </div>
         <CardTitle className="hidden lg:block text-2xl font-bold mb-2">
           Agregar nuevo producto
@@ -708,7 +767,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                     value={form.description_wsp}
                     onChange={(e) => {
                       const value = e.target.value;
-                      const truncated = value.substring(0, SHORT_DESCRIPTION_LIMIT);
+                      const truncated = value.substring(
+                        0,
+                        SHORT_DESCRIPTION_LIMIT
+                      );
                       setForm((prev) => ({
                         ...prev,
                         description_wsp: truncated,
@@ -742,7 +804,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                     value={form.description_complete}
                     onChange={(e) => {
                       const value = e.target.value;
-                      const truncated = value.substring(0, LONG_DESCRIPTION_LIMIT);
+                      const truncated = value.substring(
+                        0,
+                        LONG_DESCRIPTION_LIMIT
+                      );
                       setForm((prev) => ({
                         ...prev,
                         description_complete: truncated,
@@ -796,15 +861,19 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
             <div className="flex items-start justify-between gap-3">
               <div className="flex flex-col gap-1">
                 <CardTitle className="text-xl font-semibold">
-                  {t("product.form.sections.basePrice.title", { fallback: "Precio general" })}
+                  {t("product.form.sections.basePrice.title", {
+                    fallback: "Precio general",
+                  })}
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
                   {variants.length > 0
                     ? t("product.form.sections.basePrice.withVariants", {
-                        fallback: "Este precio se utilizara como referencia para todas las variantes.",
+                        fallback:
+                          "Este precio se utilizara como referencia para todas las variantes.",
                       })
                     : t("product.form.sections.basePrice.description", {
-                        fallback: "Este precio se utilizara para la variante principal del producto.",
+                        fallback:
+                          "Este precio se utilizara para la variante principal del producto.",
                       })}
                 </CardDescription>
               </div>
@@ -818,7 +887,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                   htmlFor="base-price"
                   className="text-sm font-medium leading-none"
                 >
-                  {t("product.form.fields.basePrice", { fallback: "Precio base" })}
+                  {t("product.form.fields.basePrice", {
+                    fallback: "Precio base",
+                  })}
                 </label>
                 <div className="relative">
                   <Input
@@ -854,9 +925,12 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue
-                      placeholder={t("product.form.fields.currencyPlaceholder", {
-                        fallback: "Selecciona una moneda",
-                      })}
+                      placeholder={t(
+                        "product.form.fields.currencyPlaceholder",
+                        {
+                          fallback: "Selecciona una moneda",
+                        }
+                      )}
                     />
                   </SelectTrigger>
                   <SelectContent>
@@ -873,7 +947,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
               </div>
             </div>
             {errors.variantPricing && (
-              <p className="text-sm text-destructive">{errors.variantPricing}</p>
+              <p className="text-sm text-destructive">
+                {errors.variantPricing}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -887,11 +963,10 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                   Agregar variaciones
                 </CardTitle>
                 <CardDescription className="text-sm text-muted-foreground">
-                  Ofrece diferentes opciones de tu producto, como color, talla
-                  o material.
+                  Ofrece diferentes opciones de tu producto, como color, talla o
+                  material.
                 </CardDescription>
               </div>
-              
             </div>
           </CardHeader>
 
@@ -1030,7 +1105,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                     className="border-b border-muted-foreground/20 last:border-b-0"
                   >
                     <div className="px-4 py-3 bg-muted/20 font-medium text-sm">
-                      {options[0]?.name}: {group.name}
+                      {options.find(o => o.name.trim() && o.values.some(v => v.trim()))?.name}: {group.name}                      
                       <span className="ml-2 text-xs text-muted-foreground font-normal">
                         {group.variants.length} variante
                         {group.variants.length !== 1 ? "s" : ""}
@@ -1140,7 +1215,9 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                           </div>
 
                           <div className="flex flex-wrap gap-2 items-center pr-4">
-                            <span className="text-xs text-muted-foreground md:hidden">Variante</span>
+                            <span className="text-xs text-muted-foreground md:hidden">
+                              Variante
+                            </span>
                             <span className="text-sm font-medium shrink-0">
                               {vIndex + 1}
                             </span>
@@ -1159,16 +1236,23 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                           <div className="w-full md:w-56 space-y-2">
                             <div className="flex items-center justify-between">
                               <span className="text-xs text-muted-foreground">
-                                {t("product.form.variant.priceLabel", { fallback: "Precio" })}
+                                {t("product.form.variant.priceLabel", {
+                                  fallback: "Precio",
+                                })}
                               </span>
                               <div className="flex items-center gap-2">
                                 <span className="text-[11px] text-muted-foreground">
-                                  {t("product.form.variant.useBase", { fallback: "Usar precio base" })}
+                                  {t("product.form.variant.useBase", {
+                                    fallback: "Usar precio base",
+                                  })}
                                 </span>
                                 <Switch
                                   checked={variant.inheritProductPrice}
                                   onCheckedChange={(checked) =>
-                                    updateVariantInheritance(globalIndex, checked)
+                                    updateVariantInheritance(
+                                      globalIndex,
+                                      checked
+                                    )
                                   }
                                 />
                               </div>
@@ -1179,17 +1263,25 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                               step="0.01"
                               placeholder="0.00"
                               value={
-                                variant.inheritProductPrice ? form.price : variant.customPrice || ""
+                                variant.inheritProductPrice
+                                  ? form.price
+                                  : variant.customPrice || ""
                               }
-                              onChange={(e) => updateVariantPrice(globalIndex, e.target.value)}
+                              onChange={(e) =>
+                                updateVariantPrice(globalIndex, e.target.value)
+                              }
                               className="h-9"
                               disabled={variant.inheritProductPrice}
                             />
-                            <p className="text-xs text-muted-foreground">{form.currency}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {form.currency}
+                            </p>
                           </div>
 
                           <div className="flex flex-col md:flex-row md:items-center md:justify-center w-full md:w-24">
-                            <span className="text-xs text-muted-foreground md:hidden mb-1">Disponibilidad</span>
+                            <span className="text-xs text-muted-foreground md:hidden mb-1">
+                              Disponibilidad
+                            </span>
                             <Switch
                               checked={variant.is_available}
                               onCheckedChange={(val) =>
@@ -1214,9 +1306,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
             variant="outline"
             onClick={() => {
               const segment = chatbotSlug || chatbotId;
-              router.push(
-                `/dashboard/${encodeURIComponent(segment)}/products`
-              );
+              router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
             }}
             className="flex-1 py-3 text-base"
             disabled={status.loading}
@@ -1239,9 +1329,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
             variant="outline"
             onClick={() => {
               const segment = chatbotSlug || chatbotId;
-              router.push(
-                `/dashboard/${encodeURIComponent(segment)}/products`
-              );
+              router.push(`/dashboard/${encodeURIComponent(segment)}/products`);
             }}
             disabled={status.loading}
           >
