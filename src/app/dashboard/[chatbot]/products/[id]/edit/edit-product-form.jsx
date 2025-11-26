@@ -932,6 +932,47 @@ export default function EditProductForm({
                 )}
               </div>
             </div>
+            {/* Entrega automática */}
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+              <div className="space-y-2">
+                <label className="text-sm font-medium leading-none block min-h-[40px]">
+                  Mensaje de entrega automática
+                </label>
+                <div className="relative">
+                  <Textarea
+                    id="auto-delivery-msg"
+                    placeholder="Escribe el mensaje que verán tras la compra..."
+                    value={form.auto_delivery_msg}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const truncated = value.substring(0, LONG_DESCRIPTION_LIMIT);
+                      setForm((prev) => ({ ...prev, auto_delivery_msg: truncated }));
+                    }}
+                    maxLength={LONG_DESCRIPTION_LIMIT}
+                    className="min-h-[100px] resize-none"
+                    disabled={!form.is_auto_delivery}
+                  />
+                  <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background px-1">
+                    {form.auto_delivery_msg.length}/{LONG_DESCRIPTION_LIMIT}
+                  </div>
+                </div>
+                {errors.auto_delivery_msg && (
+                  <p className="text-sm text-destructive">{errors.auto_delivery_msg}</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2 md:justify-end md:items-start">
+                <label htmlFor="product-auto-delivery" className="text-sm font-medium whitespace-nowrap">
+                  Entrega automática
+                </label>
+                <Switch
+                  id="product-auto-delivery"
+                  checked={!!form.is_auto_delivery}
+                  onCheckedChange={(value) =>
+                    setForm((prev) => ({ ...prev, is_auto_delivery: !!value }))
+                  }
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
         {/* Imágenes y videos */}
