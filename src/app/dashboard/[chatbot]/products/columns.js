@@ -61,8 +61,29 @@ export const columns = [
       </div>
     ),
     cell: ({ row }) => {
+      const router = useRouter();
+      const documentId =
+        row.original?.documentId ||
+        row.original?.attributes?.documentId ||
+        row.original?.id;
       const name = row.getValue("name");
-      return <span className="font-medium">{name || "-"}</span>;
+      const handleClick = () => {
+        if (!documentId) return;
+        const base =
+          typeof window !== "undefined"
+            ? window.location.pathname
+            : "/dashboard";
+        router.push(`${base}/${encodeURIComponent(documentId)}/edit`);
+      };
+      return (
+        <button
+          type="button"
+          onClick={handleClick}
+          className="font-medium text-primary hover:underline focus:outline-none"
+        >
+          {name || "-"}
+        </button>
+      );
     },
   },
   {

@@ -41,6 +41,10 @@ export default function EditProductForm({
   const router = useRouter();
   const { t } = useTranslation();
   const attrs = initialData?.attributes || initialData || {};
+  const combinationKey = useCallback(
+    (combination = {}) => JSON.stringify(combination || {}),
+    []
+  );
 
   const [form, setForm] = useState({
     name: attrs.name || "",
@@ -117,7 +121,7 @@ export default function EditProductForm({
 
   // Generar combinaciones de variantes
   const generateVariants = useCallback(() => {
-    // 1. Validar si hay opciones útiles
+    // 1. Validar si hay opciones ?tiles
     const validOptions = options
       .filter((opt) => opt.name.trim() && opt.values.length > 0)
       .map((opt) => ({
@@ -126,10 +130,10 @@ export default function EditProductForm({
       }))
       .filter((opt) => opt.values.length > 0);
 
-    // 2. Si no hay opciones válidas, limpiamos las variantes y salimos
+    // 2. Si no hay opciones v?lidas, limpiamos las variantes y salimos
     if (validOptions.length === 0) {
       setVariants([]);
-      // Opcional: Si quieres ocultar la sección automáticamente:
+      // Opcional: Si quieres ocultar la secci?n autom?ticamente:
       // setShowVariants(false);
       return;
     }
@@ -152,20 +156,38 @@ export default function EditProductForm({
     generateCombinations(0, []);
 
     // 4. Actualizar el estado comparando con las variantes PREVIAS (prevVariants)
-    // Esto es clave: al usar la función dentro de setVariants, no necesitamos 'variants' en las dependencias
+    // Esto es clave: al usar la funci?n dentro de setVariants, no necesitamos 'variants' en las dependencias
     setVariants((prevVariants) => {
-      return combinations.map((combo) => {
+      const comboList = combinations.map((combo) => {
         const combinationObj = {};
         combo.forEach((item) => {
           combinationObj[item.name] = item.value;
         });
+        return {
+          combinationObj,
+          variantName: combo.map((c) => c.value).join(" / "),
+        };
+      });
 
-        const variantName = combo.map((c) => c.value).join(" / ");
+      const nextKeys = new Set(
+        comboList.map(({ combinationObj }) => combinationKey(combinationObj))
+      );
+      const removed = prevVariants
+        .filter(
+          (v) =>
+            v.documentId && !nextKeys.has(combinationKey(v.combination || {}))
+        )
+        .map((v) => v.documentId);
+      if (removed.length) {
+        setDeletedVariants((prev) =>
+          Array.from(new Set([...prev, ...removed]))
+        );
+      }
 
-        // Buscamos si esta combinación ya existía en el estado anterior para conservar sus datos
+      return comboList.map(({ combinationObj, variantName }) => {
         const existing = prevVariants.find(
           (v) =>
-            JSON.stringify(v.combination) === JSON.stringify(combinationObj)
+            combinationKey(v.combination) === combinationKey(combinationObj)
         );
 
         const inheritProductPrice = existing?.inheritProductPrice ?? true;
@@ -188,7 +210,7 @@ export default function EditProductForm({
         };
       });
     });
-  }, [options, form.price, form.currency]);
+  }, [options, form.price, form.currency, combinationKey]);
 
   const addOption = () => {
     setOptions([
@@ -337,10 +359,18 @@ export default function EditProductForm({
     );
 
     if (!hasValidOptions && variants.length > 0) {
+      const removedIds = variants
+        .filter((variant) => variant.documentId)
+        .map((variant) => variant.documentId);
+      if (removedIds.length) {
+        setDeletedVariants((prev) =>
+          Array.from(new Set([...prev, ...removedIds]))
+        );
+      }
       setVariants([]);
       setShowVariants(false);
     }
-  }, [options, variants.length]);
+  }, [options, variants]);
 
   useEffect(() => {
     if (showVariants || variants.length > 0) {
