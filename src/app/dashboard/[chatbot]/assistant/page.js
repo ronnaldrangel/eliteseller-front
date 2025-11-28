@@ -9,6 +9,7 @@ import ChatbotEditForm from "@/components/chatbot-edit-form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatbotPayments from "@/components/chatbot-payments";
 import ChatbotFaqs from "@/components/chatbot-faqs";
+import ChatbotAdvancedSettings from "@/components/chatbot-advanced-settings";
 
 export default async function AppsPage({ params }) {
   const session = await auth();
@@ -80,6 +81,13 @@ export default async function AppsPage({ params }) {
     : Array.isArray(attrs?.faqs)
     ? attrs.faqs
     : [];
+  const autoAssignement =
+    typeof attrs?.auto_assignement === "boolean"
+      ? attrs.auto_assignement
+      : !!attrs?.auto_assignement;
+  const chatbotSlugForUpdate =
+    chatbots[0]?.slug || chatbot.slug || chatbot.documentId;
+  const chatbotIdForUpdate = chatbots[0]?.documentId || documentId;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -97,10 +105,11 @@ export default async function AppsPage({ params }) {
 
         <div className="px-4 lg:px-6 w-full max-w-7xl mx-auto">
           <Tabs defaultValue="todo" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 sm:grid-cols-3">
+            <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4">
               <TabsTrigger value="todo">Personalidad</TabsTrigger>
               <TabsTrigger value="faqs">Conocimiento</TabsTrigger>
               <TabsTrigger value="pagos">Pagos</TabsTrigger>
+              <TabsTrigger value="avanzado">Avanzado</TabsTrigger>
             </TabsList>
 
             <div className="mt-4">
@@ -180,6 +189,14 @@ export default async function AppsPage({ params }) {
                   items={paymentsItems}
                   token={session.strapiToken}
                   chatbotId={chatbots[0]?.documentId || documentId}
+                />
+              </TabsContent>
+              <TabsContent value="avanzado">
+                <ChatbotAdvancedSettings
+                  chatbotId={chatbotIdForUpdate}
+                  chatbotSlug={chatbotSlugForUpdate}
+                  token={session.strapiToken}
+                  initialAutoAssignement={autoAssignement}
                 />
               </TabsContent>
             </div>
