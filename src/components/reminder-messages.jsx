@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { buildStrapiUrl } from "@/lib/strapi";
-import { Input } from "@/components/ui/input";
-import { BellRing, Clock3, Flame, Loader2, Snowflake, Sparkles, X } from "lucide-react";
+import { BellRing, Clock3, Flame, Loader2, Snowflake, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 export default function ReminderMessages({
@@ -24,44 +23,33 @@ export default function ReminderMessages({
     return [];
   };
 
-  const [form, setForm] = useState({
-    hot: toArray(initialHot),
-    normal: toArray(initialNormal),
-    cold: toArray(initialCold),
-    interval: initialInterval || "",
+  const [messages, setMessages] = useState({
+    hot: toArray(initialHot)[0] || "",
+    normal: toArray(initialNormal)[0] || "",
+    cold: toArray(initialCold)[0] || "",
   });
-  const [inputs, setInputs] = useState({ hot: "", normal: "", cold: "" });
-  const [loading, setLoading] = useState(false);
+  const [interval, setInterval] = useState(initialInterval || "");
+  const [loadingKey, setLoadingKey] = useState(null);
 
   const targetId = chatbotSlug || chatbotId;
 
-  const addMessage = (key) => {
-    const text = inputs[key].trim();
-    if (!text) return;
-    setForm((prev) => ({ ...prev, [key]: [...prev[key], text] }));
-    setInputs((prev) => ({ ...prev, [key]: "" }));
-  };
-
-  const removeMessage = (key, index) => {
-    setForm((prev) => ({
-      ...prev,
-      [key]: prev[key].filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSave = async (key) => {
     if (!token || !targetId) {
       toast.error("Faltan datos para guardar los mensajes.");
       return;
     }
 
-    if (!form.interval) {
+    if (key === "interval" && !interval) {
       toast.error("Define el intervalo de tiempo.");
       return;
     }
 
-    setLoading(true);
+    if (key !== "interval" && !messages[key]?.trim()) {
+      toast.error("Escribe un mensaje antes de guardar.");
+      return;
+    }
+
+    setLoadingKey(key);
     try {
       const res = await fetch(buildStrapiUrl(`/api/chatbots/${targetId}`), {
         method: "PUT",
@@ -71,10 +59,10 @@ export default function ReminderMessages({
         },
         body: JSON.stringify({
           data: {
-            reminder_hot_messages: form.hot,
-            reminder_normal_messages: form.normal,
-            reminder_cold_messages: form.cold,
-            reminder_interval_minutes: form.interval,
+            reminder_hot_messages: messages.hot ? [messages.hot] : [],
+            reminder_normal_messages: messages.normal ? [messages.normal] : [],
+            reminder_cold_messages: messages.cold ? [messages.cold] : [],
+            reminder_interval_minutes: interval,
           },
         }),
       });
@@ -87,12 +75,20 @@ export default function ReminderMessages({
         return;
       }
 
-      toast.success("Mensajes de recordatorio guardados.");
+      const label =
+        key === "hot"
+          ? "Hot"
+          : key === "normal"
+          ? "Normal"
+          : key === "cold"
+          ? "Cold"
+          : "intervalo";
+      toast.success(`Guardado ${label}.`);
     } catch (err) {
       console.error("Error saving reminder messages", err);
       toast.error("Error de red al guardar.");
     } finally {
-      setLoading(false);
+      setLoadingKey(null);
     }
   };
 
@@ -124,10 +120,7 @@ export default function ReminderMessages({
   ];
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="rounded-2xl border bg-card/95 p-5 shadow-sm md:p-6"
-    >
+    <div className="rounded-2xl border bg-card/95 p-5 shadow-sm md:p-6">
       <div className="rounded-xl border border-primary/10 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 md:p-5">
         <div className="flex items-start gap-3">
           <div className="rounded-2xl bg-primary/15 p-3 text-primary ring-1 ring-primary/20">
@@ -140,7 +133,7 @@ export default function ReminderMessages({
                 <Clock3 className="h-4 w-4 text-primary" />
                 Intervalo actual:{" "}
                 <strong className="text-foreground">
-                  {form.interval ? `${form.interval} min` : "sin definir"}
+                  {interval ? `${interval} min` : "sin definir"}
                 </strong>
               </span>
             </div>
@@ -152,70 +145,55 @@ export default function ReminderMessages({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {messageTypes.map(({ key, label, description, icon: Icon, badgeClass, areaClass }) => (
-          <div
-            key={key}
-            className={`flex flex-col gap-3 rounded-xl border p-4 ${areaClass}`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="space-y-1">
+        {messageTypes.map(({ key, label, description, icon: Icon, badgeClass, areaClass }) => {
+          const isLoading = loadingKey === key;
+          return (
+            <div
+              key={key}
+              className={`flex flex-col gap-3 rounded-xl border p-4 ${areaClass}`}
+            >
+              <div className="space-y-2">
                 <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${badgeClass}`}>
                   <Icon className="h-4 w-4" />
                   {label}
                 </div>
                 <p className="text-sm text-muted-foreground">{description}</p>
               </div>
-              {form[key].length > 0 && (
-                <span className="text-xs font-medium text-muted-foreground">
-                  {form[key].length} msg
-                </span>
-              )}
-            </div>
 
-            <div className="flex flex-wrap gap-2">
-              {form[key].map((msg, index) => (
-                <span
-                  key={`${key}-${index}-${msg}`}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border/70 bg-background/70 px-3 py-1 text-xs shadow-sm"
+              <div className="flex flex-col gap-2">
+                <Label htmlFor={`reminder-${key}`} className="text-sm font-medium">
+                  Mensaje {label}
+                </Label>
+                <Input
+                  id={`reminder-${key}`}
+                  value={messages[key]}
+                  onChange={(e) =>
+                    setMessages((prev) => ({ ...prev, [key]: e.target.value }))
+                  }
+                  placeholder={`Escribe el mensaje ${label}`}
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={isLoading}
+                  onClick={() => handleSave(key)}
                 >
-                  <span className="truncate max-w-[180px] text-foreground">{msg}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeMessage(key, index)}
-                    className="rounded-full border border-transparent p-1 text-muted-foreground transition hover:border-destructive/30 hover:bg-destructive/10 hover:text-destructive"
-                    aria-label={`Eliminar mensaje ${msg}`}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </span>
-              ))}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Guardando...
+                    </>
+                  ) : (
+                    "Guardar"
+                  )}
+                </Button>
+              </div>
             </div>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
-              <Textarea
-                id={`reminder-${key}`}
-                value={inputs[key]}
-                onChange={(e) =>
-                  setInputs((prev) => ({ ...prev, [key]: e.target.value }))
-                }
-                placeholder={`Nuevo mensaje ${label}`}
-                rows={3}
-                className="min-h-[96px] flex-1"
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                className="sm:w-28"
-                onClick={() => addMessage(key)}
-              >
-                Agregar
-              </Button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
+      <div className="mt-4 flex flex-col gap-3 rounded-xl border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 flex-col gap-2">
           <Label htmlFor="reminder-interval" className="text-sm font-semibold">
             Intervalo de envío (minutos)
@@ -225,10 +203,8 @@ export default function ReminderMessages({
               id="reminder-interval"
               type="number"
               min="1"
-              value={form.interval}
-              onChange={(e) =>
-                setForm((prev) => ({ ...prev, interval: e.target.value }))
-              }
+              value={interval}
+              onChange={(e) => setInterval(e.target.value)}
               placeholder="Ej. 60"
               className="w-full sm:w-40"
             />
@@ -239,20 +215,21 @@ export default function ReminderMessages({
         </div>
 
         <Button
-          type="submit"
+          type="button"
           className="self-stretch md:self-auto"
-          disabled={loading || !token || !targetId || !form.interval}
+          disabled={loadingKey === "interval" || !interval}
+          onClick={() => handleSave("interval")}
         >
-          {loading ? (
+          {loadingKey === "interval" ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Guardando...
             </>
           ) : (
-            "Guardar mensajes"
+            "Guardar intervalo"
           )}
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
