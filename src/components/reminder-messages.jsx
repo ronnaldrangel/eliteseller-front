@@ -31,7 +31,8 @@ export default function ReminderMessages({
   const [interval, setInterval] = useState(initialInterval || "");
   const [loadingKey, setLoadingKey] = useState(null);
 
-  const targetId = chatbotSlug || chatbotId;
+  // Prefer the numeric/document ID for Strapi writes; fall back to slug only if needed.
+  const targetId = chatbotId || chatbotSlug;
 
   const handleSave = async (key) => {
     if (!token || !targetId) {
@@ -49,8 +50,8 @@ export default function ReminderMessages({
         toast.error("Escribe un mensaje antes de guardar.");
         return;
       }
-      if (!chatbotId && !targetId) {
-        toast.error("Falta el identificador del chatbot para remarketing.");
+      if (!chatbotId) {
+        toast.error("Falta el ID del chatbot para guardar remarketing.");
         return;
       }
     }
@@ -77,23 +78,20 @@ export default function ReminderMessages({
           return;
         }
       } else {
-        const remarketingRes = await fetch(
-          buildStrapiUrl("/api/remarketings"),
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
+        const remarketingRes = await fetch(buildStrapiUrl("/api/remarketings"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            data: {
+              content: messages[key],
+              hotness_message: key,
+              chatbot: chatbotId, // Strapi relation expects the numeric/document ID
             },
-            body: JSON.stringify({
-              data: {
-                content: messages[key],
-                hotness_message: key,
-                chatbot: chatbotId || targetId,
-              },
-            }),
-          }
-        );
+          }),
+        });
 
         if (!remarketingRes.ok) {
           const remarketingBody = await remarketingRes.json().catch(() => ({}));
