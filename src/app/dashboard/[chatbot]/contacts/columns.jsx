@@ -16,6 +16,14 @@ const textContains = (row, id, value) => {
   return cellValue.includes(search);
 };
 
+const searchNameOrPhone = (row, _id, value) => {
+  const search = String(value || "").trim().toLowerCase();
+  if (!search) return true;
+  const name = String(row.getValue("name") ?? "").toLowerCase();
+  const phone = String(row.getValue("customer_phone_name") ?? "").toLowerCase();
+  return name.includes(search) || phone.includes(search);
+};
+
 const booleanFromMixed = (value) => {
   if (typeof value === "boolean") return value;
   return value === "true" || value === 1 || value === "1" || value === "yes";
@@ -74,7 +82,7 @@ export const columns = [
     cell: ({ row }) => (
       <span className="font-medium pl-4">{row.getValue("name") || "-"}</span>
     ),
-    filterFn: textContains,
+    filterFn: searchNameOrPhone,
   },
   {
     accessorKey: "customer_phone_name",

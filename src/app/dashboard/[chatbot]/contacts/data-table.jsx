@@ -43,7 +43,6 @@ export function ContactsDataTable({
   useEffect(() => {
     setColumnFilters([
       { id: "name", value: queryFilter },
-      { id: "customer_phone_name", value: queryFilter },
       { id: "sale_status_flag", value: saleStatusFilter },
       { id: "hotness", value: hotnessFilter },
       { id: "fb_ads_id", value: fbAdsFilter },
