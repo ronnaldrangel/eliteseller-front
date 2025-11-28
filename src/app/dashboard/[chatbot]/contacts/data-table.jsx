@@ -18,7 +18,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-export function ContactsDataTable({ columns, data, nameFilter = "" }) {
+export function ContactsDataTable({
+  columns,
+  data,
+  queryFilter = "",
+  saleStatusFilter = "all",
+  hotnessFilter = "all",
+  fbAdsFilter = "all",
+}) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
 
@@ -34,11 +41,14 @@ export function ContactsDataTable({ columns, data, nameFilter = "" }) {
   });
 
   useEffect(() => {
-    setColumnFilters((prev) => {
-      const others = prev.filter((f) => f.id !== "name");
-      return [...others, { id: "name", value: nameFilter }];
-    });
-  }, [nameFilter]);
+    setColumnFilters([
+      { id: "name", value: queryFilter },
+      { id: "customer_phone_name", value: queryFilter },
+      { id: "sale_status_flag", value: saleStatusFilter },
+      { id: "hotness", value: hotnessFilter },
+      { id: "fb_ads_id", value: fbAdsFilter },
+    ]);
+  }, [queryFilter, saleStatusFilter, hotnessFilter, fbAdsFilter]);
 
   return (
     <div className="overflow-hidden rounded-md border">
@@ -76,7 +86,7 @@ export function ContactsDataTable({ columns, data, nameFilter = "" }) {
           ) : (
             <TableRow>
               <TableCell colSpan={columns.length} className="h-24 text-center">
-                Sin resultados.
+                Sin resultados. Ajusta la busqueda o limpia los filtros.
               </TableCell>
             </TableRow>
           )}

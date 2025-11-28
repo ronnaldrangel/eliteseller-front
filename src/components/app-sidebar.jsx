@@ -7,6 +7,7 @@ import {
   ArrowUpCircleIcon,
   BarChartIcon,
   CameraIcon,
+  BellRing,
   ClipboardListIcon,
   DatabaseIcon,
   FileCodeIcon,
@@ -149,6 +150,11 @@ const data = {
         />
       ),
     },
+    {
+      title: "Recordatorio",
+      url: "/reminders",
+      icon: BellRing,
+    },
     // {
     //   title: "Metricas",
     //   url: "/metrics",
@@ -242,7 +248,7 @@ export function AppSidebar({
     return `/dashboard/${slug}${trimmed}`
   }
   const navMainDynamic = data.navMain.map((item) => {
-    const dynamicPaths = ["/dashboard", "/home", "/chats", "/tags", "/triggers", "/products", "/sales", "/assistant", "/integrations", "/contacts"]
+    const dynamicPaths = ["/dashboard", "/home", "/chats", "/tags", "/triggers", "/products", "/sales", "/assistant", "/integrations", "/contacts", "/reminders"]
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs
       const mappedSubItems = item.items.map((sub) => ({
