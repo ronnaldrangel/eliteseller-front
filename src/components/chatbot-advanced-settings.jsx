@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 export default function ChatbotAdvancedSettings({
   chatbotSlug,
@@ -22,13 +23,12 @@ export default function ChatbotAdvancedSettings({
 
   const targetId = chatbotSlug || chatbotId;
 
-  const toggleAutoAssign = async () => {
+  const toggleAutoAssign = async (nextValue = !autoAssignEnabled) => {
     if (!token || !targetId) {
       toast.error("Faltan datos del chatbot para actualizar");
       return;
     }
 
-    const nextValue = !autoAssignEnabled;
     setLoading(true);
     try {
       const res = await fetch(buildStrapiUrl(`/api/chatbots/${targetId}`), {
@@ -83,23 +83,17 @@ export default function ChatbotAdvancedSettings({
           Este control impacta el comportamiento de asignacion automatica en el
           chatbot.
         </div>
-        <Button
-          type="button"
-          onClick={toggleAutoAssign}
-          disabled={loading || !token || !targetId}
-          className="w-full sm:w-auto"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Actualizando...
-            </>
-          ) : autoAssignEnabled ? (
-            "Desactivar auto asignacion"
-          ) : (
-            "Activar auto asignacion"
-          )}
-        </Button>
+        <div className="flex items-center gap-3">
+          <Switch
+            id="auto-assign-switch"
+            checked={autoAssignEnabled}
+            disabled={loading || !token || !targetId}
+            onCheckedChange={(checked) => toggleAutoAssign(checked)}
+          />
+          <label htmlFor="auto-assign-switch" className="text-sm">
+            {loading ? "Actualizando..." : autoAssignEnabled ? "Activado" : "Desactivado"}
+          </label>
+        </div>
       </div>
     </div>
   );
