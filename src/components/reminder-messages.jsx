@@ -44,38 +44,39 @@ export default function ReminderMessages({
       return;
     }
 
-    if (key !== "interval" && !messages[key]?.trim()) {
-      toast.error("Escribe un mensaje antes de guardar.");
-      return;
+    if (key !== "interval") {
+      if (!messages[key]?.trim()) {
+        toast.error("Escribe un mensaje antes de guardar.");
+        return;
+      }
+      if (!chatbotId && !targetId) {
+        toast.error("Falta el identificador del chatbot para remarketing.");
+        return;
+      }
     }
 
     setLoadingKey(key);
     try {
-      const res = await fetch(buildStrapiUrl(`/api/chatbots/${targetId}`), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          data: {
-            reminder_hot_messages: messages.hot ? [messages.hot] : [],
-            reminder_normal_messages: messages.normal ? [messages.normal] : [],
-            reminder_cold_messages: messages.cold ? [messages.cold] : [],
-            reminder_interval_minutes: interval,
+      if (key === "interval") {
+        const res = await fetch(buildStrapiUrl(`/api/chatbots/${targetId}`), {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        }),
-      });
+          body: JSON.stringify({
+            data: { cooldown_minutes: interval },
+          }),
+        });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        const msg =
-          body?.error?.message || "No se pudieron guardar los recordatorios.";
-        toast.error(msg);
-        return;
-      }
-
-      if (key !== "interval") {
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          const msg =
+            body?.error?.message || "No se pudo guardar el intervalo.";
+          toast.error(msg);
+          return;
+        }
+      } else {
         const remarketingRes = await fetch(
           buildStrapiUrl("/api/remarketings"),
           {
@@ -88,6 +89,7 @@ export default function ReminderMessages({
               data: {
                 content: messages[key],
                 hotness_message: key,
+                chatbot: chatbotId || targetId,
               },
             }),
           }
