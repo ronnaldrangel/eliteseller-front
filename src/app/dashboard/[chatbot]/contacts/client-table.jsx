@@ -43,35 +43,37 @@ export function ContactsClientTable({ columns, data }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-md border bg-card/50 p-4 shadow-sm">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="contact-search">Buscar contactos</Label>
-            <InputGroup className="bg-background">
-              <InputGroupAddon aria-hidden="true">
-                <Search className="h-4 w-4 text-muted-foreground" />
-              </InputGroupAddon>
-              <InputGroupInput
-                id="contact-search"
-                placeholder="Buscar por nombre o telefono"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                aria-describedby="contact-search-help"
-              />
-            </InputGroup>
-            <p
-              id="contact-search-help"
-              className="text-xs text-muted-foreground"
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="contact-search">Buscar contactos</Label>
+              <InputGroup className="bg-background">
+                <InputGroupAddon aria-hidden="true">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                </InputGroupAddon>
+                <InputGroupInput
+                  id="contact-search"
+                  placeholder="Buscar por nombre o telefono"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  aria-describedby="contact-search-help"
+                />
+              </InputGroup>
+            </div>
+            <Button
+              variant="ghost"
+              className="w-full sm:w-auto sm:self-end sm:pb-1"
+              onClick={resetFilters}
             >
-              Busca por nombre o telefono. Los filtros reducen los resultados sin perder el contexto de la tabla.
-            </p>
+              Limpiar filtros
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            className="w-full justify-center lg:w-auto"
-            onClick={resetFilters}
+          <p
+            id="contact-search-help"
+            className="text-xs text-muted-foreground"
           >
-            Limpiar filtros
-          </Button>
+            Busca por nombre o telefono. Los filtros reducen los resultados sin perder el contexto de la tabla.
+          </p>
         </div>
 
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

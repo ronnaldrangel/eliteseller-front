@@ -153,7 +153,15 @@ const data = {
     {
       title: "Recordatorio",
       url: "/reminders",
-      icon: BellRing,
+      icon: () => (
+        <Image
+          src="/icons/bell.png"
+          alt="Contactos"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
     // {
     //   title: "Metricas",
