@@ -68,6 +68,15 @@ const hotnessDisplay = (value) => {
   }
 };
 
+const formatDateTime = (value) => {
+  if (!value) return null;
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const dateStr = d.toLocaleDateString();
+  const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  return `${dateStr} (${timeStr})`;
+};
+
 export const columns = [
   {
     accessorKey: "name",
@@ -133,18 +142,29 @@ export const columns = [
       </div>
     ),
     cell: ({ row }) => {
-      const text = row.getValue("last_message");
-      const time =
+      const rawMessage = row.getValue("last_message");
+      const timeRaw =
         row.original?.last_message_time ||
         row.original?.last_message_at ||
         row.original?.last_message_date ||
         "";
-      const timeText = typeof time === "string" ? time.trim() : "";
-      const messageText = text || "-";
-      const display =
-        messageText && timeText
-          ? `${messageText} (${timeText})`
-          : messageText || timeText || "-";
+      const timeText = typeof timeRaw === "string" ? timeRaw.trim() : "";
+      const messageText = rawMessage || "";
+      const formattedMessage = formatDateTime(rawMessage);
+      const formattedTime = formatDateTime(timeText);
+
+      let display = "-";
+      if (formattedMessage && (!messageText || messageText === timeText)) {
+        display = formattedMessage;
+      } else if (messageText && formattedTime) {
+        display = `${messageText} (${formattedTime})`;
+      } else if (formattedTime) {
+        display = formattedTime;
+      } else if (messageText || timeText) {
+        display =
+          messageText && timeText ? `${messageText} (${timeText})` : messageText || timeText;
+      }
+
       return (
         <span className="truncate max-w-[320px] block text-muted-foreground">
           {display}
