@@ -75,6 +75,34 @@ export default function ReminderMessages({
         return;
       }
 
+      if (key !== "interval") {
+        const remarketingRes = await fetch(
+          buildStrapiUrl("/api/remarketings"),
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              data: {
+                content: messages[key],
+                hotness_message: key,
+              },
+            }),
+          }
+        );
+
+        if (!remarketingRes.ok) {
+          const remarketingBody = await remarketingRes.json().catch(() => ({}));
+          const remarketingMsg =
+            remarketingBody?.error?.message ||
+            "No se pudo guardar el mensaje de remarketing.";
+          toast.error(remarketingMsg);
+          return;
+        }
+      }
+
       const label =
         key === "hot"
           ? "Hot"
