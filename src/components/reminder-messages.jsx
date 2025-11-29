@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { BellRing, Clock3, Flame, Loader2, Snowflake, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -28,11 +30,43 @@ export default function ReminderMessages({
     normal: toArray(initialNormal)[0] || "",
     cold: toArray(initialCold)[0] || "",
   });
-  const [interval, setInterval] = useState(initialInterval || "");
+  const [intervalUnit, setIntervalUnit] = useState(() => {
+    const m = Number(initialInterval) || 0;
+    return m > 0 && m % 60 === 0 ? "hours" : "minutes";
+  });
+  const [interval, setInterval] = useState(() => {
+    const m = Number(initialInterval) || 0;
+    return m > 0 && m % 60 === 0 ? String(Math.floor(m / 60)) : String(initialInterval || "");
+  });
   const [loadingKey, setLoadingKey] = useState(null);
 
   // Prefer the numeric/document ID for Strapi writes; fall back to slug only if needed.
-  const targetId = chatbotId || chatbotSlug;
+  const targetId = chatbotSlug;
+
+  const findExistingRemarketing = async (key) => {
+    try {
+      const qs = new URLSearchParams();
+      qs.set("filters[chatbot][documentId][$eq]", chatbotId);
+      qs.set("filters[hotness_message][$eq]", key);
+      qs.set("pagination[pageSize]", "1");
+      const res = await fetch(buildStrapiUrl(`/api/remarketings?${qs.toString()}`), {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      const item = Array.isArray(data?.data) ? data.data[0] : data?.[0];
+      if (!item) return null;
+      const attrs = item?.attributes || {};
+      return { id: item?.id, documentId: item?.documentId };
+    } catch {
+      return null;
+    }
+  };
 
   const handleSave = async (key) => {
     if (!token || !targetId) {
@@ -59,6 +93,16 @@ export default function ReminderMessages({
     setLoadingKey(key);
     try {
       if (key === "interval") {
+        const valueNum = Number(interval) || 0;
+        if (!valueNum || valueNum <= 0) {
+          toast.error("El intervalo debe ser mayor a 0.");
+          return;
+        }
+        const minutesToSave = intervalUnit === "hours" ? valueNum * 60 : valueNum;
+        if (minutesToSave > 1440) {
+          toast.error("El intervalo máximo es 24 horas (1440 minutos).");
+          return;
+        }
         const res = await fetch(buildStrapiUrl(`/api/chatbots/${targetId}`), {
           method: "PUT",
           headers: {
@@ -66,7 +110,7 @@ export default function ReminderMessages({
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            data: { cooldown_minutes: interval },
+            data: { cooldown_minutes: minutesToSave },
           }),
         });
 
@@ -78,28 +122,49 @@ export default function ReminderMessages({
           return;
         }
       } else {
-        const remarketingRes = await fetch(buildStrapiUrl("/api/remarketings"), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            data: {
-              content: messages[key],
-              hotness_message: key,
-              chatbot: chatbotId, // Strapi relation expects the numeric/document ID
+        const existing = await findExistingRemarketing(key);
+        if (existing?.documentId || existing?.id) {
+          const doc = existing.documentId || existing.id;
+          const updateRes = await fetch(buildStrapiUrl(`/api/remarketings/${encodeURIComponent(doc)}`), {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
             },
-          }),
-        });
-
-        if (!remarketingRes.ok) {
-          const remarketingBody = await remarketingRes.json().catch(() => ({}));
-          const remarketingMsg =
-            remarketingBody?.error?.message ||
-            "No se pudo guardar el mensaje de remarketing.";
-          toast.error(remarketingMsg);
-          return;
+            body: JSON.stringify({
+              data: {
+                content: messages[key],
+                hotness_message: key,
+              },
+            }),
+          });
+          if (!updateRes.ok) {
+            const updateBody = await updateRes.json().catch(() => ({}));
+            const updateMsg = updateBody?.error?.message || "No se pudo actualizar el mensaje.";
+            toast.error(updateMsg);
+            return;
+          }
+        } else {
+          const createRes = await fetch(buildStrapiUrl("/api/remarketings"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              data: {
+                content: messages[key],
+                hotness_message: key,
+                chatbot: chatbotId,
+              },
+            }),
+          });
+          if (!createRes.ok) {
+            const createBody = await createRes.json().catch(() => ({}));
+            const createMsg = createBody?.error?.message || "No se pudo crear el mensaje.";
+            toast.error(createMsg);
+            return;
+          }
         }
       }
 
@@ -148,7 +213,7 @@ export default function ReminderMessages({
   ];
 
   return (
-    <div className="rounded-2xl border bg-card/95 p-5 shadow-sm md:p-6">
+    <div className="rounded-2xl border bg-card/95 p-5 shadow-sm md:p-6 space-y-4">
       <div className="rounded-xl border border-primary/10 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 md:p-5">
         <div className="flex items-start gap-3">
           <div className="rounded-2xl bg-primary/15 p-3 text-primary ring-1 ring-primary/20">
@@ -161,7 +226,7 @@ export default function ReminderMessages({
                 <Clock3 className="h-4 w-4 text-primary" />
                 Intervalo actual:{" "}
                 <strong className="text-foreground">
-                  {interval ? `${interval} min` : "sin definir"}
+                  {interval ? `${interval} ${intervalUnit === "hours" ? "h" : "min"}` : "sin definir"}
                 </strong>
               </span>
             </div>
@@ -192,19 +257,22 @@ export default function ReminderMessages({
                 <Label htmlFor={`reminder-${key}`} className="text-sm font-medium">
                   Mensaje {label}
                 </Label>
-                <Input
+                <Textarea
                   id={`reminder-${key}`}
                   value={messages[key]}
                   onChange={(e) =>
                     setMessages((prev) => ({ ...prev, [key]: e.target.value }))
                   }
                   placeholder={`Escribe el mensaje ${label}`}
+                  rows={3}
+                  maxLength={255}
                 />
                 <Button
                   type="button"
                   variant="secondary"
                   disabled={isLoading}
                   onClick={() => handleSave(key)}
+                  className="hover:bg-primary/50 transition-colors cursor-pointer"
                 >
                   {isLoading ? (
                     <>
@@ -235,9 +303,19 @@ export default function ReminderMessages({
               onChange={(e) => setInterval(e.target.value)}
               placeholder="Ej. 60"
               className="w-full sm:w-40"
+              max={intervalUnit === "hours" ? 24 : 1440}
             />
+            <Select value={intervalUnit} onValueChange={(v) => setIntervalUnit(v)}>
+              <SelectTrigger id="reminder-interval-unit" className="w-full sm:w-32">
+                <SelectValue placeholder="Unidad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="minutes">Minutos</SelectItem>
+                <SelectItem value="hours">Horas</SelectItem>
+              </SelectContent>
+            </Select>
             <p className="text-xs text-muted-foreground">
-              Un único intervalo aplica para todas las temperaturas.
+              Un único intervalo aplica para todas las temperaturas. Máximo 24 horas (1440 min).
             </p>
           </div>
         </div>

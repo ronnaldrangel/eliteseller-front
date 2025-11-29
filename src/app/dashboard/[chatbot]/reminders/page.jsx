@@ -28,46 +28,57 @@ export default async function RemindersPage({ params }) {
   let reminderError = null;
 
   try {
-    const settingsRes = await fetch(
-      buildStrapiUrl(`/api/chatbots/${encodeURIComponent(chatbot.slug)}`),
-      {
+    const qs = new URLSearchParams();
+    qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
+    qs.set("fields[0]", "content");
+    qs.set("fields[1]", "hotness_message");
+    qs.set("pagination[pageSize]", "100");
+
+    const remarkRes = await fetch(buildStrapiUrl(`/api/remarketings?${qs.toString()}`), {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.strapiToken}`,
+      },
+      cache: "no-store",
+    });
+
+    if (!remarkRes.ok) {
+      const details = await remarkRes.json().catch(() => ({}));
+      reminderError = details?.error?.message || `No se pudieron cargar los mensajes (${remarkRes.status}).`;
+    } else {
+      const payload = await remarkRes.json();
+      const items = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
+      const hot = [];
+      const normal = [];
+      const cold = [];
+      items.forEach((item) => {
+        const a = item?.attributes || item || {};
+        const msg = a.content || item.content || "";
+        const type = a.hotness_message || item.hotness_message || "";
+        if (!msg || !type) return;
+        if (type === "hot") hot.push(msg);
+        else if (type === "normal") normal.push(msg);
+        else if (type === "cold") cold.push(msg);
+      });
+      reminderSettings.hot = hot;
+      reminderSettings.normal = normal;
+      reminderSettings.cold = cold;
+
+      const botRes = await fetch(buildStrapiUrl(`/api/chatbots/${encodeURIComponent(chatbot.slug)}`), {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.strapiToken}`,
         },
         cache: "no-store",
+      });
+      if (botRes.ok) {
+        const botPayload = await botRes.json();
+        // console.log('botPayload',botPayload);
+        const attrs = botPayload?.data?.attributes || botPayload?.attributes || botPayload || {};
+        reminderSettings.interval = botPayload?.data?.cooldown_minutes ?? "";
       }
-    );
-
-    if (!settingsRes.ok) {
-      const details = await settingsRes.json().catch(() => ({}));
-      reminderError =
-        details?.error?.message ||
-        `No se pudieron cargar los mensajes (status ${settingsRes.status})`;
-    } else {
-      const payload = await settingsRes.json();
-      const attrs =
-        payload?.data?.attributes || payload?.attributes || payload || {};
-      reminderSettings = {
-        hot: Array.isArray(attrs.reminder_hot_messages)
-          ? attrs.reminder_hot_messages
-          : attrs.reminder_hot_message
-          ? [attrs.reminder_hot_message]
-          : [],
-        normal: Array.isArray(attrs.reminder_normal_messages)
-          ? attrs.reminder_normal_messages
-          : attrs.reminder_normal_message
-          ? [attrs.reminder_normal_message]
-          : [],
-        cold: Array.isArray(attrs.reminder_cold_messages)
-          ? attrs.reminder_cold_messages
-          : attrs.reminder_cold_message
-          ? [attrs.reminder_cold_message]
-          : [],
-        interval:
-          attrs.reminder_interval_minutes ?? attrs.reminder_interval ?? "",
-      };
     }
   } catch (e) {
     reminderError = "Error al cargar los mensajes de recordatorio.";
