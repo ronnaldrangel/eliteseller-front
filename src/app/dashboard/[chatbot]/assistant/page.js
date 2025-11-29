@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChatbotPayments from "@/components/chatbot-payments";
 import ChatbotFaqs from "@/components/chatbot-faqs";
 import ChatbotAdvancedSettings from "@/components/chatbot-advanced-settings";
+import ChatbotReviews from "@/components/chatbot-reviews";
 
 export default async function AppsPage({ params }) {
   const session = await auth();
@@ -39,7 +40,9 @@ export default async function AppsPage({ params }) {
 
   try {
     const url = buildStrapiUrl(
-      `/api/chatbots/${encodeURIComponent(chatbot.slug)}?populate[faqs]=true&populate[payments]=true`
+      `/api/chatbots/${encodeURIComponent(
+        chatbot.slug
+      )}?populate[faqs]=true&populate[payments]=true&populate[reviews][populate]=images`
     );
     const res = await fetch(url, {
       method: "GET",
@@ -80,6 +83,11 @@ export default async function AppsPage({ params }) {
     ? attrs.faqs.data
     : Array.isArray(attrs?.faqs)
     ? attrs.faqs
+    : [];
+  const reviewsItems = Array.isArray(attrs?.reviews?.data)
+    ? attrs.reviews.data
+    : Array.isArray(attrs?.reviews)
+    ? attrs.reviews
     : [];
   const autoAssignement =
     typeof attrs?.auto_assignement === "boolean"
@@ -183,6 +191,13 @@ export default async function AppsPage({ params }) {
                   token={session.strapiToken}
                   chatbotId={chatbots[0]?.documentId || documentId}
                 />
+                <div className="mt-6">
+                  <ChatbotReviews
+                    items={reviewsItems}
+                    token={session.strapiToken}
+                    chatbotId={chatbots[0]?.documentId || documentId}
+                  />
+                </div>
               </TabsContent>
               <TabsContent value="pagos">
                 <ChatbotPayments

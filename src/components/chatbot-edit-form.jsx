@@ -45,6 +45,40 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
   const [status, setStatus] = useState({ loading: false, type: null, message: null })
   const [banWordsList, setBanWordsList] = useState(initialBanWords)
   const [banWordInput, setBanWordInput] = useState("")
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
+
+  const personalityTemplates = [
+    {
+      id: "ramoncito",
+      label: "Ramoncito",
+      description: "Directo y con urgencia para cerrar ventas",
+      value: "tono directo, urgencia alta, orientado a cerrar ventas rapido con llamadas a la accion claras",
+    },
+    {
+      id: "miguel",
+      label: "Miguel",
+      description: "Configuracion actual",
+      value: base.style_communication ?? form.style_communication ?? "friendly, concise, and clear",
+    },
+    {
+      id: "daniel",
+      label: "Daniel",
+      description: "Formal y sin emotividad",
+      value: "tono robotico, formal y preciso, sin emotividad, respuestas secas y estructuradas",
+    },
+    {
+      id: "ronald",
+      label: "Ronald",
+      description: "Chill y relajado",
+      value: "tono chill, relajado y cercano, mensajes breves y tranquilos",
+    },
+  ]
+
+  const applyTemplate = (template) => {
+    if (!template) return
+    setSelectedTemplate(template.id)
+    setForm((prev) => ({ ...prev, style_communication: template.value }))
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -160,6 +194,23 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
       <div className="rounded-xl border bg-card p-5 space-y-6">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Personalidad</h4>
         <div className="grid gap-6 sm:grid-cols-2">
+          <div className="sm:col-span-2 space-y-3">
+            <div className="text-sm font-medium">Plantillas de personalidad</div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {personalityTemplates.map((tpl) => (
+                <Button
+                  key={tpl.id}
+                  type="button"
+                  variant={selectedTemplate === tpl.id ? "default" : "outline"}
+                  className="h-full justify-start text-left flex flex-col gap-1"
+                  onClick={() => applyTemplate(tpl)}
+                >
+                  <span className="font-semibold text-sm">{tpl.label}</span>
+                  <span className="text-xs text-muted-foreground">{tpl.description}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
           <Field>
             <FieldLabel htmlFor="style_communication">Estilo de comunicación</FieldLabel>
             <Textarea id="style_communication" name="style_communication" value={form.style_communication} onChange={handleChange} rows={3} placeholder="friendly, concise, and clear" />
