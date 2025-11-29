@@ -85,18 +85,20 @@ export default async function RemindersPage({ params }) {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex flex-1 flex-col px-4 lg:px-6">
       <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-          <div className="px-4 lg:px-6 w-full max-w-7xl mx-auto">
+        <div className="py-4 md:py-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+
+          <div>
             <h1 className="text-2xl font-semibold">Recordatorios</h1>
             <p className="text-sm text-muted-foreground mt-2">
               Configura los mensajes por temperatura y el intervalo de envío.
             </p>
           </div>
+
         </div>
 
-        <div className="px-4 lg:px-6 w-full max-w-7xl mx-auto">
+        <div>
           {reminderError ? (
             <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
               {reminderError}

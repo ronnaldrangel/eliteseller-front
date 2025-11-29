@@ -38,7 +38,7 @@ export default function ChatbotAdvancedSettings({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          data: { auto_assignement: nextValue },
+          data: { auto_assignment: nextValue },
         }),
       });
 
@@ -67,32 +67,23 @@ export default function ChatbotAdvancedSettings({
 
   return (
     <div className="rounded-xl border bg-card p-6 space-y-4">
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-center justify-between gap-3">
         <div className="space-y-1">
-          <p className="text-base font-semibold">Auto asignacion</p>
+          <p className="text-base font-semibold">Auto asignacion a un Humano</p>
           <p className="text-sm text-muted-foreground">
-            Cambia el estado del campo auto_assignement del chatbot.
+            Permite que el Eliteseller asigne automaticamente los chats a un humano.
           </p>
         </div>
-        <Badge variant={autoAssignEnabled ? "default" : "secondary"}>
-          {autoAssignEnabled ? "Activado" : "Desactivado"}
-        </Badge>
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-muted-foreground">
-          Este control impacta el comportamiento de asignacion automatica en el
-          chatbot.
-        </div>
         <div className="flex items-center gap-3">
+          <Badge variant={autoAssignEnabled ? "default" : "secondary"}>
+            {autoAssignEnabled ? "Activado" : "Desactivado"}
+          </Badge>
           <Switch
             id="auto-assign-switch"
             checked={autoAssignEnabled}
             disabled={loading || !token || !targetId}
             onCheckedChange={(checked) => toggleAutoAssign(checked)}
           />
-          <label htmlFor="auto-assign-switch" className="text-sm">
-            {loading ? "Actualizando..." : autoAssignEnabled ? "Activado" : "Desactivado"}
-          </label>
         </div>
       </div>
     </div>

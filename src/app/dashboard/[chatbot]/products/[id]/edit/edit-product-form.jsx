@@ -195,8 +195,8 @@ export default function EditProductForm({
           typeof existing?.customPrice !== "undefined"
             ? existing.customPrice
             : !inheritProductPrice
-            ? existing?.price || ""
-            : "";
+              ? existing?.price || ""
+              : "";
 
         return {
           combination: combinationObj,
@@ -252,9 +252,9 @@ export default function EditProductForm({
       options.map((opt) =>
         opt.id === optionId
           ? {
-              ...opt,
-              values: opt.values.map((v, i) => (i === valueIndex ? value : v)),
-            }
+            ...opt,
+            values: opt.values.map((v, i) => (i === valueIndex ? value : v)),
+          }
           : opt
       )
     );
@@ -265,9 +265,9 @@ export default function EditProductForm({
       options.map((opt) =>
         opt.id === optionId
           ? {
-              ...opt,
-              values: opt.values.filter((_, i) => i !== valueIndex),
-            }
+            ...opt,
+            values: opt.values.filter((_, i) => i !== valueIndex),
+          }
           : opt
       )
     );
@@ -279,11 +279,11 @@ export default function EditProductForm({
       current.map((variant, i) =>
         i === index
           ? {
-              ...variant,
-              customPrice: price,
-              price,
-              inheritProductPrice: false,
-            }
+            ...variant,
+            customPrice: price,
+            price,
+            inheritProductPrice: false,
+          }
           : variant
       )
     );
@@ -318,12 +318,12 @@ export default function EditProductForm({
       current.map((variant, i) =>
         i === index
           ? {
-              ...variant,
-              inheritProductPrice,
-              price: inheritProductPrice
-                ? form.price
-                : variant.customPrice || "",
-            }
+            ...variant,
+            inheritProductPrice,
+            price: inheritProductPrice
+              ? form.price
+              : variant.customPrice || "",
+          }
           : variant
       )
     );
@@ -933,11 +933,25 @@ export default function EditProductForm({
               </div>
             </div>
             {/* Entrega automática */}
-            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-              <div className="space-y-2">
-                <label className="text-sm font-medium leading-none block min-h-[40px]">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium leading-none">
                   Mensaje de entrega automática
                 </label>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="product-auto-delivery" className="text-sm font-medium whitespace-nowrap">
+                    Entrega automática
+                  </label>
+                  <Switch
+                    id="product-auto-delivery"
+                    checked={!!form.is_auto_delivery}
+                    onCheckedChange={(value) =>
+                      setForm((prev) => ({ ...prev, is_auto_delivery: !!value }))
+                    }
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
                 <div className="relative">
                   <Textarea
                     id="auto-delivery-msg"
@@ -959,18 +973,6 @@ export default function EditProductForm({
                 {errors.auto_delivery_msg && (
                   <p className="text-sm text-destructive">{errors.auto_delivery_msg}</p>
                 )}
-              </div>
-              <div className="flex items-center gap-2 md:justify-end md:items-start">
-                <label htmlFor="product-auto-delivery" className="text-sm font-medium whitespace-nowrap">
-                  Entrega automática
-                </label>
-                <Switch
-                  id="product-auto-delivery"
-                  checked={!!form.is_auto_delivery}
-                  onCheckedChange={(value) =>
-                    setForm((prev) => ({ ...prev, is_auto_delivery: !!value }))
-                  }
-                />
               </div>
             </div>
           </CardContent>
@@ -1018,13 +1020,13 @@ export default function EditProductForm({
                 <CardDescription className="text-sm text-muted-foreground">
                   {variants.length > 0
                     ? t("product.form.sections.basePrice.withVariants", {
-                        fallback:
-                          "Este precio se utilizara como referencia para todas las variantes.",
-                      })
+                      fallback:
+                        "Este precio se utilizara como referencia para todas las variantes.",
+                    })
                     : t("product.form.sections.basePrice.description", {
-                        fallback:
-                          "Este precio se utilizara para la variante principal del producto.",
-                      })}
+                      fallback:
+                        "Este precio se utilizara para la variante principal del producto.",
+                    })}
                 </CardDescription>
               </div>
             </div>

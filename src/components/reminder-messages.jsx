@@ -172,10 +172,10 @@ export default function ReminderMessages({
         key === "hot"
           ? "Hot"
           : key === "normal"
-          ? "Normal"
-          : key === "cold"
-          ? "Cold"
-          : "intervalo";
+            ? "Normal"
+            : key === "cold"
+              ? "Cold"
+              : "intervalo";
       toast.success(`Guardado ${label}.`);
     } catch (err) {
       console.error("Error saving reminder messages", err);
@@ -197,7 +197,7 @@ export default function ReminderMessages({
     {
       key: "normal",
       label: "Normal",
-      description: "Mensajes de nurturing para mantener la conversación.",
+      description: "Mensajes para mantener la conversación.",
       icon: Sparkles,
       badgeClass: "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-100",
       areaClass: "bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200/60 dark:border-emerald-900",
@@ -213,31 +213,7 @@ export default function ReminderMessages({
   ];
 
   return (
-    <div className="rounded-2xl border bg-card/95 p-5 shadow-sm md:p-6 space-y-4">
-      <div className="rounded-xl
-      p-4 md:p-5">
-        <div className="flex items-start gap-3">
-          <div className="rounded-2xl p-3 text-primary">
-            <BellRing className="h-5 w-5" />
-          </div>
-          <div className="flex-1 space-y-1">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-semibold">Mensajes de recordatorio</h2>
-              <span className="inline-flex items-center gap-2 rounded-full bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground ring-1 ring-primary/10">
-                <Clock3 className="h-4 w-4 text-primary" />
-                Intervalo actual:{" "}
-                <strong className="text-foreground">
-                  {interval ? `${interval} ${intervalUnit === "hours" ? "h" : "min"}` : "sin definir"}
-                </strong>
-              </span>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Define varios mensajes para cada temperatura y un único intervalo de envío para todos.
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div >
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {messageTypes.map(({ key, label, description, icon: Icon, badgeClass, areaClass }) => {
           const isLoading = loadingKey === key;
@@ -270,10 +246,10 @@ export default function ReminderMessages({
                 />
                 <Button
                   type="button"
-                  variant="secondary"
-                  disabled={isLoading}
+                  variant={messages[key]?.trim() ? "default" : "secondary"}
+                  disabled={isLoading || !messages[key]?.trim()}
                   onClick={() => handleSave(key)}
-                  className="hover:bg-primary/50 transition-colors cursor-pointer"
+                  className="transition-colors cursor-pointer"
                 >
                   {isLoading ? (
                     <>
@@ -323,8 +299,9 @@ export default function ReminderMessages({
 
         <Button
           type="button"
+          variant={interval?.trim() ? "default" : "secondary"}
           className="self-stretch md:self-auto"
-          disabled={loadingKey === "interval" || !interval}
+          disabled={loadingKey === "interval" || !interval?.trim()}
           onClick={() => handleSave("interval")}
         >
           {loadingKey === "interval" ? (
