@@ -214,9 +214,10 @@ export default function ReminderMessages({
 
   return (
     <div className="rounded-2xl border bg-card/95 p-5 shadow-sm md:p-6 space-y-4">
-      <div className="rounded-xl border border-primary/10 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 md:p-5">
+      <div className="rounded-xl
+      p-4 md:p-5">
         <div className="flex items-start gap-3">
-          <div className="rounded-2xl bg-primary/15 p-3 text-primary ring-1 ring-primary/20">
+          <div className="rounded-2xl p-3 text-primary">
             <BellRing className="h-5 w-5" />
           </div>
           <div className="flex-1 space-y-1">
