@@ -2,13 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { Label } from "@/components/ui/label";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -33,50 +29,27 @@ export function ContactsClientTable({ columns, data }) {
     return Array.from(unique);
   }, [data]);
 
-  const resetFilters = () => {
-    setQuery("");
-    setSaleStatus("all");
-    setHotness("all");
-    setFbAds("all");
-  };
+
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="rounded-md border bg-card/50 p-4 shadow-sm">
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="contact-search">Buscar contactos</Label>
-              <InputGroup className="bg-background">
-                <InputGroupAddon aria-hidden="true">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                </InputGroupAddon>
-                <InputGroupInput
-                  id="contact-search"
-                  placeholder="Buscar por nombre o telefono"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  aria-describedby="contact-search-help"
-                />
-              </InputGroup>
+      <div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="space-y-2 sm:col-span-2 lg:col-span-2">
+            <Label htmlFor="contact-search">Buscar contactos</Label>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="contact-search"
+                placeholder="Buscar por nombre o telefono"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="pl-9"
+                aria-describedby="contact-search-help"
+              />
             </div>
-            <Button
-              variant="ghost"
-              className="w-full sm:w-auto sm:self-end sm:pb-1"
-              onClick={resetFilters}
-            >
-              Limpiar filtros
-            </Button>
           </div>
-          <p
-            id="contact-search-help"
-            className="text-xs text-muted-foreground"
-          >
-            Busca por nombre o telefono. Los filtros reducen los resultados sin perder el contexto de la tabla.
-          </p>
-        </div>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <Label htmlFor="sale-status-filter">Estado de venta</Label>
             <Select
