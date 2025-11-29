@@ -293,7 +293,7 @@ export default function ReminderMessages({
       <div className="mt-4 flex flex-col gap-3 rounded-xl border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-1 flex-col gap-2">
           <Label htmlFor="reminder-interval" className="text-sm font-semibold">
-            Intervalo de envío (minutos)
+            Intervalo de envío (minutos u horas)
           </Label>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <Input
