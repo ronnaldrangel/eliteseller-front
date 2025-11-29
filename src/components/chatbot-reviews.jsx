@@ -33,8 +33,8 @@ const normalizeImage = (img) => {
   const url = typeof base.url === "string" ? base.url : ""
   const finalUrl = url.startsWith("http") ? url : url ? buildStrapiUrl(url) : ""
   return {
-    id: base.id || null, // id numérico
-    documentId: base.documentId || null, // id de documento en Strapi v5
+    id: base.id || base.documentId || null, // prioriza id numérico para relaciones
+    documentId: base.documentId || base.id || null,
     url: finalUrl,
     name: base.name || "image",
   }
@@ -108,7 +108,7 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
 
   const extractMediaIds = (items = []) =>
     items
-      .map((item) => item?.documentId || item?.id || item?.document_id || item?._id)
+      .map((item) => item?.id || item?.documentId || item?.document_id || item?._id)
       .filter(Boolean)
 
   const openEdit = (rev) => {
