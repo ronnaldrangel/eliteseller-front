@@ -33,7 +33,8 @@ const normalizeImage = (img) => {
   const url = typeof base.url === "string" ? base.url : ""
   const finalUrl = url.startsWith("http") ? url : url ? buildStrapiUrl(url) : ""
   return {
-    id: base.documentId || base.id || base._id || null,
+    id: base.id || null, // id numérico
+    documentId: base.documentId || null, // id de documento en Strapi v5
     url: finalUrl,
     name: base.name || "image",
   }
@@ -105,6 +106,11 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
     return Array.isArray(body) ? body : []
   }
 
+  const extractMediaIds = (items = []) =>
+    items
+      .map((item) => item?.documentId || item?.id || item?.document_id || item?._id)
+      .filter(Boolean)
+
   const openEdit = (rev) => {
     setEditing(rev)
     setForm({ description: rev?.description || "", type: rev?.type || "confiabilidad" })
@@ -126,8 +132,8 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
     setStatus({ loading: true, error: null })
     try {
       const uploads = await uploadFiles(newFiles)
-      const uploadIds = uploads.map((u) => u.id || u.documentId).filter(Boolean)
-      const existingIds = existingImages.map((img) => img.id).filter(Boolean)
+      const uploadIds = extractMediaIds(uploads)
+      const existingIds = extractMediaIds(existingImages)
 
       const docId = editing.documentId || editing.id
       const res = await fetch(buildStrapiUrl(`/api/reviews/${encodeURIComponent(docId)}`), {
@@ -210,7 +216,7 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
     setCreateStatus({ loading: true, error: null })
     try {
       const uploads = await uploadFiles(createFiles)
-      const uploadIds = uploads.map((u) => u.id || u.documentId).filter(Boolean)
+      const uploadIds = extractMediaIds(uploads)
       const payload = {
         data: {
           description: createForm.description,
