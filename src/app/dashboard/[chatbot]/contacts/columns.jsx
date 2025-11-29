@@ -58,13 +58,13 @@ const hotnessDisplay = (value) => {
   const normalized = String(value || "").trim().toLowerCase();
   switch (normalized) {
     case "hot":
-      return { icon: Flame, label: "Hot" };
+      return { icon: Flame, label: "Hot", className: "text-orange-500" };
     case "cold":
-      return { icon: Snowflake, label: "Cold" };
+      return { icon: Snowflake, label: "Cold", className: "text-blue-500" };
     case "normal":
-      return { icon: Sprout, label: "Normal" };
+      return { icon: Sprout, label: "Normal", className: "text-green-500" };
     default:
-      return { icon: null, label: value || "-" };
+      return { icon: null, label: value || "-", className: "" };
   }
 };
 
@@ -72,9 +72,14 @@ const formatDateTime = (value) => {
   if (!value) return null;
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return null;
-  const dateStr = d.toLocaleDateString();
-  const timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  return `${dateStr} (${timeStr})`;
+  return d.toLocaleString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
 };
 
 export const columns = [
@@ -121,9 +126,9 @@ export const columns = [
     ),
     cell: ({ row }) => {
       const val = row.getValue("hotness");
-      const { icon: Icon, label } = hotnessDisplay(val);
+      const { icon: Icon, label, className } = hotnessDisplay(val);
       return (
-        <span className="flex items-center gap-2 truncate max-w-[280px]">
+        <span className={`flex items-center gap-2 truncate max-w-[280px] ${className}`}>
           {Icon ? <Icon className="h-4 w-4" aria-hidden="true" /> : null}
           <span className="truncate">{label}</span>
         </span>
@@ -148,21 +153,24 @@ export const columns = [
         row.original?.last_message_at ||
         row.original?.last_message_date ||
         "";
-      const timeText = typeof timeRaw === "string" ? timeRaw.trim() : "";
-      const messageText = rawMessage || "";
+
+      // Try to format the main message field
       const formattedMessage = formatDateTime(rawMessage);
-      const formattedTime = formatDateTime(timeText);
+      const formattedTime = formatDateTime(timeRaw);
 
       let display = "-";
-      if (formattedMessage && (!messageText || messageText === timeText)) {
+
+      // If rawMessage is a valid date, show it formatted
+      if (formattedMessage) {
         display = formattedMessage;
-      } else if (messageText && formattedTime) {
-        display = `${messageText} (${formattedTime})`;
-      } else if (formattedTime) {
+      }
+      // Otherwise if we have a separate time field, show that formatted
+      else if (formattedTime) {
         display = formattedTime;
-      } else if (messageText || timeText) {
-        display =
-          messageText && timeText ? `${messageText} (${timeText})` : messageText || timeText;
+      }
+      // If rawMessage is text (not a date), show it with formatted time if available
+      else if (rawMessage && typeof rawMessage === "string" && !rawMessage.match(/^\d{4}-\d{2}-\d{2}/)) {
+        display = formattedTime ? `${rawMessage} (${formattedTime})` : rawMessage;
       }
 
       return (
