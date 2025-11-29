@@ -114,14 +114,9 @@ export default function NewTriggerForm({
   const [newMediaFiles, setNewMediaFiles] = useState([]);
   const [newType, setNewType] = useState("message");
 
-  const keywordsWithAds = useMemo(() => {
-    const extra = form.id_ads?.trim() ? [form.id_ads.trim()] : [];
-    return [...keywordsList, ...extra];
-  }, [keywordsList, form.id_ads]);
-
   const keywordsJoined = useMemo(
-    () => keywordsWithAds.join(","),
-    [keywordsWithAds]
+    () => keywordsList.join(","),
+    [keywordsList]
   );
 
   const validate = () => {
@@ -131,7 +126,7 @@ export default function NewTriggerForm({
       nextErrors.name = "Asigna un nombre para identificar el disparador.";
     }
 
-    if (keywordsWithAds.length === 0) {
+    if (keywordsList.length === 0) {
       nextErrors.keywords =
         "Define las palabras clave que activan este disparador.";
     } else if (keywordsJoined.length > MAX_KEYWORDS_LENGTH) {
