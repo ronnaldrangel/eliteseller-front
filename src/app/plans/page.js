@@ -11,7 +11,6 @@ import { Check } from "lucide-react";
 import CountdownOffer from "@/components/countdown-offer";
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
-import Link from "next/link";
 import SubscribePlanButton from "@/components/subscribe-plan-button";
 
 export const metadata = {
@@ -21,22 +20,24 @@ export const metadata = {
 
 export default async function PlansPage() {
   const session = await auth();
-  
 
   let dynamicPlans = [];
   let error = null;
 
-  // Obtener los planes con flag "has_trial" en false
-  const qs = new URLSearchParams();
-  qs.set("filters[has_trial][$eq]", "false");
-
   try {
-    const url = buildStrapiUrl(`/api/plans?${qs.toString()}`);
+    const url = buildStrapiUrl(`/api/plans`);
+    const apiToken = process.env.STRAPI_API_TOKEN;
+    const authHeader =
+      apiToken?.trim().length > 0
+        ? { Authorization: `Bearer ${apiToken}` }
+        : session?.strapiToken
+          ? { Authorization: `Bearer ${session.strapiToken}` }
+          : {};
     const res = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${session.strapiToken}`,
+        ...authHeader,
       },
       cache: "no-store",
     });
@@ -48,8 +49,15 @@ export default async function PlansPage() {
         `No se pudo cargar los planes (status ${res.status})`;
     } else {
       const data = await res.json();
-      dynamicPlans = Array.isArray(data) ? data : data?.data || [];
-      console.log("Fetched plans:", dynamicPlans);
+      const items = Array.isArray(data) ? data : data?.data || [];
+      const normalize = (item) => {
+        const attrs = item?.attributes || item || {};
+        return {
+          ...attrs,
+          plan_id: attrs.plan_id || attrs.planId || item?.plan_id || item?.planId,
+        };
+      };
+      dynamicPlans = items.map(normalize).filter(Boolean);
     }
   } catch (e) {
     console.error("Error fetching plans:", e);
@@ -78,7 +86,9 @@ export default async function PlansPage() {
     featureIconColor: "text-green-600",
   };
 
-  const sortedPlans = [...dynamicPlans].sort((a, b) => Number(a?.price ?? 0) - Number(b?.price ?? 0))
+  const sortedPlans = [...dynamicPlans].sort(
+    (a, b) => Number(a?.price ?? 0) - Number(b?.price ?? 0)
+  );
 
   const plans = [
     ...sortedPlans.map((plan, index) => {
@@ -171,7 +181,7 @@ export default async function PlansPage() {
   return (
     <MarketingLayout>
       <div className="mt-2">
-        <h1 className="text-2xl font-semibold">🤖 Empieza ahora</h1>
+        <h1 className="text-2xl font-semibold">— Empieza ahora</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Elige el plan que mejor se adapte a tu negocio.
         </p>
@@ -184,8 +194,8 @@ export default async function PlansPage() {
         <>
           <CountdownOffer days={7} color="#ef4444" />
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {plans.map((p) => (
-              <PlanCard key={p.title} {...p} />
+            {plans.map((p, idx) => (
+              <PlanCard key={`${p.planId || p.title || "plan"}-${idx}`} {...p} />
             ))}
           </div>
         </>
