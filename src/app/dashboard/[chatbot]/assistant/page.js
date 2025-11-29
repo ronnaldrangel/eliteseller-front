@@ -77,18 +77,18 @@ export default async function AppsPage({ params }) {
   const paymentsItems = Array.isArray(attrs?.payments?.data)
     ? attrs.payments.data
     : Array.isArray(attrs?.payments)
-    ? attrs.payments
-    : [];
+      ? attrs.payments
+      : [];
   const faqsItems = Array.isArray(attrs?.faqs?.data)
     ? attrs.faqs.data
     : Array.isArray(attrs?.faqs)
-    ? attrs.faqs
-    : [];
+      ? attrs.faqs
+      : [];
   const reviewsItems = Array.isArray(attrs?.reviews?.data)
     ? attrs.reviews.data
     : Array.isArray(attrs?.reviews)
-    ? attrs.reviews
-    : [];
+      ? attrs.reviews
+      : [];
   const autoAssignement =
     typeof attrs?.auto_assignement === "boolean"
       ? attrs.auto_assignement
@@ -113,11 +113,11 @@ export default async function AppsPage({ params }) {
 
         <div className="px-4 lg:px-6 w-full max-w-7xl mx-auto">
           <Tabs defaultValue="todo" className="w-full">
-            <TabsList className="w-full grid grid-cols-2 sm:grid-cols-4">
-              <TabsTrigger value="todo">Personalidad</TabsTrigger>
-              <TabsTrigger value="faqs">Conocimiento</TabsTrigger>
-              <TabsTrigger value="pagos">Pagos</TabsTrigger>
-              <TabsTrigger value="avanzado">Avanzado</TabsTrigger>
+            <TabsList className="w-full inline-flex sm:grid sm:grid-cols-4 overflow-x-auto">
+              <TabsTrigger value="todo" className="flex-1 sm:flex-none whitespace-nowrap">Personalidad</TabsTrigger>
+              <TabsTrigger value="faqs" className="flex-1 sm:flex-none whitespace-nowrap">Conocimiento</TabsTrigger>
+              <TabsTrigger value="pagos" className="flex-1 sm:flex-none whitespace-nowrap">Pagos</TabsTrigger>
+              <TabsTrigger value="avanzado" className="flex-1 sm:flex-none whitespace-nowrap">Avanzado</TabsTrigger>
             </TabsList>
 
             <div className="mt-4">
