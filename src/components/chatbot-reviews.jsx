@@ -33,8 +33,8 @@ const normalizeImage = (img) => {
   const url = typeof base.url === "string" ? base.url : ""
   const finalUrl = url.startsWith("http") ? url : url ? buildStrapiUrl(url) : ""
   return {
-    id: base.id || base.documentId || null, // prioriza id numérico para relaciones
-    documentId: base.documentId || base.id || null,
+    id: base.id ?? base.documentId ?? null, // Strapi suele retornar id numérico; documentId es string
+    documentId: base.documentId ?? base.id ?? null,
     url: finalUrl,
     name: base.name || "image",
   }
@@ -108,7 +108,23 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
 
   const extractMediaIds = (items = []) =>
     items
-      .map((item) => item?.id || item?.documentId || item?.document_id || item?._id)
+      .map((item) => {
+        const id = item?.id
+        if (typeof id === "number") return id
+        const docId = item?.documentId || item?.document_id || item?._id || id
+        if (typeof docId === "number") return docId
+        if (typeof docId === "string" && /^\d+$/.test(docId)) return Number(docId)
+        return null
+      })
+      .filter((v) => v !== null)
+
+  const toRelationSet = (ids = []) =>
+    ids
+      .map((id) => {
+        if (typeof id === "number") return { id }
+        if (typeof id === "string") return { documentId: id }
+        return null
+      })
       .filter(Boolean)
 
   const openEdit = (rev) => {
@@ -146,7 +162,7 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
           data: {
             description: form.description,
             type: form.type,
-            images: [...existingIds, ...uploadIds],
+            images: { set: toRelationSet([...existingIds, ...uploadIds]) },
           },
         }),
       })
@@ -221,7 +237,7 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
         data: {
           description: createForm.description,
           type: createForm.type,
-          images: uploadIds,
+          images: { set: toRelationSet(uploadIds) },
           chatbot: chatbotId,
         },
       }
