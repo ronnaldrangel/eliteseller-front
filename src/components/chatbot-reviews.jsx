@@ -247,6 +247,12 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
     }
   }
 
+  const formatFileNames = (files, fallback = "Selecciona imágenes") => {
+    if (!files || files.length === 0) return fallback
+    const names = files.map((f) => f.name).join(", ")
+    return names.length > 60 ? `${names.slice(0, 57)}...` : names
+  }
+
   const typeLabel = useMemo(() => {
     const map = Object.fromEntries(TYPE_OPTIONS.map((o) => [o.value, o.label]))
     return map
@@ -359,13 +365,22 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
             </div>
             <div className="grid gap-2">
               <label htmlFor="rev-files" className="text-sm font-medium">Añadir imágenes</label>
-              <Input
-                id="rev-files"
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => setNewFiles(e.target.files ? Array.from(e.target.files) : [])}
-              />
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" className="w-full justify-start" asChild>
+                  <label htmlFor="rev-files" className="w-full cursor-pointer text-left">
+                    <ImageIcon className="mr-2 inline size-4" />
+                    {formatFileNames(newFiles, "Selecciona imágenes")}
+                  </label>
+                </Button>
+                <input
+                  id="rev-files"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => setNewFiles(e.target.files ? Array.from(e.target.files) : [])}
+                />
+              </div>
               <p className="text-xs text-muted-foreground">Si no subes nuevas, se mantienen las actuales.</p>
             </div>
             <DialogFooter>
@@ -409,13 +424,22 @@ export default function ChatbotReviews({ items = [], token, chatbotId }) {
             </div>
             <div className="grid gap-2">
               <label htmlFor="new-rev-files" className="text-sm font-medium">Imágenes</label>
-              <Input
-                id="new-rev-files"
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={(e) => setCreateFiles(e.target.files ? Array.from(e.target.files) : [])}
-              />
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" className="w-full justify-start" asChild>
+                  <label htmlFor="new-rev-files" className="w-full cursor-pointer text-left">
+                    <ImageIcon className="mr-2 inline size-4" />
+                    {formatFileNames(createFiles, "Selecciona imágenes")}
+                  </label>
+                </Button>
+                <input
+                  id="new-rev-files"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => setCreateFiles(e.target.files ? Array.from(e.target.files) : [])}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeCreate}>Cancelar</Button>
