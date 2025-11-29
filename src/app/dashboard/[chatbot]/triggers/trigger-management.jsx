@@ -125,97 +125,99 @@ export default function TriggerManagement({
           <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead className="min-w-[200px] ml-1">Nombre</TableHead>
+              <TableHead className="min-w-[120px]">ADS ID</TableHead>
               <TableHead className="min-w-[280px]">Palabras clave</TableHead>
               <TableHead className="min-w-[120px]">Visibilidad</TableHead>
               <TableHead className="min-w-[180px]">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-              {triggers.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="h-20 text-center text-muted-foreground mb"
-                  >
-                    Aun no has configurado disparadores. Crea el primero para
-                    automatizar tus flujos.
+            {triggers.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="h-20 text-center text-muted-foreground mb"
+                >
+                  Aun no has configurado disparadores. Crea el primero para
+                  automatizar tus flujos.
+                </TableCell>
+              </TableRow>
+            ) : (
+              triggers.map((trigger) => (
+                <TableRow key={trigger.id} className="even:bg-muted/10">
+                  <TableCell>
+                    <div
+                      className="truncate max-w-[180px]"
+                      title={trigger.name || "Sin nombre"}
+                    >
+                      {trigger.name || "Sin nombre"}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {trigger.id_ads ? (
+                      <span className="text-sm">{trigger.id_ads}</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {trigger.keywords ? (
+                      <div
+                        className="truncate max-w-[260px]"
+                        title={trigger.keywords}
+                      >
+                        {trigger.keywords}
+                      </div>
+                    ) : (
+                      <span className="text-xs">Sin palabras clave.</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={trigger.available ? "default" : "outline"}
+                      className="uppercase"
+                    >
+                      {trigger.available ? "Activo" : "Pausado"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Button asChild variant="outline" size="sm">
+                        <Link
+                          href={`/dashboard/${encodeURIComponent(
+                            chatbotSlug ?? chatbotId
+                          )}/triggers/${encodeURIComponent(
+                            trigger.documentId || trigger.id
+                          )}/edit`}
+                          className="whitespace-nowrap"
+                        >
+                          Editar
+                        </Link>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        aria-label="Eliminar disparador"
+                        title="Eliminar disparador"
+                        disabled={!token || !chatbotId}
+                        onClick={() => handleDelete(trigger)}
+                      >
+                        <Trash2Icon className="size-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
-              ) : (
-                triggers.map((trigger) => (
-                  <TableRow key={trigger.id} className="even:bg-muted/10">
-                    <TableCell>
-                      <div
-                        className="truncate max-w-[180px]"
-                        title={trigger.name || "Sin nombre"}
-                      >
-                        {trigger.name || "Sin nombre"}
-                      </div>
-                      {trigger.id_ads && (
-                        <div className="text-xs text-muted-foreground mt-1">
-                          ID: {trigger.id_ads}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {trigger.keywords ? (
-                        <div
-                          className="truncate max-w-[260px]"
-                          title={trigger.keywords}
-                        >
-                          {trigger.keywords}
-                        </div>
-                      ) : (
-                        <span className="text-xs">Sin palabras clave.</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={trigger.available ? "default" : "outline"}
-                        className="uppercase"
-                      >
-                        {trigger.available ? "Activo" : "Pausado"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Button asChild variant="outline" size="sm">
-                          <Link
-                            href={`/dashboard/${encodeURIComponent(
-                              chatbotSlug ?? chatbotId
-                            )}/triggers/${encodeURIComponent(
-                              trigger.documentId || trigger.id
-                            )}/edit`}
-                            className="whitespace-nowrap"
-                          >
-                            Editar
-                          </Link>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          aria-label="Eliminar disparador"
-                          title="Eliminar disparador"
-                          disabled={!token || !chatbotId}
-                          onClick={() => handleDelete(trigger)}
-                        >
-                          <Trash2Icon className="size-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-            {/* {triggers.length > 0 && (
-              <TableCaption className="text-xs">
-                Los disparadores se sincronizan automaticamente con tu chatbot.
-              </TableCaption>
-            )} */}
+              ))
+            )}
+          </TableBody>
+          {/* {triggers.length > 0 && (
+            <TableCaption className="text-xs">
+              Los disparadores se sincronizan automaticamente con tu chatbot.
+            </TableCaption>
+          )} */}
         </Table>
       </div>
     </div>
   );
 }
-

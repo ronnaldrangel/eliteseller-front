@@ -18,9 +18,9 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
   const initialBanWords = Array.isArray(base.ban_words)
     ? base.ban_words.map((w) => (typeof w === "string" ? w.trim() : "")).filter(Boolean)
     : String(base.ban_words || "")
-        .split(/[,;\n]/)
-        .map((w) => w.trim())
-        .filter(Boolean)
+      .split(/[,;\n]/)
+      .map((w) => w.trim())
+      .filter(Boolean)
 
   const [form, setForm] = useState({
     chatbot_name: base.chatbot_name ?? "EliteSellet",
@@ -158,18 +158,18 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
             </ToggleGroup>
           </Field>
           <Field>
-             <FieldLabel htmlFor="country">País</FieldLabel>
-             <Select value={form.country || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, country: value }))}>
-               <SelectTrigger id="country" className="w-full">
-                 <SelectValue placeholder="Selecciona país" />
-               </SelectTrigger>
-               <SelectContent>
-                 <SelectItem value="Peru">Perú</SelectItem>
-                 <SelectItem value="Mexico">México</SelectItem>
-                 <SelectItem value="Colombia">Colombia</SelectItem>
-               </SelectContent>
-             </Select>
-           </Field>
+            <FieldLabel htmlFor="country">País</FieldLabel>
+            <Select value={form.country || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, country: value }))}>
+              <SelectTrigger id="country" className="w-full">
+                <SelectValue placeholder="Selecciona país" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Peru">Perú</SelectItem>
+                <SelectItem value="Mexico">México</SelectItem>
+                <SelectItem value="Colombia">Colombia</SelectItem>
+              </SelectContent>
+            </Select>
+          </Field>
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="company_description">Descripción de la empresa</FieldLabel>
             <Textarea id="company_description" name="company_description" value={form.company_description} onChange={handleChange} rows={3} />
@@ -185,9 +185,9 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
             <Input id="target" name="target" value={form.target} onChange={handleChange} />
           </Field>
           <Field>
-             <FieldLabel htmlFor="instructions">Instrucciones</FieldLabel>
-             <Input id="instructions" name="instructions" value={form.instructions} onChange={handleChange} />
-           </Field>
+            <FieldLabel htmlFor="instructions">Instrucciones</FieldLabel>
+            <Input id="instructions" name="instructions" value={form.instructions} onChange={handleChange} />
+          </Field>
         </div>
       </div>
 
@@ -205,8 +205,8 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
                   className="h-full justify-start text-left flex flex-col gap-1"
                   onClick={() => applyTemplate(tpl)}
                 >
-                  <span className="font-semibold text-sm">{tpl.label}</span>
-                  <span className="text-xs text-muted-foreground">{tpl.description}</span>
+                  <span className={`font-semibold text-sm ${selectedTemplate === tpl.id ? 'text-white' : ''}`}>{tpl.label}</span>
+                  <span className={`text-xs ${selectedTemplate === tpl.id ? 'text-white' : 'text-muted-foreground'}`}>{tpl.description}</span>
                 </Button>
               ))}
             </div>
