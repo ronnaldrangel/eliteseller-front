@@ -24,8 +24,11 @@ export default async function PlansPage() {
   let dynamicPlans = [];
   let error = null;
 
+  const qs = new URLSearchParams();
+  qs.set("filters[has_trial][$eq]", "false")
+
   try {
-    const url = buildStrapiUrl(`/api/plans`);
+    const url = buildStrapiUrl(`/api/plans?${qs.toString()}`);
     const apiToken = process.env.STRAPI_API_TOKEN;
     const authHeader =
       apiToken?.trim().length > 0
