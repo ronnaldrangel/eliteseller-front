@@ -19,7 +19,12 @@ export default function SubscribePlanButton({ planId, userId }) {
   const router = useRouter();
 
   const handleClick = () => {
-    if (!planId || !userId || loading) return;
+    if (!planId || loading) return;
+    if (!userId) {
+      toast.error("Inicia sesión para suscribirte");
+      router.push("/auth/login?callbackUrl=/plans");
+      return;
+    }
     setShowModal(true);
   };
 
