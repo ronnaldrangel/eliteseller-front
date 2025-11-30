@@ -202,6 +202,19 @@ const data = {
   ],
   navSecondary: [
     {
+      title: "Batería",
+      url: "/battery",
+      icon: () => (
+        <Image
+          src="/icons/battery.webp"
+          alt="Batería"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
+    {
       title: "Ayuda",
       url: "/help",
       icon: () => (
@@ -272,7 +285,7 @@ export function AppSidebar({
   })
 
   const navSecondaryDynamic = data.navSecondary.map((item) => {
-    const dynamicSecondary = ["/help", "/docs", "/affiliates"]
+    const dynamicSecondary = ["/battery", "/help", "/docs", "/affiliates"]
     if (dynamicSecondary.includes(item.url)) {
       return { ...item, url: withChatbotSegment(item.url) }
     }

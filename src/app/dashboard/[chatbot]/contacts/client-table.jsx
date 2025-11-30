@@ -153,10 +153,10 @@ export function ContactsClientTable({ columns, data }) {
             </Select>
           </div>
 
-          <div className="flex items-end">
+          <div className="flex items-end sm:col-span-2 lg:col-span-1">
             <Button
               variant="outline"
-              className="h-10 gap-2 px-3 text-xs"
+              className="h-10 gap-2 px-3 text-xs w-full sm:w-auto"
               onClick={handleExport}
             >
               <Download className="h-3.5 w-3.5" />
