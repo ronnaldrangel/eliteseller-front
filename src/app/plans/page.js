@@ -184,7 +184,7 @@ export default async function PlansPage() {
   return (
     <MarketingLayout>
       <div className="mt-2">
-        <h1 className="text-2xl font-semibold">— Empieza ahora</h1>
+        <h1 className="text-2xl font-semibold">Empieza ahora</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Elige el plan que mejor se adapte a tu negocio.
         </p>
