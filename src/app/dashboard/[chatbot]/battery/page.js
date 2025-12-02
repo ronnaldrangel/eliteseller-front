@@ -117,33 +117,56 @@ export default async function BatteryPage({ params }) {
       plans = plans.sort(
         (x, y) => Number(x?.sale_price ?? 0) - Number(y?.sale_price ?? 0)
       );
+      console.log("Mira aquí Rayan", chatbotData);
     }
   } catch (e) {
     error = "Error al conectar con Strapi. Verifica tu conexión.";
   }
 
-  // RONALD AQUI PUEDES REEMPLAZAR Datos de estadísticas (reemplaza con datos reales del chatbot)
-  const sentMessages =
-    typeof chatbotData?.tokens_used === "number"
-      ? Math.floor(chatbotData.tokens_used / 1000)
-      : 0;
-  const remainingMessages =
-    typeof chatbotData?.tokens_remaining === "number"
-      ? Math.floor(chatbotData.tokens_remaining / 1000)
-      : 0;
+
+  const divideBy1000Str = (s) => {
+    try {
+      const v = BigInt(String(s || "0"));
+      return (v / 1000n).toString();
+    } catch {
+      return "0";
+    }
+  };
+
+  const formatThousands = (s) => {
+    const raw = String(s || "0");
+    const neg = raw.startsWith("-");
+    const digits = neg ? raw.slice(1) : raw;
+    const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    return neg ? `-${formatted}` : formatted;
+  };
+
+  const sentMessagesStr =
+    typeof chatbotData?.tokens_used === "string"
+      ? divideBy1000Str(chatbotData.tokens_used)
+      : typeof chatbotData?.tokens_used === "number"
+      ? String(Math.floor((chatbotData.tokens_used || 0) / 1000))
+      : "0";
+
+  const remainingMessagesStr =
+    typeof chatbotData?.tokens_remaining === "string"
+      ? divideBy1000Str(chatbotData.tokens_remaining)
+      : typeof chatbotData?.tokens_remaining === "number"
+      ? String(Math.floor((chatbotData.tokens_remaining || 0) / 1000))
+      : "0";
 
   const stats = [
     {
       key: "remaining",
       icon: Inbox,
       label: "Mensajes restantes",
-      value: remainingMessages,
+      value: formatThousands(remainingMessagesStr),
     },
     {
       key: "sent",
       icon: MessageSquare,
       label: "Mensajes enviados",
-      value: sentMessages,
+      value: formatThousands(sentMessagesStr),
     },
   ];
 
@@ -182,7 +205,7 @@ export default async function BatteryPage({ params }) {
                           {stat.label}
                         </CardDescription>
                         <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                          {stat.value.toLocaleString("es-ES")}
+                          {stat.value}
                         </CardTitle>
                       </CardHeader>
                     </Card>
