@@ -69,20 +69,6 @@ export default function BatteryChargePage({ searchParams }) {
             </div>
           </div>
 
-          {/* Mensaje motivacional */}
-          <div className="bg-gradient-to-r from-primary/10 to-blue-500/10 rounded-lg p-4 border border-primary/20">
-            <div className="flex items-start gap-3">
-              <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                <span className="font-semibold text-foreground">
-                  ¡Ramoncito está listo para despegar!
-                </span>{" "}
-                Ahora puedes continuar disfrutando de todas las funcionalidades
-                sin límites.
-              </p>
-            </div>
-          </div>
-
           {/* Botón de continuar */}
           <Link href="/select" className="block">
             <Button
