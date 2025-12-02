@@ -6,6 +6,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const plan_id = searchParams.get("plan_id")
   const userId = searchParams.get("userId")
+  const slugchatbot = searchParams.get("slugchatbot")
   const redirectFlag = searchParams.get("redirect")
 
   if (!plan_id || !userId) {
@@ -16,7 +17,7 @@ export async function GET(request) {
     const res = await fetch("https://n8n.eliteseller.app/webhook/flow/tokens-charge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan_id, userId }),
+      body: JSON.stringify({ plan_id, userId, slugchatbot }),
       cache: "no-store",
       redirect: "manual",
     })

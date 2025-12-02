@@ -309,6 +309,7 @@ export default async function BatteryPage({ params }) {
                           <ConfirmRechargeBattery
                             planId={plan.id}
                             userId={session.user.strapiUserId}
+                            chatbotSlug={chatbotSlug}
                           />
                         </div>
                       </CardContent>
