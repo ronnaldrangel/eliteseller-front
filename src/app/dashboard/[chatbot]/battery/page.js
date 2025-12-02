@@ -33,6 +33,34 @@ export default async function BatteryPage({ params }) {
   );
   if (!chatbot) redirect("/select");
 
+  let chatbotData = null;
+  try {
+    const qsCb = new URLSearchParams();
+    qsCb.set("filters[documentId][$eq]", chatbot.documentId);
+    qsCb.set("populate", "*");
+    const urlCb = buildStrapiUrl(`/api/chatbots?${qsCb.toString()}`);
+    const resCb = await fetch(urlCb, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.strapiToken}`,
+      },
+      cache: "no-store",
+    });
+    if (resCb.ok) {
+      const payload = await resCb.json().catch(() => ({}));
+      const row = Array.isArray(payload?.data)
+        ? payload.data[0]
+        : payload?.data || payload || null;
+      const a = row?.attributes || row || {};
+      chatbotData = {
+        ...a,
+        id: row?.id || a?.id,
+        documentId: row?.documentId || a?.documentId,
+      };
+    }
+  } catch (_) {}
+
   let plans = [];
   let error = null;
 
@@ -95,8 +123,14 @@ export default async function BatteryPage({ params }) {
   }
 
   // RONALD AQUI PUEDES REEMPLAZAR Datos de estadísticas (reemplaza con datos reales del chatbot)
-  const sentMessages = chatbot?.tokens_used ? (chatbot.tokens_used/1000).toFixed(0) : "-";
-  const remainingMessages = chatbot?.tokens_remaining ? (chatbot.tokens_remaining/1000).toFixed(0) : "-";
+  const sentMessages =
+    typeof chatbotData?.tokens_used === "number"
+      ? Math.floor(chatbotData.tokens_used / 1000)
+      : 0;
+  const remainingMessages =
+    typeof chatbotData?.tokens_remaining === "number"
+      ? Math.floor(chatbotData.tokens_remaining / 1000)
+      : 0;
 
   const stats = [
     {

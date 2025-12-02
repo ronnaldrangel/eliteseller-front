@@ -18,14 +18,12 @@ export async function getChatbotBySlug(segment, token, userId = null) {
   params.set("fields[2]", "slug")
   params.set("fields[3]", "chatbot_name")
   params.set("fields[4]", "isWhatsAppConnected")
-  params.set("fields[5]", "tokens_used")
-  params.set("fields[6]", "tokens_remaining")
 
-  if (userId) {
-    params.set("filters[users_permissions_user][id][$eq]", userId)
-  } else {
+   if (userId) {
+     params.set("filters[users_permissions_user][id][$eq]", userId)
+   } else {
     params.set("filters[slug][$eq]", segment)
-  }
+   }
 
   const res = await fetch(buildStrapiUrl(`/api/chatbots?${params.toString()}`), {
     method: "GET",
@@ -72,7 +70,5 @@ export async function getChatbotBySlug(segment, token, userId = null) {
     routeSegment: meta.routeSegment,
     name: meta.name || meta.routeSegment,
     isWhatsAppConnected: items[0].isWhatsAppConnected || false,
-    tokens_used: items[0].tokens_used || 0,
-    tokens_remaining: items[0].tokens_remaining || 0,
   }
 }
