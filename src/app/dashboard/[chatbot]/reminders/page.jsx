@@ -24,78 +24,109 @@ export default async function RemindersPage({ params }) {
   );
   if (!chatbot) redirect("/select");
 
-  let reminderSettings = { hot: [], normal: [], cold: [], interval: "" };
+  // Estructura para almacenar datos padres (Remarketing) e hijos (Contents)
+  let structuredData = {
+    hot: { id: null, items: [] },
+    normal: { id: null, items: [] },
+    cold: { id: null, items: [] },
+  };
+  let reminderInterval = "";
   let reminderError = null;
 
   try {
     const qs = new URLSearchParams();
     qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
-    qs.set("fields[0]", "content");
-    qs.set("fields[1]", "hotness_message");
+
+    // Solicitamos la relación anidada y la media
+    qs.set("populate[remarketing_contents][populate]", "media");
+    qs.set("populate[remarketing_contents][sort]", "order:asc");
+
     qs.set("pagination[pageSize]", "100");
 
-    const remarkRes = await fetch(buildStrapiUrl(`/api/remarketings?${qs.toString()}`), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.strapiToken}`,
-      },
-      cache: "no-store",
-    });
-
-    if (!remarkRes.ok) {
-      const details = await remarkRes.json().catch(() => ({}));
-      reminderError = details?.error?.message || `No se pudieron cargar los mensajes (${remarkRes.status}).`;
-    } else {
-      const payload = await remarkRes.json();
-      const items = Array.isArray(payload?.data) ? payload.data : Array.isArray(payload) ? payload : [];
-      const hot = [];
-      const normal = [];
-      const cold = [];
-      items.forEach((item) => {
-        const a = item?.attributes || item || {};
-        const msg = a.content || item.content || "";
-        const type = a.hotness_message || item.hotness_message || "";
-        if (!msg || !type) return;
-        if (type === "hot") hot.push(msg);
-        else if (type === "normal") normal.push(msg);
-        else if (type === "cold") cold.push(msg);
-      });
-      reminderSettings.hot = hot;
-      reminderSettings.normal = normal;
-      reminderSettings.cold = cold;
-
-      const botRes = await fetch(buildStrapiUrl(`/api/chatbots/${encodeURIComponent(chatbot.slug)}`), {
+    const remarkRes = await fetch(
+      buildStrapiUrl(`/api/remarketings?${qs.toString()}`),
+      {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.strapiToken}`,
         },
         cache: "no-store",
+      }
+    );
+
+    if (!remarkRes.ok) {
+      const details = await remarkRes.json().catch(() => ({}));
+      reminderError = details?.error?.message || `Error (${remarkRes.status}).`;
+    } else {
+      const payload = await remarkRes.json();
+      const remarketings = Array.isArray(payload?.data) ? payload.data : [];
+
+      remarketings.forEach((item) => {
+        const attrs = item.attributes || item;
+        const type = attrs.hotness_message;
+
+        if (type && structuredData[type]) {
+          // Guardamos ID del padre
+          structuredData[type].id = item.documentId || item.id;
+
+          // Procesamos los hijos (Contents)
+          const contents =
+            attrs.remarketing_contents?.data ||
+            attrs.remarketing_contents ||
+            [];
+          structuredData[type].items = contents.map((contentItem) => {
+            const cAttrs = contentItem.attributes || contentItem;
+            const mediaData = cAttrs.media?.data || cAttrs.media;
+
+            return {
+              id: contentItem.documentId || contentItem.id, // ID del contenido
+              content: cAttrs.content || "",
+              type: mediaData ? "media" : "text",
+              mediaUrl: mediaData
+                ? mediaData.attributes?.url || mediaData.url
+                : null,
+              mediaMime: mediaData
+                ? mediaData.attributes?.mime || mediaData.mime
+                : null,
+              mediaId: mediaData ? mediaData.documentId || mediaData.id : null,
+            };
+          });
+        }
       });
+
+      // Obtener intervalo del chatbot
+      const botRes = await fetch(
+        buildStrapiUrl(`/api/chatbots/${encodeURIComponent(chatbot.slug)}`),
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.strapiToken}`,
+          },
+          cache: "no-store",
+        }
+      );
       if (botRes.ok) {
         const botPayload = await botRes.json();
-        // console.log('botPayload',botPayload);
-        const attrs = botPayload?.data?.attributes || botPayload?.attributes || botPayload || {};
-        reminderSettings.interval = botPayload?.data?.cooldown_minutes ?? "";
+        reminderInterval = botPayload?.data?.cooldown_minutes ?? "";
       }
     }
   } catch (e) {
-    reminderError = "Error al cargar los mensajes de recordatorio.";
+    console.error(e);
+    reminderError = "Error al cargar configuración.";
   }
 
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
       <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="py-4 md:py-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-
+        <div className="py-4 md:pt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-semibold">Recordatorios</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Configura los mensajes por temperatura y el intervalo de envío.
+              Configura mensajes y multimedia por temperatura.
             </p>
           </div>
-
         </div>
 
         <div>
@@ -108,10 +139,8 @@ export default async function RemindersPage({ params }) {
               token={session.strapiToken}
               chatbotSlug={chatbot.slug}
               chatbotId={chatbot.documentId}
-              initialHot={reminderSettings.hot}
-              initialNormal={reminderSettings.normal}
-              initialCold={reminderSettings.cold}
-              initialInterval={reminderSettings.interval}
+              initialData={structuredData}
+              initialInterval={reminderInterval}
             />
           )}
         </div>
