@@ -10,16 +10,17 @@ import Link from "next/link";
 import Image from "next/image";
 import { Zap, Sparkles, ArrowRight } from "lucide-react";
 
-export default function BatteryChargePage({ searchParams }) {
-  const name = String(searchParams?.name || "").trim();
-  const price = String(searchParams?.price || "").trim();
+export default async function BatteryChargePage({ searchParams }) {
+  const sp = await searchParams;
+  const name = String(sp?.name || "").trim();
+  const price = String(sp?.price || "").trim();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-muted/20">
       <Card className="max-w-2xl w-full">
         <CardHeader className="text-center">
           <Image
-            src="/images/robot/battery-charge.png"
+            src="/images/robot/battery-charge-2.webp"
             alt=""
             width={180}
             height={90}
@@ -32,22 +33,22 @@ export default function BatteryChargePage({ searchParams }) {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-6 flex flex-col items-center">
           {/* Información del paquete */}
-          <div className="rounded-xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6 space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="bg-primary/20 rounded-full p-2">
+          <div className="w-full max-w-md rounded-xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 p-6 space-y-4 text-center">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div>
                 <Zap className="h-5 w-5 text-primary" />
               </div>
               <h3 className="font-semibold text-lg">Detalles de tu recarga</h3>
             </div>
 
+
             <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-green-500" />
+              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-background/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2 justify-center">
                   <span className="text-sm font-medium text-muted-foreground">
-                    Paquete
+                    Paquete:
                   </span>
                 </div>
                 <span className="text-base font-bold text-foreground">
@@ -55,11 +56,11 @@ export default function BatteryChargePage({ searchParams }) {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-lg bg-background/50 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
+
+              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-background/50 backdrop-blur-sm">
+                <div className="flex items-center gap-2 justify-center">
                   <span className="text-sm font-medium text-muted-foreground">
-                    Total pagado
+                    Total pagado:
                   </span>
                 </div>
                 <span className="text-base font-bold text-foreground">
@@ -70,12 +71,12 @@ export default function BatteryChargePage({ searchParams }) {
           </div>
 
           {/* Botón de continuar */}
-          <Link href="/select" className="block">
+          <Link href="/select" className="block w-full max-w-md">
             <Button
               size="lg"
               className="w-full text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 group"
             >
-              Continuar al Dashboard
+              Continuar
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>

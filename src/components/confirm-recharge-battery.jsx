@@ -14,7 +14,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Zap } from "lucide-react";
 
-export default function ConfirmRechargeBattery({ planId, userId, endpoint = "/api/tokens/charge" }) {
+export default function ConfirmRechargeBattery({ planId, userId, chatbotSlug = "", endpoint = "/api/tokens/charge" }) {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function ConfirmRechargeBattery({ planId, userId, endpoint = "/ap
     setShowModal(false);
     setLoading(true);
     try {
-      const url = `${endpoint}?plan_id=${encodeURIComponent(planId)}&userId=${encodeURIComponent(userId)}`;
+      const url = `${endpoint}?plan_id=${encodeURIComponent(planId)}&userId=${encodeURIComponent(userId)}${chatbotSlug ? `&slugchatbot=${encodeURIComponent(chatbotSlug)}` : ''}`;
       const res = await fetch(url, { method: "GET" });
       const contentType = res.headers.get("content-type") || "";
 
