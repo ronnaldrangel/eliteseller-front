@@ -90,9 +90,11 @@ export default async function AppsPage({ params }) {
       ? attrs.reviews
       : [];
   const autoAssignement =
-    typeof attrs?.auto_assignement === "boolean"
-      ? attrs.auto_assignement
-      : !!attrs?.auto_assignement;
+    typeof attrs?.auto_assignment === "boolean"
+      ? attrs.auto_assignment
+      : typeof attrs?.auto_assignement === "boolean"
+        ? attrs.auto_assignement
+        : !!(attrs?.auto_assignment ?? attrs?.auto_assignement);
   const chatbotSlugForUpdate =
     chatbots[0]?.slug || chatbot.slug || chatbot.documentId;
   const chatbotIdForUpdate = chatbots[0]?.documentId || documentId;

@@ -37,7 +37,6 @@ export default async function BatteryPage({ params }) {
   try {
     const qsCb = new URLSearchParams();
     qsCb.set("filters[documentId][$eq]", chatbot.documentId);
-    qsCb.set("populate", "*");
     const urlCb = buildStrapiUrl(`/api/chatbots?${qsCb.toString()}`);
     const resCb = await fetch(urlCb, {
       method: "GET",
@@ -117,7 +116,7 @@ export default async function BatteryPage({ params }) {
       plans = plans.sort(
         (x, y) => Number(x?.sale_price ?? 0) - Number(y?.sale_price ?? 0)
       );
-      console.log("Mira aquí Rayan", chatbotData);
+      // console.log("Mira aquí Rayan", chatbotData);
     }
   } catch (e) {
     error = "Error al conectar con Strapi. Verifica tu conexión.";
@@ -159,14 +158,24 @@ export default async function BatteryPage({ params }) {
     {
       key: "remaining",
       icon: Inbox,
-      label: "Mensajes restantes",
-      value: formatThousands(remainingMessagesStr),
+      label: "Tienes bateria restante para enviar:",
+      value: (
+        <>
+          <span className="tabular-nums">{formatThousands(remainingMessagesStr)}</span>
+          <span className="ml-1 text-sm text-muted-foreground">/mensajes</span>
+        </>
+      ),
     },
     {
       key: "sent",
       icon: MessageSquare,
-      label: "Mensajes enviados",
-      value: formatThousands(sentMessagesStr),
+      label: "Tu bot ha enviado:",
+      value: (
+        <>
+          <span className="tabular-nums">{formatThousands(sentMessagesStr)}</span>
+          <span className="ml-1 text-sm text-muted-foreground">/mensajes</span>
+        </>
+      ),
     },
   ];
 
@@ -246,11 +255,11 @@ export default async function BatteryPage({ params }) {
                         )}
 
                         {/* Badge de oferta */}
-                        {hasDiscount && (
+                        {/* {hasDiscount && (
                           <div className="absolute top-3 right-3 bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-1 rounded-md shadow-lg">
                             OFERTA
                           </div>
-                        )}
+                        )} */}
                       </div>
 
                       {/* Contenido */}
@@ -265,14 +274,14 @@ export default async function BatteryPage({ params }) {
                           </p>
                         )}
                         {hasDiscount && (
-                          <span className="text-md text-red-400/80 dark:text-red-300/80 line-through">
+                          <span className="text-lg md:text-xl text-red-400/80 dark:text-red-300/80 line-through">
                             ${plan.regular_price}
                           </span>
                         )}
 
                         {/* Precio */}
-                        <div className="flex items-center gap-3 mb-4">
-                          <span className="lg:text-2xl xl:text-3xl font-bold text-foreground">
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-2xl xl:text-3xl font-bold text-foreground">
                             ${plan.sale_price}
                           </span>
                           {hasDiscount &&

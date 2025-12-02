@@ -21,7 +21,7 @@ export default function ChatbotAdvancedSettings({
   const [autoAssignEnabled, setAutoAssignEnabled] = useState(safeInitial);
   const [loading, setLoading] = useState(false);
 
-  const targetId = chatbotSlug || chatbotId;
+  const targetId = chatbotSlug;
 
   const toggleAutoAssign = async (nextValue = !autoAssignEnabled) => {
     if (!token || !targetId) {
@@ -31,6 +31,11 @@ export default function ChatbotAdvancedSettings({
 
     setLoading(true);
     try {
+      console.log("[AdvancedSettings] toggleAutoAssign: sending", {
+        targetId,
+        nextValue,
+        hasToken: !!token,
+      });
       const res = await fetch(buildStrapiUrl(`/api/chatbots/${targetId}`), {
         method: "PUT",
         headers: {
@@ -41,9 +46,11 @@ export default function ChatbotAdvancedSettings({
           data: { auto_assignment: nextValue },
         }),
       });
+      console.log("[AdvancedSettings] response status", res.status);
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        console.log("[AdvancedSettings] error body", body);
         const msg =
           body?.error?.message ||
           "No se pudo actualizar la configuracion avanzada";
@@ -51,7 +58,10 @@ export default function ChatbotAdvancedSettings({
         return;
       }
 
+      const body = await res.json().catch(() => ({}));
+      console.log("[AdvancedSettings] success body", body);
       setAutoAssignEnabled(nextValue);
+      console.log("[AdvancedSettings] local state updated", { nextValue });
       toast.success(
         nextValue
           ? "Auto asignacion activada."
