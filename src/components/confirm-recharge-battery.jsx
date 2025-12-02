@@ -62,7 +62,7 @@ export default function ConfirmRechargeBattery({ planId, userId, endpoint = "/ap
 
         if (typeof target === "string" && target.length > 0) {
           if (target === "/billing") {
-            toast.error("Primero añade un método de pago válido");
+            toast.error("Verifica tu método de pago e intenta de nuevo.");
             router.push("/billing");
             return;
           }
