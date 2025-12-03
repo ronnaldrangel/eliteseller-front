@@ -30,7 +30,6 @@ export default async function RemindersPage({ params }) {
     normal: { id: null, items: [] },
     cold: { id: null, items: [] },
   };
-  let reminderInterval = "";
   let reminderError = null;
 
   try {
@@ -80,7 +79,7 @@ export default async function RemindersPage({ params }) {
             const mediaData = cAttrs.media?.data || cAttrs.media;
 
             return {
-              id: contentItem.documentId || contentItem.id, // ID del contenido
+              id: contentItem.documentId || contentItem.id,
               content: cAttrs.content || "",
               type: mediaData ? "media" : "text",
               mediaUrl: mediaData
@@ -90,27 +89,11 @@ export default async function RemindersPage({ params }) {
                 ? mediaData.attributes?.mime || mediaData.mime
                 : null,
               mediaId: mediaData ? mediaData.documentId || mediaData.id : null,
+              time_to_send: cAttrs.time_to_send || "",
             };
           });
         }
       });
-
-      // Obtener intervalo del chatbot
-      const botRes = await fetch(
-        buildStrapiUrl(`/api/chatbots/${encodeURIComponent(chatbot.slug)}`),
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${session.strapiToken}`,
-          },
-          cache: "no-store",
-        }
-      );
-      if (botRes.ok) {
-        const botPayload = await botRes.json();
-        reminderInterval = botPayload?.data?.cooldown_minutes ?? "";
-      }
     }
   } catch (e) {
     console.error(e);
@@ -120,11 +103,11 @@ export default async function RemindersPage({ params }) {
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
       <div className="@container/main flex flex-1 flex-col gap-2">
-        <div className="py-4 md:pt-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div className="py-4 md:pt-6 flex flex-col gap-3">
           <div>
             <h1 className="text-2xl font-semibold">Recordatorios</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Configura mensajes y multimedia por temperatura.
+              Configura mensajes y multimedia por temperatura de lead. Cada mensaje tiene su propio tiempo de envío.
             </p>
           </div>
         </div>
@@ -140,7 +123,6 @@ export default async function RemindersPage({ params }) {
               chatbotSlug={chatbot.slug}
               chatbotId={chatbot.documentId}
               initialData={structuredData}
-              initialInterval={reminderInterval}
             />
           )}
         </div>

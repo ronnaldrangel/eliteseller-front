@@ -6,6 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -18,93 +25,111 @@ import {
   Flame,
   Sparkles,
   Snowflake,
-  Image as ImageIcon,
   MessageSquare,
   Trash2,
   FileVideo,
+  Plus,
+  ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 
-// --- Subcomponente: Item Individual (Texto o Media) ---
+// --- Subcomponente: Item Individual (Texto o Media) con tiempo ---
 function ContentItem({ item, index, onUpdate, onRemove }) {
   const isMedia = item.type === "media";
 
   return (
-    <div className="flex gap-2 items-start p-3 bg-background/50 rounded-md border mb-2 group relative">
-      <span className="text-[10px] font-bold text-muted-foreground mt-1 min-w-[12px]">
-        {index + 1}.
-      </span>
+    <div className="p-4 bg-background/50 rounded-lg border mb-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-bold text-muted-foreground">Mensaje {index + 1}</span>
+        <div className="flex gap-2 items-center">
+          <Label className="text-xs text-muted-foreground">Tiempo:</Label>
+          <Input
+            type="number"
+            min="1"
+            placeholder="15"
+            className="w-20 h-8 text-sm"
+            value={item.time_to_send || ""}
+            onChange={(e) => onUpdate({ ...item, time_to_send: e.target.value })}
+          />
+          <Select
+            value={item.timeUnit || "minutes"}
+            onValueChange={(val) => onUpdate({ ...item, timeUnit: val })}
+          >
+            <SelectTrigger className="w-28 h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="minutes">Minutos</SelectItem>
+              <SelectItem value="hours">Horas</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-      <div className="flex-1 space-y-2">
+      <div className="mt-3">
         {isMedia ? (
-          <div className="flex gap-3 items-center">
-            {/* Preview solo (sin descripción) */}
-            <div className="w-24 h-24 bg-slate-100 rounded border overflow-hidden flex-shrink-0 flex items-center justify-center">
-              {item.isVideo ||
-              (item.mediaMime && item.mediaMime.startsWith("video")) ? (
-                item.previewUrl || item.mediaUrl ? (
-                  <video
-                    src={item.previewUrl || item.mediaUrl}
-                    className="w-full h-full object-cover"
-                    controls
-                    muted
-                  />
-                ) : (
-                  <FileVideo className="text-slate-400 w-8 h-8" />
-                )
-              ) : (
-                <img
+          <div className="w-full bg-slate-100 rounded border overflow-hidden">
+            {item.isVideo || (item.mediaMime && item.mediaMime.startsWith("video")) ? (
+              item.previewUrl || item.mediaUrl ? (
+                <video
                   src={item.previewUrl || item.mediaUrl}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
+                  className="w-full h-48 object-cover"
+                  controls
+                  muted
                 />
-              )}
-            </div>
-            <div className="text-xs text-muted-foreground italic">
-              {item.isVideo ? "Video adjunto" : "Imagen adjunta"}
-            </div>
+              ) : (
+                <div className="w-full h-48 flex items-center justify-center">
+                  <FileVideo className="text-slate-400 w-10 h-10" />
+                </div>
+              )
+            ) : (
+              <img
+                src={item.previewUrl || item.mediaUrl}
+                alt="Preview"
+                className="w-full h-48 object-cover"
+              />
+            )}
           </div>
         ) : (
           <Textarea
-            className="text-sm min-h-[60px] resize-none focus-visible:ring-offset-0"
+            className="w-full text-sm min-h-[80px] resize-none focus-visible:ring-offset-0"
             placeholder="Escribe el mensaje..."
             value={item.content || ""}
             onChange={(e) => onUpdate({ ...item, content: e.target.value })}
-            autoFocus // Opcional: para enfocar automáticamente al crear
           />
         )}
       </div>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 text-destructive hover:bg-destructive/10 opacity-70 hover:opacity-100"
-        onClick={onRemove}
-      >
-        <Trash2 className="h-3 w-3" />
-      </Button>
+      <div className="mt-3">
+        <button
+          type="button"
+          className="block mx-auto h-8 w-8 rounded-md text-destructive hover:bg-destructive/10 opacity-70 hover:opacity-100 cursor-pointer"
+          onClick={onRemove}
+        >
+          <Trash2 className="h-4 w-4 mx-auto" />
+        </button>
+      </div>
     </div>
   );
 }
 
-// --- Subcomponente: Tarjeta de Sección (Hot/Normal/Cold) ---
-function RemarketingCard({
+// --- Modal para gestionar los recordatorios ---
+function ReminderModal({
+  isOpen,
+  onClose,
   typeKey,
   config,
   data,
   chatbotId,
   token,
-  loadingKey,
-  setLoadingKey,
+  onSaveSuccess,
 }) {
   const [items, setItems] = useState(data.items || []);
   const [itemsToDelete, setItemsToDelete] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // LOGICA CAMBIADA: Validar último texto vacío
   const addText = () => {
     const lastItem = items[items.length - 1];
-
-    // Si existe un último elemento, es de tipo texto y está vacío (o solo espacios)
     if (lastItem && lastItem.type === "text" && !lastItem.content?.trim()) {
       toast.warning("Completa el mensaje vacío antes de añadir otro.");
       return;
@@ -112,14 +137,19 @@ function RemarketingCard({
 
     setItems([
       ...items,
-      { id: `temp-txt-${Date.now()}`, type: "text", content: "", isNew: true },
+      {
+        id: `temp-txt-${Date.now()}`,
+        type: "text",
+        content: "",
+        time_to_send: "",
+        timeUnit: "minutes",
+        isNew: true,
+      },
     ]);
   };
 
   const addMedia = (e) => {
     const lastItem = items[items.length - 1];
-
-    // Si existe un último elemento, es de tipo texto y está vacío (o solo espacios)
     if (lastItem && lastItem.type === "text" && !lastItem.content?.trim()) {
       toast.warning("Completa el mensaje vacío antes de añadir otro.");
       return;
@@ -139,7 +169,9 @@ function RemarketingCard({
         file: file,
         previewUrl: objectUrl,
         isVideo: isVideo,
-        content: "", // Se mantiene vacío ya que no hay UI para editarlo
+        content: "",
+        time_to_send: "",
+        timeUnit: "minutes",
         isNew: true,
       },
     ]);
@@ -161,21 +193,24 @@ function RemarketingCard({
   };
 
   const handleSave = async () => {
-    // Validar que no se guarden textos vacíos al final (opcional, limpieza)
-    const validItems = items.filter(
-      (item) => item.type === "media" || item.content?.trim()
-    );
-
-    if (validItems.length !== items.length) {
-      // Opcional: Podrías limpiarlos automáticamente o avisar.
-      // Aquí simplemente actualizamos el estado local para reflejar la limpieza antes de guardar.
-      setItems(validItems);
+    // Validar que todos los mensajes tengan tiempo
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.time_to_send || Number(item.time_to_send) <= 0) {
+        toast.error(`El mensaje ${i + 1} necesita un tiempo válido`);
+        return;
+      }
+      if (item.type === "text" && !item.content?.trim()) {
+        toast.error(`El mensaje ${i + 1} no puede estar vacío`);
+        return;
+      }
     }
 
-    setLoadingKey(typeKey);
+    setIsSaving(true);
     try {
       let parentId = data.id;
 
+      // Crear el Remarketing padre si no existe
       if (!parentId) {
         const createRes = await fetch(buildStrapiUrl("/api/remarketings"), {
           method: "POST",
@@ -196,6 +231,7 @@ function RemarketingCard({
         parentId = createPayload.data.documentId || createPayload.data.id;
       }
 
+      // Obtener los registros existentes por orden
       let existingByOrder = {};
       try {
         const qsExisting = new URLSearchParams();
@@ -228,10 +264,12 @@ function RemarketingCard({
         }
       } catch {}
 
-      for (let i = 0; i < validItems.length; i++) {
-        const item = validItems[i];
+      // Procesar cada item
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
         let mediaId = item.mediaId;
 
+        // Subir media si es necesario
         if (item.isNew && item.type === "media" && item.file) {
           const formData = new FormData();
           formData.append("files", item.file);
@@ -248,17 +286,21 @@ function RemarketingCard({
           }
         }
 
+        // Convertir tiempo a minutos
+        const timeValue = Number(item.time_to_send) || 0;
+        const timeInMinutes =
+          item.timeUnit === "hours" ? timeValue * 60 : timeValue;
+
         const payload = {
-          content: item.content || "", // Aseguramos string vacío si es null
+          content: item.content || "",
           order: i,
           remarketing: parentId,
           media: mediaId,
+          time_to_send: timeInMinutes,
         };
 
         const existingIdAtOrder = existingByOrder[i];
-        const targetId = !item.isNew ? (item.id || existingIdAtOrder) : null;
-
-        console.log("targetId", targetId);
+        const targetId = !item.isNew ? item.id || existingIdAtOrder : null;
 
         if (targetId) {
           await fetch(
@@ -284,6 +326,7 @@ function RemarketingCard({
         }
       }
 
+      // Eliminar items marcados
       for (const idToDelete of itemsToDelete) {
         await fetch(buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`), {
           method: "DELETE",
@@ -292,92 +335,135 @@ function RemarketingCard({
       }
 
       setItemsToDelete([]);
-      toast.success(`Guardado ${config.label}`);
+      toast.success(`Recordatorios guardados para ${config.label}`);
+      onSaveSuccess();
+      onClose();
     } catch (error) {
       console.error(error);
       toast.error("Error al guardar");
     } finally {
-      setLoadingKey(null);
+      setIsSaving(false);
     }
   };
 
-  const isLoading = loadingKey === typeKey;
   const Icon = config.icon;
 
   return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Icon className="h-5 w-5" />
+            Recordatorios {config.label}
+          </DialogTitle>
+          <DialogDescription>{config.description}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          {items.length === 0 && (
+            <div className="text-center py-8 border border-dashed rounded-lg bg-background/30 text-sm text-muted-foreground">
+              No hay mensajes configurados. Añade el primer mensaje.
+            </div>
+          )}
+
+          {items.map((item, idx) => (
+            <ContentItem
+              key={item.id}
+              item={item}
+              index={idx}
+              onUpdate={(updated) => updateItem(idx, updated)}
+              onRemove={() => removeItem(idx)}
+            />
+          ))}
+
+          <div className="flex gap-2 pt-4">
+            <Button
+              onClick={addText}
+              variant="outline"
+              size="sm"
+              className="flex-1"
+            >
+              <MessageSquare className="w-4 h-4 mr-2" /> Añadir mensaje
+            </Button>
+
+            <div className="relative flex-1">
+              <input
+                type="file"
+                id={`upload-modal-${typeKey}`}
+                className="hidden"
+                accept="image/*,video/*"
+                onChange={addMedia}
+              />
+              <Button
+                onClick={() =>
+                  document.getElementById(`upload-modal-${typeKey}`)?.click()
+                }
+                variant="outline"
+                size="sm"
+                className="w-full"
+              >
+                <ImageIcon className="w-4 h-4 mr-2" /> Añadir multimedia
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              "Guardar cambios"
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// --- Tarjeta de Sección (Hot/Normal/Cold) ---
+function RemarketingCard({ typeKey, config, data, chatbotId, token, onEdit }) {
+  const Icon = config.icon;
+  const messageCount = data.items?.length || 0;
+
+  return (
     <div
-      className={`flex flex-col rounded-xl border p-4 ${config.areaClass} h-full`}
+      className={`flex flex-col rounded-xl border p-6 ${config.areaClass} h-full`}
     >
-      <div className="space-y-2 mb-4">
+      <div className="space-y-3 mb-4">
         <div
           className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${config.badgeClass}`}
         >
           <Icon className="h-4 w-4" />
           {config.label}
         </div>
-        <p className="text-sm text-muted-foreground">{config.description}</p>
-      </div>
-
-      <div className="flex-1 flex flex-col gap-2 min-h-[100px]">
-        {items.length === 0 && (
-          <div className="text-center py-6 border border-dashed rounded bg-background/30 text-xs text-muted-foreground">
-            No hay mensajes configurados.
-          </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {config.description}
+        </p>
+        {messageCount > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {messageCount} {messageCount === 1 ? "mensaje" : "mensajes"}{" "}
+            configurado{messageCount === 1 ? "" : "s"}
+          </p>
         )}
-        {items.map((item, idx) => (
-          <ContentItem
-            key={item.id}
-            item={item}
-            index={idx}
-            onUpdate={(updated) => updateItem(idx, updated)}
-            onRemove={() => removeItem(idx)}
-          />
-        ))}
       </div>
 
-      <div className="mt-4 pt-4 border-t border-border/50 flex flex-col gap-3">
-        <div className="flex gap-2">
-          <Button
-            onClick={addText}
-            variant="outline"
-            size="sm"
-            className="flex-1 h-8 text-xs bg-background/50"
-          >
-            <MessageSquare className="w-3 h-3 mr-2" /> Texto
-          </Button>
-
-          <div className="relative flex-1">
-            <input
-              type="file"
-              id={`upload-${typeKey}`}
-              className="hidden"
-              accept="image/*,video/*"
-              onChange={addMedia}
-            />
-            <Button
-              onClick={() =>
-                document.getElementById(`upload-${typeKey}`)?.click()
-              }
-              variant="outline"
-              size="sm"
-              className="w-full h-8 text-xs bg-background/50"
-            >
-              <ImageIcon className="w-3 h-3 mr-2" /> Media
-            </Button>
-          </div>
-        </div>
-
+      <div className="mt-auto">
         <Button
-          onClick={handleSave}
-          disabled={isLoading}
+          onClick={onEdit}
           variant="default"
           className="w-full"
+          size="sm"
         >
-          {isLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            "Guardar Cambios"
-          )}
+          <Plus className="w-4 h-4 mr-2" />
+          Añadir recordatorio
         </Button>
       </div>
     </div>
@@ -390,57 +476,16 @@ export default function ReminderMessages({
   chatbotSlug,
   chatbotId,
   initialData = { hot: {}, normal: {}, cold: {} },
-  initialInterval = "",
 }) {
-  const [loadingKey, setLoadingKey] = useState(null);
-
-  // Interval Logic
-  const [intervalUnit, setIntervalUnit] = useState(() => {
-    const m = Number(initialInterval) || 0;
-    return m > 0 && m % 60 === 0 ? "hours" : "minutes";
-  });
-  const [interval, setInterval] = useState(() => {
-    const m = Number(initialInterval) || 0;
-    return m > 0 && m % 60 === 0
-      ? String(Math.floor(m / 60))
-      : String(initialInterval || "");
-  });
-
-  const handleSaveInterval = async () => {
-    setLoadingKey("interval");
-    try {
-      const valueNum = Number(interval) || 0;
-      if (!valueNum || valueNum <= 0) {
-        toast.error("Intervalo inválido");
-        return;
-      }
-      const minutesToSave = intervalUnit === "hours" ? valueNum * 60 : valueNum;
-
-      const res = await fetch(buildStrapiUrl(`/api/chatbots/${chatbotSlug}`), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          data: { cooldown_minutes: minutesToSave },
-        }),
-      });
-
-      if (!res.ok) throw new Error("Falló guardado");
-      toast.success("Intervalo actualizado");
-    } catch (e) {
-      toast.error("Error al guardar intervalo");
-    } finally {
-      setLoadingKey(null);
-    }
-  };
+  const [currentModal, setCurrentModal] = useState(null);
+  const [modalData, setModalData] = useState({});
 
   const messageTypes = [
     {
       key: "hot",
       label: "Hot",
-      description: "Seguimiento inmediato alta intención.",
+      description:
+        "Mensajes de seguimiento inmediato para leads con alta intención de compra.",
       icon: Flame,
       badgeClass:
         "bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-100",
@@ -450,7 +495,8 @@ export default function ReminderMessages({
     {
       key: "normal",
       label: "Normal",
-      description: "Mensajes para mantener conversación.",
+      description:
+        "Mensajes regulares para mantener la conversación activa con leads interesados.",
       icon: Sparkles,
       badgeClass:
         "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-100",
@@ -460,7 +506,8 @@ export default function ReminderMessages({
     {
       key: "cold",
       label: "Cold",
-      description: "Reengancha contactos fríos.",
+      description:
+        "Mensajes para reenganchar contactos fríos que han perdido interés.",
       icon: Snowflake,
       badgeClass:
         "bg-sky-50 text-sky-800 ring-sky-200 dark:bg-sky-950/40 dark:text-sky-100",
@@ -469,52 +516,39 @@ export default function ReminderMessages({
     },
   ];
 
+  const handleOpenModal = (typeKey) => {
+    const config = messageTypes.find((t) => t.key === typeKey);
+    const data = initialData[typeKey] || { items: [] };
+
+    // Convertir time_to_send de vuelta a unidades amigables
+    const processedItems = data.items.map((item) => {
+      const minutes = Number(item.time_to_send) || 0;
+      const isHours = minutes > 0 && minutes % 60 === 0;
+
+      return {
+        ...item,
+        timeUnit: isHours ? "hours" : "minutes",
+        time_to_send: isHours ? String(minutes / 60) : String(minutes),
+      };
+    });
+
+    setModalData({ ...data, items: processedItems });
+    setCurrentModal({ typeKey, config });
+  };
+
+  const handleCloseModal = () => {
+    setCurrentModal(null);
+    setModalData({});
+  };
+
+  const handleSaveSuccess = () => {
+    // Aquí podrías recargar los datos o actualizar el estado
+    window.location.reload();
+  };
+
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-3 rounded-xl border bg-muted/40 p-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-1 flex-col gap-2">
-          <Label htmlFor="reminder-interval" className="text-sm font-semibold">
-            Intervalo de envío (minutos u horas)
-          </Label>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-            <Input
-              id="reminder-interval"
-              type="number"
-              min="1"
-              value={interval}
-              onChange={(e) => setInterval(e.target.value)}
-              className="w-full sm:w-40"
-            />
-            <Select value={intervalUnit} onValueChange={setIntervalUnit}>
-              <SelectTrigger className="w-full sm:w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="minutes">Minutos</SelectItem>
-                <SelectItem value="hours">Horas</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-muted-foreground">
-              Aplica globalmente. Máx 24h.
-            </p>
-          </div>
-        </div>
-
-        <Button
-          variant={interval?.trim() ? "default" : "secondary"}
-          disabled={loadingKey === "interval" || !interval?.trim()}
-          onClick={handleSaveInterval}
-        >
-          {loadingKey === "interval" ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Guardando...
-            </>
-          ) : (
-            "Guardar intervalo"
-          )}
-        </Button>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 items-start">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
         {messageTypes.map((config) => (
           <RemarketingCard
             key={config.key}
@@ -523,11 +557,23 @@ export default function ReminderMessages({
             data={initialData[config.key] || { items: [] }}
             chatbotId={chatbotId}
             token={token}
-            loadingKey={loadingKey}
-            setLoadingKey={setLoadingKey}
+            onEdit={() => handleOpenModal(config.key)}
           />
         ))}
       </div>
+
+      {currentModal && (
+        <ReminderModal
+          isOpen={true}
+          onClose={handleCloseModal}
+          typeKey={currentModal.typeKey}
+          config={currentModal.config}
+          data={modalData}
+          chatbotId={chatbotId}
+          token={token}
+          onSaveSuccess={handleSaveSuccess}
+        />
+      )}
     </div>
   );
 }
