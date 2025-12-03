@@ -63,7 +63,7 @@ export default async function RemindersPage({ params }) {
 
       remarketings.forEach((item) => {
         const attrs = item.attributes || item;
-        const type = attrs.hotness_message;
+        const type = attrs.hotness;
 
         if (type && structuredData[type]) {
           // Guardamos ID del padre

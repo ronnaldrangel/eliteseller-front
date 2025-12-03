@@ -30,12 +30,28 @@ import {
   FileVideo,
   Plus,
   ImageIcon,
+  FileText,
 } from "lucide-react";
 import { toast } from "sonner";
 
 // --- Subcomponente: Item Individual (Texto o Media) con tiempo ---
 function ContentItem({ item, index, onUpdate, onRemove }) {
   const isMedia = item.type === "media";
+  const mime = String(item.mediaMime || (item.file && item.file.type) || "");
+  const isVid = !!(item.isVideo || mime.startsWith("video"));
+  const isImg = mime.startsWith("image");
+  const fileName = (() => {
+    if (item.file && item.file.name) return item.file.name;
+    if (item.mediaUrl && typeof item.mediaUrl === "string") {
+      try {
+        const parts = item.mediaUrl.split("/");
+        return parts[parts.length - 1] || "archivo";
+      } catch {
+        return "archivo";
+      }
+    }
+    return "archivo";
+  })();
 
   return (
     <div className="p-4 bg-background/50 rounded-lg border mb-3">
@@ -68,28 +84,31 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
 
       <div className="mt-3">
         {isMedia ? (
-          <div className="w-full bg-slate-100 rounded border overflow-hidden">
-            {item.isVideo || (item.mediaMime && item.mediaMime.startsWith("video")) ? (
-              item.previewUrl || item.mediaUrl ? (
-                <video
-                  src={item.previewUrl || item.mediaUrl}
-                  className="w-full h-48 object-cover"
-                  controls
-                  muted
-                />
-              ) : (
-                <div className="w-full h-48 flex items-center justify-center">
-                  <FileVideo className="text-slate-400 w-10 h-10" />
-                </div>
-              )
-            ) : (
-              <img
+          isVid ? (
+            item.previewUrl || item.mediaUrl ? (
+              <video
                 src={item.previewUrl || item.mediaUrl}
-                alt="Preview"
                 className="w-full h-48 object-cover"
+                controls
+                muted
               />
-            )}
-          </div>
+            ) : (
+              <div className="w-full h-48 flex items-center justify-center">
+                <FileVideo className="text-slate-400 w-10 h-10" />
+              </div>
+            )
+          ) : isImg ? (
+            <img
+              src={item.previewUrl || item.mediaUrl}
+              alt=""
+              className="w-full h-48 object-cover"
+            />
+          ) : (
+            <div className="w-full rounded border p-3 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-slate-500" />
+              <span className="text-xs truncate" title={fileName}>{fileName}</span>
+            </div>
+          )
         ) : (
           <Textarea
             className="w-full text-sm min-h-[80px] resize-none focus-visible:ring-offset-0"
@@ -220,9 +239,8 @@ function ReminderModal({
           },
           body: JSON.stringify({
             data: {
-              hotness_message: typeKey,
+              hotness: typeKey,
               chatbot: chatbotId,
-              content: "Container",
             },
           }),
         });
