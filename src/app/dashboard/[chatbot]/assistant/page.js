@@ -123,7 +123,7 @@ export default async function AppsPage({ params }) {
             </TabsList>
 
             <div className="mt-4">
-              <TabsContent value="todo" className="space-y-6">
+              <TabsContent value="todo" className="space-y-6" forceMount>
                 {error ? (
                   <div className="rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
                     {error}
@@ -187,7 +187,7 @@ export default async function AppsPage({ params }) {
                 )}
               </TabsContent>
 
-              <TabsContent value="faqs">
+              <TabsContent value="faqs" forceMount>
                 <ChatbotFaqs
                   items={faqsItems}
                   token={session.strapiToken}
@@ -201,14 +201,14 @@ export default async function AppsPage({ params }) {
                   />
                 </div>
               </TabsContent>
-              <TabsContent value="pagos">
+              <TabsContent value="pagos" forceMount>
                 <ChatbotPayments
                   items={paymentsItems}
                   token={session.strapiToken}
                   chatbotId={chatbots[0]?.documentId || documentId}
                 />
               </TabsContent>
-              <TabsContent value="avanzado">
+              <TabsContent value="avanzado" forceMount>
                 <ChatbotAdvancedSettings
                   chatbotId={chatbotIdForUpdate}
                   chatbotSlug={chatbotSlugForUpdate}

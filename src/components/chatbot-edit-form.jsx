@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { buildStrapiUrl } from "@/lib/strapi"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -46,6 +47,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
   const [banWordsList, setBanWordsList] = useState(initialBanWords)
   const [banWordInput, setBanWordInput] = useState("")
   const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const router = useRouter()
 
   const personalityTemplates = [
     {
@@ -124,6 +126,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
       } else {
         setStatus({ loading: false, type: null, message: null })
         toast.success('Guardado correctamente')
+        router.refresh()
       }
     } catch (err) {
       setStatus({ loading: false, type: null, message: null })
