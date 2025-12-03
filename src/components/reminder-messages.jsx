@@ -55,78 +55,88 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
 
   return (
     <div className="p-4 bg-background/50 rounded-lg border mb-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-bold text-muted-foreground">Mensaje {index + 1}</span>
-        <div className="flex gap-2 items-center">
-          <Label className="text-xs text-muted-foreground">Tiempo:</Label>
-          <Input
-            type="number"
-            min="1"
-            placeholder="15"
-            className="w-20 h-8 text-sm"
-            value={item.time_to_send || ""}
-            onChange={(e) => onUpdate({ ...item, time_to_send: e.target.value })}
-          />
-          <Select
-            value={item.timeUnit || "minutes"}
-            onValueChange={(val) => onUpdate({ ...item, timeUnit: val })}
-          >
-            <SelectTrigger className="w-28 h-8 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="minutes">Minutos</SelectItem>
-              <SelectItem value="hours">Horas</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        {isMedia ? (
-          isVid ? (
-            item.previewUrl || item.mediaUrl ? (
-              <video
-                src={item.previewUrl || item.mediaUrl}
-                className="w-full h-48 object-cover"
-                controls
-                muted
+      <div className="grid grid-cols-[1fr_36px] gap-4 items-center">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-muted-foreground">
+              Mensaje {index + 1}
+            </span>
+            <div className="flex gap-2 items-center">
+              <Label className="text-xs text-muted-foreground">Tiempo:</Label>
+              <Input
+                type="number"
+                min="1"
+                placeholder="15"
+                className="w-20 h-8 text-sm"
+                value={item.time_to_send || ""}
+                onChange={(e) =>
+                  onUpdate({ ...item, time_to_send: e.target.value })
+                }
               />
-            ) : (
-              <div className="w-full h-48 flex items-center justify-center">
-                <FileVideo className="text-slate-400 w-10 h-10" />
-              </div>
-            )
-          ) : isImg ? (
-            <img
-              src={item.previewUrl || item.mediaUrl}
-              alt=""
-              className="w-full h-48 object-cover"
-            />
-          ) : (
-            <div className="w-full rounded border p-3 flex items-center gap-2">
-              <FileText className="w-5 h-5 text-slate-500" />
-              <span className="text-xs truncate" title={fileName}>{fileName}</span>
+              <Select
+                value={item.timeUnit || "minutes"}
+                onValueChange={(val) => onUpdate({ ...item, timeUnit: val })}
+              >
+                <SelectTrigger className="w-28 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="minutes">Minutos</SelectItem>
+                  <SelectItem value="hours">Horas</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-          )
-        ) : (
-          <Textarea
-            className="w-full text-sm min-h-[80px] resize-none focus-visible:ring-offset-0"
-            placeholder="Escribe el mensaje..."
-            value={item.content || ""}
-            onChange={(e) => onUpdate({ ...item, content: e.target.value })}
-          />
-        )}
-      </div>
-
-      <div className="mt-3">
-        <button
-          type="button"
-          className="block mx-auto h-8 w-8 rounded-md text-destructive hover:bg-destructive/10 opacity-70 hover:opacity-100 cursor-pointer"
-          onClick={onRemove}
-        >
-          <Trash2 className="h-4 w-4 mx-auto" />
-        </button>
+          </div>
+          <div>
+            {isMedia ? (
+              isVid ? (
+                item.previewUrl || item.mediaUrl ? (
+                  <video
+                    src={item.previewUrl || item.mediaUrl}
+                    className="w-full h-48 object-cover"
+                    controls
+                    muted
+                  />
+                ) : (
+                  <div className="w-full h-48 flex items-center justify-center">
+                    <FileVideo className="text-slate-400 w-10 h-10" />
+                  </div>
+                )
+              ) : isImg ? (
+                <img
+                  src={item.previewUrl || item.mediaUrl}
+                  alt=""
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <div className="w-full rounded border p-3 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-slate-500" />
+                  <span className="text-xs truncate" title={fileName}>
+                    {fileName}
+                  </span>
+                </div>
+              )
+            ) : (
+              <Textarea
+                className="w-full text-sm min-h-[80px] resize-none focus-visible:ring-offset-0"
+                placeholder="Escribe el mensaje..."
+                value={item.content || ""}
+                onChange={(e) => onUpdate({ ...item, content: e.target.value })}
+              />
+            )}
+          </div>
+        </div>
+        <div className="flex items-center justify-center">
+          <Button
+            aria-label="Eliminar mensaje"
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:bg-destructive/10 opacity-70 hover:opacity-100"
+            onClick={onRemove}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -321,17 +331,14 @@ function ReminderModal({
         const targetId = !item.isNew ? item.id || existingIdAtOrder : null;
 
         if (targetId) {
-          await fetch(
-            buildStrapiUrl(`/api/remarketing-contents/${targetId}`),
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ data: payload }),
-            }
-          );
+          await fetch(buildStrapiUrl(`/api/remarketing-contents/${targetId}`), {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ data: payload }),
+          });
         } else {
           await fetch(buildStrapiUrl("/api/remarketing-contents"), {
             method: "POST",
@@ -474,12 +481,7 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, onEdit }) {
       </div>
 
       <div className="mt-auto">
-        <Button
-          onClick={onEdit}
-          variant="default"
-          className="w-full"
-          size="sm"
-        >
+        <Button onClick={onEdit} variant="default" className="w-full" size="sm">
           <Plus className="w-4 h-4 mr-2" />
           Añadir recordatorio
         </Button>
