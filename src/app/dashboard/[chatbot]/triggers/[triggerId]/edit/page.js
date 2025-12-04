@@ -33,7 +33,6 @@ export default async function EditTriggerPage({ params }) {
   qs.set("fields[1]", "keywords");
   // qs.set("fields[2]", "keywords_ai");
   qs.set("fields[2]", "available");
-  qs.set("fields[3]", "id_ads");
 
   // Contenidos (mensaje + documentId/id)
   qs.set("populate[trigger_contents][fields][0]", "message");
@@ -120,7 +119,6 @@ export default async function EditTriggerPage({ params }) {
         keywords: raw?.keywords ?? "",
         // keywords_ai: raw?.keywords_ai ?? "",
         available: raw?.available ?? true,
-        id_ads: raw?.id_ads ?? "",
         trigger_contents: contents.map((c) => ({
           id: c.id,
           documentId: c.documentId,

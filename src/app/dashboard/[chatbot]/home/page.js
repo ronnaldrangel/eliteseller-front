@@ -38,6 +38,7 @@ export default async function DashboardPage({ params }) {
 
   let cards = [];
   let cardsError = null;
+  let messageStats = { tokensRemaining: null, tokensUsed: null };
 
   try {
     const res = await fetch(url, {
@@ -75,10 +76,42 @@ export default async function DashboardPage({ params }) {
     cardsError = "Error al conectar. Verifica tu conexión.";
   }
 
+  try {
+    const qsChatbot = new URLSearchParams();
+    qsChatbot.set("filters[documentId][$eq]", chatbot.documentId);
+    qsChatbot.set("fields[0]", "tokens_remaining");
+    qsChatbot.set("fields[1]", "tokens_used");
+
+    const usageUrl = buildStrapiUrl(`/api/chatbots?${qsChatbot.toString()}`);
+    const usageRes = await fetch(usageUrl, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.strapiToken}`,
+      },
+      cache: "no-store",
+    });
+
+    if (usageRes.ok) {
+      const payload = await usageRes.json().catch(() => ({}));
+      const row = Array.isArray(payload?.data)
+        ? payload.data[0]
+        : payload?.data || payload || null;
+      const attrs = row?.attributes || row || {};
+      messageStats = {
+        tokensRemaining: attrs?.tokens_remaining ?? null,
+        tokensUsed: attrs?.tokens_used ?? null,
+      };
+    }
+  } catch {
+    // Si falla el conteo de mensajes, el dashboard seguira mostrando el resto del contenido.
+  }
+
   return (
     <DocsPageClient
       initialNewsItems={cards}
       newsError={cardsError}
+      messageStats={messageStats}
     />
   );
 }

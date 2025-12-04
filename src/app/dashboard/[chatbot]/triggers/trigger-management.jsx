@@ -41,7 +41,6 @@ const normalizeTrigger = (entry) => {
     keywords: entry.keywords ?? "",
     keywords_ai: entry.keywords_ai ?? "",
     available: entry.available ?? false,
-    id_ads: entry.id_ads ?? null,
     messages: messages,
   };
 };
@@ -125,7 +124,6 @@ export default function TriggerManagement({
           <TableHeader className="bg-muted/40">
             <TableRow>
               <TableHead className="min-w-[200px] ml-1">Nombre</TableHead>
-              <TableHead className="min-w-[120px]">ADS ID</TableHead>
               <TableHead className="min-w-[280px]">Palabras clave</TableHead>
               <TableHead className="min-w-[120px]">Visibilidad</TableHead>
               <TableHead className="min-w-[180px]">Acciones</TableHead>
@@ -135,7 +133,7 @@ export default function TriggerManagement({
             {triggers.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={4}
                   className="h-20 text-center text-muted-foreground mb"
                 >
                   Aun no has configurado disparadores. Crea el primero para
@@ -152,13 +150,6 @@ export default function TriggerManagement({
                     >
                       {trigger.name || "Sin nombre"}
                     </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {trigger.id_ads ? (
-                      <span className="text-sm">{trigger.id_ads}</span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">-</span>
-                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {trigger.keywords ? (

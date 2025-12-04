@@ -22,6 +22,7 @@ import {
   TrendingDown,
   TrendingUp,
   X as CloseIcon,
+  MessageSquare,
 } from "lucide-react";
 import {
   Area,
@@ -86,6 +87,29 @@ const RANGE_LIMIT_DAYS = {
   "7d": 7,
 };
 
+function formatThousands(value) {
+  const raw = typeof value === "bigint" ? value.toString() : String(value ?? "0");
+  const neg = raw.startsWith("-");
+  const digits = neg ? raw.slice(1) : raw;
+  const formatted = digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return neg ? `-${formatted}` : formatted;
+}
+
+function tokensToMessages(tokens) {
+  if (tokens === null || tokens === undefined) return null;
+  try {
+    return BigInt(String(tokens)) / 1000n;
+  } catch {
+    return null;
+  }
+}
+
+function formatMessageCount(tokens) {
+  const value = tokensToMessages(tokens);
+  if (value === null) return "--";
+  return formatThousands(value);
+}
+
 function getTrendDescriptor(item, value) {
   if (typeof value !== "number") {
     return {
@@ -127,7 +151,11 @@ function formatShortDate(date) {
   });
 }
 
-export default function DocsPageClient({ initialNewsItems = [], newsError }) {
+export default function DocsPageClient({
+  initialNewsItems = [],
+  newsError,
+  messageStats = { tokensRemaining: null, tokensUsed: null },
+}) {
   const params = useParams();
   const chatbotSegmentParam = params?.chatbot;
   const chatbotSegment = useMemo(() => {
@@ -136,6 +164,17 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
       ? chatbotSegmentParam[0]
       : String(chatbotSegmentParam);
   }, [chatbotSegmentParam]);
+  const remainingMessages = useMemo(
+    () => formatMessageCount(messageStats?.tokensRemaining),
+    [messageStats]
+  );
+  const usedMessages = useMemo(
+    () => formatMessageCount(messageStats?.tokensUsed),
+    [messageStats]
+  );
+  const batteryHref = chatbotSegment
+    ? `/dashboard/${encodeURIComponent(chatbotSegment)}/battery`
+    : null;
 
   // Novedades recibidas del server
   const [newsItems, setNewsItems] = useState(
@@ -525,71 +564,114 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
               </Card>
             </div>
 
-            <Card className="flex flex-col gap-4">
-              <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle className="mb-2">Novedades</CardTitle>
+            <div className="flex flex-col gap-4">
+              <Card className="flex flex-col gap-2 border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card">
+                <CardHeader className="pb-2">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <MessageSquare className="h-4 w-4 text-primary" />
+                    Mensajes restantes
+                  </CardTitle>
                   <CardDescription>
-                    Nuevas noticias sobre EliteSeller de la semana.
+                    Saldo disponible en tu batería.
                   </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {newsError ? (
-                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                    {newsError}
+                </CardHeader>
+                <CardContent className="flex items-end justify-between gap-4 pt-0">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Disponible</p>
+                    <p className="text-3xl font-semibold leading-tight">
+                      {remainingMessages}
+                    </p>
+                    <p className="text-xs text-muted-foreground">mensajes</p>
                   </div>
-                ) : null}
+                  <Badge
+                    variant="outline"
+                    className="rounded-full border-primary/40 bg-primary/10 text-primary"
+                  >
+                    {batteryHref ? "Batería" : "Saldo"}
+                  </Badge>
+                </CardContent>
+                <CardFooter className="flex items-center justify-between text-xs text-muted-foreground pt-0">
+                  <span>
+                    Consumidos:{" "}
+                    {usedMessages === "--" ? "--" : `${usedMessages} msgs`}
+                  </span>
+                  {batteryHref ? (
+                    <a
+                      href={batteryHref}
+                      className="font-medium text-primary hover:text-primary/80"
+                    >
+                      Ver detalle
+                    </a>
+                  ) : null}
+                </CardFooter>
+              </Card>
 
-                {activeNews ? (
-                  <>
-                    <div className="overflow-hidden rounded-2xl shadow-md">
-                      <div className="relative h-48 w-full">
-                        <img
-                          src={activeNews.image ? activeNews.image : null}
-                          alt={activeNews.imageAlt}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-base font-semibold">
-                        {activeNews.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {activeNews.description}
-                      </p>
-                      <a
-                        href={activeNews.href}
-                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
-                      >
-                        {activeNews.cta}
-                        <ArrowRight className="ml-1 h-4 w-4" />
-                      </a>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      {newsItems.map((item, index) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setActiveSlide(index)}
-                          className={`h-2.5 w-2.5 rounded-full ${index === activeSlide
-                            ? "bg-primary"
-                            : "bg-muted-foreground/30"
-                            }`}
-                          aria-label={`Ir a la novedad ${item.title}`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    Esperando nuevas noticias!.
+              <Card className="flex h-full flex-col gap-4">
+                <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle className="mb-2">Novedades</CardTitle>
+                    <CardDescription>
+                      Nuevas noticias sobre EliteSeller de la semana.
+                    </CardDescription>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {newsError ? (
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                      {newsError}
+                    </div>
+                  ) : null}
+
+                  {activeNews ? (
+                    <>
+                      <div className="overflow-hidden rounded-2xl shadow-md">
+                        <div className="relative h-40 w-full sm:h-48">
+                          <img
+                            src={activeNews.image ? activeNews.image : null}
+                            alt={activeNews.imageAlt}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-base font-semibold">
+                          {activeNews.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {activeNews.description}
+                        </p>
+                        <a
+                          href={activeNews.href}
+                          className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
+                        >
+                          {activeNews.cta}
+                          <ArrowRight className="ml-1 h-4 w-4" />
+                        </a>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        {newsItems.map((item, index) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setActiveSlide(index)}
+                            className={`h-2.5 w-2.5 rounded-full ${index === activeSlide
+                              ? "bg-primary"
+                              : "bg-muted-foreground/30"
+                              }`}
+                            aria-label={`Ir a la novedad ${item.title}`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-muted-foreground">
+                      Esperando nuevas noticias!.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
         </div>

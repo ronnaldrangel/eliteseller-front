@@ -98,7 +98,6 @@ export default function NewTriggerForm({
     name: initialTrigger?.name ?? "",
     keywords_ai: initialTrigger?.keywords_ai ?? "",
     available: initialTrigger?.available ?? true,
-    id_ads: initialTrigger?.id_ads ?? "",
   });
 
   const [errors, setErrors] = useState({});
@@ -334,7 +333,6 @@ export default function NewTriggerForm({
             keywords: joined,
             // keywords_ai: joinedAi,
             available: Boolean(form.available),
-            id_ads: form.id_ads.trim() || null,
           },
         };
 
@@ -471,7 +469,6 @@ export default function NewTriggerForm({
             keywords: joined,
             // keywords_ai: joinedAi,
             available: Boolean(form.available),
-            id_ads: form.id_ads.trim() || null,
           },
         };
 
@@ -1083,29 +1080,6 @@ export default function NewTriggerForm({
                       <FieldError>{errors.name}</FieldError>
                     </FieldContent>
                   </Field>
-
-                  <Field>
-                    <FieldLabel htmlFor="trigger-id-ads">
-                      ID Ads (opcional)
-                    </FieldLabel>
-                    <FieldContent>
-                      <Input
-                        id="trigger-id-ads"
-                        placeholder="Ej. 023232323232121"
-                        value={form.id_ads}
-                        onChange={(event) =>
-                          setForm((previous) => ({
-                            ...previous,
-                            id_ads: event.target.value,
-                          }))
-                        }
-                      />
-                      <FieldDescription>
-                        Vincula este disparador con un anuncio o campaña
-                        específica.
-                      </FieldDescription>
-                    </FieldContent>
-                  </Field>
                 </FieldGroup>
 
                 <FieldGroup className="gap-6">
@@ -1176,6 +1150,9 @@ export default function NewTriggerForm({
                             {keywordsJoined.length}/{MAX_KEYWORDS_LENGTH}
                           </span>
                         </div>
+                        <p className="mt-2 text-xs text-muted-foreground">
+                          Coloca aquí las frases o IDs de tus anuncios para que actúen como disparadores.
+                        </p>
                       </div>
                       <FieldError>{errors.keywords}</FieldError>
                     </FieldContent>

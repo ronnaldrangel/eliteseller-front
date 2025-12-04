@@ -78,7 +78,6 @@ export const normalizeTriggerEntry = (entry) => {
     keywords: keywordsValue,
     keywords_ai: attributes.keywords_ai ?? "",
     available: attributes.available ?? false,
-    id_ads: attributes.id_ads ?? "",
     trigger_contents: triggerContents,
     messages: triggerContents,
     keywordsList: keywordsValue
