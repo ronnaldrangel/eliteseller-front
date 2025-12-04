@@ -485,7 +485,7 @@ export default function DocsPageClient({
                           variant="outline"
                           className="flex gap-1 rounded-xl border-border/60 text-xs text-foreground"
                         >
-                          {batteryHref ? "Batería" : "Saldo"}
+                          {batteryHref ? "Bater?a" : "Saldo"}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -510,140 +510,142 @@ export default function DocsPageClient({
               )}
             </div>
 
-          <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-            <Card className="@container/card overflow-hidden rounded-[2rem]">
-              <CardHeader className="gap-2 pb-2">
-                <div>
-                  <CardTitle className="mb-2">Total de contactos</CardTitle>
-                  <CardDescription>
-                    Contactos captados en este periodo.
-                  </CardDescription>
-                </div>
-              </CardHeader>
+            <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
+              <Card className="@container/card overflow-hidden rounded-[2rem]">
+                <CardHeader className="gap-2 pb-2">
+                  <div>
+                    <CardTitle className="mb-2">Total de contactos</CardTitle>
+                    <CardDescription>
+                      Contactos captados en este periodo.
+                    </CardDescription>
+                  </div>
+                </CardHeader>
 
-              <CardContent className="space-y-6 px-6 pb-6">
-                <div className="h-48 sm:h-64">
-                  {chartData.length ? (
-                    <ChartContainer config={{ contacts: { label: "Contactos" } }} className="aspect-auto h-full w-full">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#6d8df6" stopOpacity={0.25} />
-                            <stop offset="95%" stopColor="#6d8df6" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid vertical={false} />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={8}
-                        />
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                        <Area
-                          type="monotone"
-                          dataKey="value"
-                          fill={`url(#${chartGradientId})`}
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={3}
-                        />
-                      </AreaChart>
-                    </ChartContainer>
+                <CardContent className="space-y-6 px-6 pb-6">
+                  <div className="h-48 sm:h-64">
+                    {chartData.length ? (
+                      <ChartContainer config={{ contacts: { label: "Contactos" } }} className="aspect-auto h-full w-full">
+                        <AreaChart data={chartData}>
+                          <defs>
+                            <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#6d8df6" stopOpacity={0.25} />
+                              <stop offset="95%" stopColor="#6d8df6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid vertical={false} />
+                          <XAxis
+                            dataKey="date"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                          />
+                          <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                          <Area
+                            type="monotone"
+                            dataKey="value"
+                            fill={`url(#${chartGradientId})`}
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={3}
+                          />
+                        </AreaChart>
+                      </ChartContainer>
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                        Aun no hay actividad para graficar.
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+                <CardFooter className="px-6 pb-6">
+                  <ToggleGroup
+                    type="single"
+                    value={chartRange}
+                    onValueChange={(value) => value && setChartRange(value)}
+                    variant="outline"
+                    className="flex w-full flex-wrap"
+                  >
+                    {CHART_RANGE_OPTIONS.map((option) => (
+                      <ToggleGroupItem
+                        key={option.id}
+                        value={option.id}
+                        className="h-9 flex-1 sm:flex-none sm:px-4"
+                      >
+                        {option.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </CardFooter>
+
+              </Card>
+
+              <Card className="flex h-full flex-col gap-4">
+                <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <CardTitle className="mb-2">Novedades</CardTitle>
+                    <CardDescription>
+                      Nuevas noticias sobre EliteSeller de la semana.
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {newsError ? (
+                    <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                      {newsError}
+                    </div>
+                  ) : null}
+
+                  {activeNews ? (
+                    <>
+                      <div className="overflow-hidden rounded-2xl shadow-md">
+                        <div className="relative h-40 w-full sm:h-48">
+                          <img
+                            src={activeNews.image ? activeNews.image : null}
+                            alt={activeNews.imageAlt}
+                            className="h-full w-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-base font-semibold">
+                          {activeNews.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {activeNews.description}
+                        </p>
+                        <a
+                          href={activeNews.href}
+                          className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
+                        >
+                          {activeNews.cta}
+                          <ArrowRight className="ml-1 h-4 w-4" />
+                        </a>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        {newsItems.map((item, index) => (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => setActiveSlide(index)}
+                            className={`h-2.5 w-2.5 rounded-full ${index === activeSlide
+                              ? "bg-primary"
+                              : "bg-muted-foreground/30"
+                              }`}
+                            aria-label={`Ir a la novedad ${item.title}`}
+                          />
+                        ))}
+                      </div>
+                    </>
                   ) : (
-                    <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                      Aun no hay actividad para graficar.
+                    <div className="text-sm text-muted-foreground">
+                      Esperando nuevas noticias!.
                     </div>
                   )}
-                </div>
-              </CardContent>
-              <CardFooter className="px-6 pb-6">
-                <ToggleGroup
-                  type="single"
-                  value={chartRange}
-                  onValueChange={(value) => value && setChartRange(value)}
-                  variant="outline"
-                  className="flex w-full flex-wrap"
-                >
-                  {CHART_RANGE_OPTIONS.map((option) => (
-                    <ToggleGroupItem
-                      key={option.id}
-                      value={option.id}
-                      className="h-9 flex-1 sm:flex-none sm:px-4"
-                    >
-                      {option.label}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </CardFooter>
-
-            </Card>
-
-            <Card className="flex h-full flex-col gap-4">
-              <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle className="mb-2">Novedades</CardTitle>
-                  <CardDescription>
-                    Nuevas noticias sobre EliteSeller de la semana.
-                  </CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {newsError ? (
-                  <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-                    {newsError}
-                  </div>
-                ) : null}
-
-                {activeNews ? (
-                  <>
-                    <div className="overflow-hidden rounded-2xl shadow-md">
-                      <div className="relative h-40 w-full sm:h-48">
-                        <img
-                          src={activeNews.image ? activeNews.image : null}
-                          alt={activeNews.imageAlt}
-                          className="h-full w-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-base font-semibold">
-                        {activeNews.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {activeNews.description}
-                      </p>
-                      <a
-                        href={activeNews.href}
-                        className="inline-flex items-center text-sm font-medium text-primary hover:text-primary/80"
-                      >
-                        {activeNews.cta}
-                        <ArrowRight className="ml-1 h-4 w-4" />
-                      </a>
-                    </div>
-                    <div className="flex items-center justify-center gap-2">
-                      {newsItems.map((item, index) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setActiveSlide(index)}
-                          className={`h-2.5 w-2.5 rounded-full ${index === activeSlide
-                            ? "bg-primary"
-                            : "bg-muted-foreground/30"
-                            }`}
-                          aria-label={`Ir a la novedad ${item.title}`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-sm text-muted-foreground">
-                    Esperando nuevas noticias!.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
+
         </div>
       </div>
     </div>
