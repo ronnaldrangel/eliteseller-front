@@ -62,11 +62,10 @@ export default async function TrialPlansPage() {
     return {
       title: plan.name,
       price: `${plan.price}$`,
+      trial_price: `${plan.trial_price}$`,
       priceClass: isPremium ? "text-4xl font-extrabold" : "text-3xl font-bold",
       perText: `al ${plan.billing_period}`,
-      beforePrice: plan.regular_price
-        ? `${plan.regular_price}$/${plan.billing_period}`
-        : "",
+      beforePrice: `${plan.price}$/${plan.billing_period}`,
       features: plan.features || [],
       planId: plan.plan_id,
       delay: `${index * 150}ms`,
@@ -79,6 +78,7 @@ export default async function TrialPlansPage() {
   const PlanCard = ({
     title,
     price,
+    trial_price,
     priceClass,
     perText,
     beforePrice,
@@ -106,13 +106,13 @@ export default async function TrialPlansPage() {
         <CardHeader>
           <CardTitle>{title}</CardTitle>
           <CardDescription>
-            <span className={`${priceClass} text-foreground`}>{price}</span>
-            {perText && <span className="ml-1">{perText}</span>}
+            <span className={`${priceClass} text-foreground`}>{trial_price}</span>
+            <span className="ml-1">por 7 dias</span>
           </CardDescription>
           {beforePrice && (
             <div className="mt-1 text-xs">
-              <span className="text-muted-foreground">Antes: </span>
-              <span className="line-through opacity-70">{beforePrice}</span>
+              <span className="text-muted-foreground">Despues </span>
+              <span className="opacity-70">{beforePrice}</span>
             </div>
           )}
         </CardHeader>
@@ -154,7 +154,7 @@ export default async function TrialPlansPage() {
           No hay planes de prueba disponibles en este momento.
         </div>
       ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
           {plans.map((p) => (
             <PlanCard key={p.title} {...p} />
           ))}

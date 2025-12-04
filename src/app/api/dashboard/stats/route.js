@@ -10,6 +10,7 @@ async function fetchCollectionCount(collection, token, chatbotDocumentId) {
   qs.set("pagination[pageSize]", "1");
   qs.set("pagination[withCount]", "true");
   qs.set("fields[0]", "id");
+  qs.set("populate", "false"); // Deshabilitar populate para mejor rendimiento
 
   if (chatbotDocumentId) {
     qs.set("filters[chatbot][documentId][$eq]", chatbotDocumentId);
@@ -61,10 +62,10 @@ async function fetchCollectionCount(collection, token, chatbotDocumentId) {
 async function fetchContactsSeries(token, chatbotDocumentId) {
   const buckets = new Map();
   const since = new Date();
-  since.setDate(since.getDate() - 120);
+  since.setDate(since.getDate() - 90); // Reducido de 120 a 90 días
   const sinceIso = since.toISOString();
 
-  const pageSize = 200;
+  const pageSize = 500; // Aumentado de 200 a 500 para menos peticiones
   let page = 1;
   let pageCount = 1;
 
@@ -74,6 +75,7 @@ async function fetchContactsSeries(token, chatbotDocumentId) {
     qs.set("pagination[pageSize]", String(pageSize));
     qs.set("sort", "createdAt:asc");
     qs.set("fields[0]", "createdAt");
+    qs.set("populate", "false"); // Deshabilitar populate para mejor rendimiento
     qs.set("filters[createdAt][$gte]", sinceIso);
     if (chatbotDocumentId) {
       qs.set("filters[chatbot][documentId][$eq]", chatbotDocumentId);
@@ -102,8 +104,8 @@ async function fetchContactsSeries(token, chatbotDocumentId) {
       const rows = Array.isArray(payload?.data)
         ? payload.data
         : Array.isArray(payload)
-        ? payload
-        : [];
+          ? payload
+          : [];
 
       rows.forEach((row) => {
         const createdAt =

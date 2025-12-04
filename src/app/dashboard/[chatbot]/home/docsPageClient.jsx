@@ -21,14 +21,15 @@ import {
   Minus,
   TrendingDown,
   TrendingUp,
-  X as CloseIcon,} from "lucide-react";
-  import {
-    Area,
-    AreaChart,
-    CartesianGrid,
-    XAxis,
-  } from "recharts";
-  import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+  X as CloseIcon,
+} from "lucide-react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  XAxis,
+} from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
 const STAT_ITEMS = [
   {
@@ -68,6 +69,10 @@ const INITIAL_STATS = {
   triggers: null,
   products: null,
 };
+
+// Caché en memoria con TTL de 5 minutos
+const statsCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 const CHART_RANGE_OPTIONS = [
   { id: "90d", label: "Hace 3 meses" },
@@ -144,6 +149,7 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState(null);
   const [chartRange, setChartRange] = useState("30d");
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   // Cerrado de la sección de bienvenida gaaaa
   const [showWelcome, setShowWelcome] = useState(true);
@@ -177,14 +183,29 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
     return () => clearInterval(interval);
   }, [newsItems.length]);
 
-  // Carga de stats (tu lógica)
+  // Carga de stats con caché
   useEffect(() => {
     const controller = new AbortController();
 
     async function loadStats() {
       setStatsLoading(true);
       setStatsError(null);
+      setLoadingProgress(10);
+
       try {
+        const cacheKey = `stats:${chatbotSegment || 'global'}`;
+        const cached = statsCache.get(cacheKey);
+
+        // Verificar si hay datos en caché válidos
+        if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+          setStatsData(cached.stats);
+          setContactSeries(cached.series);
+          setLoadingProgress(100);
+          setStatsLoading(false);
+          return;
+        }
+
+        setLoadingProgress(30);
         const qs = chatbotSegment
           ? `?chatbot=${encodeURIComponent(chatbotSegment)}`
           : "";
@@ -193,21 +214,32 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
           cache: "no-store",
         });
 
+        setLoadingProgress(70);
         const payload = await response.json();
         const stats = payload?.data?.stats || {};
         const series = Array.isArray(payload?.data?.contactSeries)
           ? payload.data.contactSeries
           : [];
 
-        setStatsData({
+        const statsResult = {
           contacts:
             typeof stats.contacts === "number" ? stats.contacts : null,
           triggers:
             typeof stats.triggers === "number" ? stats.triggers : null,
           products:
             typeof stats.products === "number" ? stats.products : null,
+        };
+
+        // Guardar en caché
+        statsCache.set(cacheKey, {
+          stats: statsResult,
+          series,
+          timestamp: Date.now(),
         });
+
+        setStatsData(statsResult);
         setContactSeries(series);
+        setLoadingProgress(100);
       } catch (error) {
         const isAbortError =
           error?.name === "AbortError" ||
@@ -222,7 +254,10 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
           setContactSeries([]);
         }
       } finally {
-        if (!controller.signal.aborted) setStatsLoading(false);
+        if (!controller.signal.aborted) {
+          setStatsLoading(false);
+          setLoadingProgress(0);
+        }
       }
     }
 
@@ -330,52 +365,76 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
                     {statsError}
                   </div>
                 ) : null}
-                {STAT_ITEMS.map((item) => {
-                  const rawValue = statsData[item.key];
-                  const displayValue =
-                    typeof rawValue === "number"
-                      ? rawValue.toLocaleString("es-ES")
-                      : "--";
-                  const trend = getTrendDescriptor(item, rawValue);
-                  const TrendIcon =
-                    trend.direction === "up"
-                      ? TrendingUp
-                      : trend.direction === "down"
-                        ? TrendingDown
-                        : Minus;
-                  return (
+                {statsLoading ? (
+                  // Skeleton loading state
+                  STAT_ITEMS.map((item) => (
                     <Card
                       key={item.key}
-                      data-slot="card"
-                      className="@container/card overflow-hidden rounded-3xl bg-gradient-to-t from-primary/5 via-card to-card dark:bg-card"
+                      className="@container/card overflow-hidden rounded-3xl bg-gradient-to-t from-primary/5 via-card to-card dark:bg-card animate-pulse"
                     >
                       <CardHeader className="relative">
                         <CardDescription className="text-sm font-medium">
                           {item.label}
                         </CardDescription>
-                        <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                          {displayValue}
-                        </CardTitle>
+                        <div className="h-8 w-20 bg-muted rounded mt-2"></div>
                         <div className="absolute right-4 top-4">
-                          <Badge
-                            variant="outline"
-                            className="flex gap-1 rounded-xl border-border/60 text-xs text-foreground"
-                          >
-                            <TrendIcon className="h-3 w-3" />
-                            {trend.deltaLabel}
-                          </Badge>
+                          <div className="h-6 w-16 bg-muted rounded-xl"></div>
                         </div>
                       </CardHeader>
                       <CardFooter className="flex-col items-start gap-1 text-sm">
-                        <div className="line-clamp-1 flex gap-2 font-medium">
-                          {trend.summary}
-                          <TrendIcon className="h-4 w-4" />
-                        </div>
-                        <div className="text-muted-foreground">{trend.context}</div>
+                        <div className="h-4 w-32 bg-muted rounded"></div>
+                        <div className="h-4 w-full bg-muted rounded"></div>
                       </CardFooter>
                     </Card>
-                  );
-                })}
+                  ))
+                ) : (
+                  STAT_ITEMS.map((item) => {
+                    const rawValue = statsData[item.key];
+                    const displayValue =
+                      typeof rawValue === "number"
+                        ? rawValue.toLocaleString("es-ES")
+                        : "--";
+                    const trend = getTrendDescriptor(item, rawValue);
+                    const TrendIcon =
+                      trend.direction === "up"
+                        ? TrendingUp
+                        : trend.direction === "down"
+                          ? TrendingDown
+                          : Minus;
+                    return (
+                      <Card
+                        key={item.key}
+                        data-slot="card"
+                        className="@container/card overflow-hidden rounded-3xl bg-gradient-to-t from-primary/5 via-card to-card dark:bg-card"
+                      >
+                        <CardHeader className="relative">
+                          <CardDescription className="text-sm font-medium">
+                            {item.label}
+                          </CardDescription>
+                          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
+                            {displayValue}
+                          </CardTitle>
+                          <div className="absolute right-4 top-4">
+                            <Badge
+                              variant="outline"
+                              className="flex gap-1 rounded-xl border-border/60 text-xs text-foreground"
+                            >
+                              <TrendIcon className="h-3 w-3" />
+                              {trend.deltaLabel}
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardFooter className="flex-col items-start gap-1 text-sm">
+                          <div className="line-clamp-1 flex gap-2 font-medium">
+                            {trend.summary}
+                            <TrendIcon className="h-4 w-4" />
+                          </div>
+                          <div className="text-muted-foreground">{trend.context}</div>
+                        </CardFooter>
+                      </Card>
+                    );
+                  })
+                )}
               </div>
 
               <Card className="@container/card overflow-hidden rounded-[2rem]">
@@ -516,8 +575,8 @@ export default function DocsPageClient({ initialNewsItems = [], newsError }) {
                           type="button"
                           onClick={() => setActiveSlide(index)}
                           className={`h-2.5 w-2.5 rounded-full ${index === activeSlide
-                              ? "bg-primary"
-                              : "bg-muted-foreground/30"
+                            ? "bg-primary"
+                            : "bg-muted-foreground/30"
                             }`}
                           aria-label={`Ir a la novedad ${item.title}`}
                         />
