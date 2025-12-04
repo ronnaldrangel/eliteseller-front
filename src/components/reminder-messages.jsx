@@ -290,7 +290,7 @@ function ReminderModal({
             if (Number.isFinite(ord) && id) existingByOrder[ord] = id;
           });
         }
-      } catch {}
+      } catch { }
 
       // Procesar cada item
       for (let i = 0; i < items.length; i++) {
@@ -473,7 +473,7 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, onEdit }) {
           {config.description}
         </p>
         {messageCount > 0 && (
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {messageCount} {messageCount === 1 ? "mensaje" : "mensajes"}{" "}
             configurado{messageCount === 1 ? "" : "s"}
           </p>
