@@ -92,6 +92,61 @@ export default function TriggerManagement({
     const prev = [...triggers];
     setTriggers((list) => list.filter((t) => t.id !== trigger.id));
 
+    // Intento de borrado en cascada: primero contenidos asociados, luego el disparador.
+    const deleteRelatedContents = async () => {
+      try {
+        const qs = new URLSearchParams();
+        qs.set("populate[trigger_contents][fields][0]", "documentId");
+        qs.set("populate[trigger_contents][fields][1]", "id");
+        qs.set(
+          "populate[trigger_contents][populate][messageMedia][fields][0]",
+          "id"
+        );
+
+        const detailsUrl = buildStrapiUrl(
+          `/api/triggers/${deleteId}?${qs.toString()}`
+        );
+        const detailRes = await fetch(detailsUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          cache: "no-store",
+        });
+
+        if (!detailRes.ok) return;
+        const payload = await detailRes.json().catch(() => ({}));
+        const raw = payload?.data || payload;
+        const contents =
+          raw?.attributes?.trigger_contents?.data ||
+          raw?.trigger_contents ||
+          [];
+
+        const contentIds = contents
+          .map((c) => c?.id || c?.documentId || c?.document_id)
+          .filter(Boolean);
+
+        if (!contentIds.length) return;
+
+        await Promise.allSettled(
+          contentIds.map((cid) =>
+            fetch(buildStrapiUrl(`/api/trigger-contents/${cid}`), {
+              method: "DELETE",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+            })
+          )
+        );
+      } catch (error) {
+        console.error("Error eliminando contenidos relacionados:", error);
+      }
+    };
+
+    await deleteRelatedContents();
+
     try {
       const res = await fetch(buildStrapiUrl(`/api/triggers/${deleteId}`), {
         method: "DELETE",
