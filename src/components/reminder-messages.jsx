@@ -378,10 +378,9 @@ function ReminderModal({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Icon className="h-5 w-5" />
-            Recordatorios {config.label}
+            Tiempos de Intervalo
           </DialogTitle>
-          <DialogDescription>{config.description}</DialogDescription>
+          <DialogDescription>Agregue múltiples tiempos para crear un sistema de remarketing escalonado</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
