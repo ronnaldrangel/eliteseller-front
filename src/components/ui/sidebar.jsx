@@ -3,6 +3,7 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react"
+import { Marquee } from "@/components/ui/marquee"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -49,6 +50,13 @@ function SidebarProvider({
   className,
   style,
   children,
+  topbarActive,
+  topbarItems,
+  topbarIconLight,
+  topbarIconDark,
+  topbarLogoLight,
+  topbarLogoDark,
+  topbarAnimated = true,
   ...props
 }) {
   const isMobile = useIsMobile()
@@ -107,6 +115,53 @@ function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={contextValue}>
+      {topbarActive ? (
+        <div className="fixed inset-x-0 top-0 z-50 border-b" style={{ background: "linear-gradient(90deg, rgb(62, 134, 198) 0%, rgb(166, 102, 170) 25%, rgb(236, 68, 146) 50%, rgb(238, 68, 84) 75%, rgb(240, 84, 39) 100%)" }}>
+          <div className="flex items-center gap-3 px-4 lg:px-6 h-14">
+            <span className="inline-flex items-center gap-2">
+              {topbarIconLight ? (
+                <img src={topbarIconLight} alt="Icon" className="h-5 w-5 dark:hidden" />
+              ) : null}
+              {topbarIconDark ? (
+                <img src={topbarIconDark} alt="Icon" className="h-5 w-5 hidden dark:block" />
+              ) : null}
+              {topbarLogoLight ? (
+                <img src={topbarLogoLight} alt="Logo" className="h-5 w-auto dark:hidden" />
+              ) : null}
+              {topbarLogoDark ? (
+                <img src={topbarLogoDark} alt="Logo" className="h-5 w-auto hidden dark:block" />
+              ) : null}
+            </span>
+            {topbarAnimated ? (
+              <Marquee pauseOnHover className="flex-1 min-w-0 [--duration:20s] [--gap:1.5rem]">
+                {Array.isArray(topbarItems) && topbarItems.length > 0
+                  ? topbarItems.map((t, i) => (
+                      <span key={`top-${i}`} className="text-sm font-medium text-white">
+                        {t}
+                      </span>
+                    ))
+                  : (
+                      <span className="text-sm font-medium text-foreground"></span>
+                    )}
+              </Marquee>
+            ) : (
+              <div className="flex-1 min-w-0 overflow-x-auto">
+                <div className="flex items-center gap-6">
+                  {Array.isArray(topbarItems) && topbarItems.length > 0
+                    ? topbarItems.map((t, i) => (
+                        <span key={`top-${i}`} className="text-sm font-medium text-foreground whitespace-nowrap">
+                          {t}
+                        </span>
+                      ))
+                    : (
+                        <span className="text-sm font-medium text-foreground whitespace-nowrap"></span>
+                      )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : null}
       <TooltipProvider delayDuration={0}>
         <div
           data-slot="sidebar-wrapper"
@@ -114,6 +169,7 @@ function SidebarProvider({
             {
               "--sidebar-width": SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
+              "--topbar-offset": topbarActive ? "3.5rem" : "0px",
               ...style
             }
           }
@@ -199,7 +255,7 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+          "fixed inset-y-0 z-10 hidden top-[var(--topbar-offset)] h-[calc(100svh-var(--topbar-offset))] w-(--sidebar-width) transition-[left,right,width,top] duration-200 ease-linear md:flex",
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -281,7 +337,7 @@ function SidebarInset({
     <main
       data-slot="sidebar-inset"
       className={cn(
-        "bg-background relative flex w-full flex-1 flex-col",
+        "bg-background relative flex w-full flex-1 flex-col pt-[var(--topbar-offset)]",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2",
         className
       )}

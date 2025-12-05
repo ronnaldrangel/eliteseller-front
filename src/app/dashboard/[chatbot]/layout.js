@@ -3,7 +3,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { auth } from "@/lib/auth"
 import { buildStrapiUrl } from "@/lib/strapi"
-import { Marquee } from "@/components/ui/marquee"
+ 
 
 export default  async function ChatbotLayout({ children, params })  {
   const { chatbot: chatbotSlug } = await params
@@ -51,37 +51,17 @@ export default  async function ChatbotLayout({ children, params })  {
   const toAbsUrl = (u) => (!u ? null : u.startsWith("http") ? u : buildStrapiUrl(u))
 
   return (
-    <SidebarProvider>
+    <SidebarProvider
+      topbarActive={!!config?.isActive}
+      topbarItems={Array.isArray(config?.topbarContent) ? config.topbarContent : []}
+      topbarIconLight={toAbsUrl(config?.icon_light)}
+      topbarIconDark={toAbsUrl(config?.icon_dark)}
+      topbarLogoLight={toAbsUrl(config?.logo_light)}
+      topbarLogoDark={toAbsUrl(config?.logo_dark)}
+    >
       <AppSidebar variant="inset" chatbotSlug={chatbotSlug} />
       <SidebarInset>
         <SiteHeader />
-        {config?.isActive ? (
-          <div className="border-b bg-muted/40 overflow-x-hidden">
-            <div className="flex items-center gap-3 px-4 lg:px-6 h-10">
-              <span className="inline-flex items-center gap-2">
-                {config.icon_light ? (
-                  <img src={toAbsUrl(config.icon_light)} alt="Icon" className="h-5 w-5 dark:hidden" />
-                ) : null}
-                {config.icon_dark ? (
-                  <img src={toAbsUrl(config.icon_dark)} alt="Icon" className="h-5 w-5 hidden dark:block" />
-                ) : null}
-                {config.logo_light ? (
-                  <img src={toAbsUrl(config.logo_light)} alt="Logo" className="h-5 w-auto dark:hidden" />
-                ) : null}
-                {config.logo_dark ? (
-                  <img src={toAbsUrl(config.logo_dark)} alt="Logo" className="h-5 w-auto hidden dark:block" />
-                ) : null}
-              </span>
-              <Marquee pauseOnHover className="flex-1 min-w-0 [--duration:20s] [--gap:1.5rem]">
-                {Array.isArray(config.topbarContent) && config.topbarContent.map((t, i) => (
-                  <span key={`top-${i}`} className="text-xs text-muted-foreground">
-                    {t}
-                  </span>
-                ))}
-              </Marquee>
-            </div>
-          </div>
-        ) : null}
         {children}
       </SidebarInset>
     </SidebarProvider>
