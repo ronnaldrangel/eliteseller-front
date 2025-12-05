@@ -31,6 +31,7 @@ import {
   XAxis,
 } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import Link from "next/link";
 
 const STAT_ITEMS = [
   {
@@ -474,8 +475,7 @@ export default function DocsPageClient({
                   <Card className="@container/card overflow-hidden rounded-3xl bg-gradient-to-t from-primary/5 via-card to-card dark:bg-card">
                     <CardHeader className="relative">
                       <CardDescription className="text-sm font-medium flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4 text-primary" />
-                        Mensajes restantes
+                        Tienes bateria para enviar
                       </CardDescription>
                       <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
                         {remainingMessages}
@@ -485,24 +485,21 @@ export default function DocsPageClient({
                           variant="outline"
                           className="flex gap-1 rounded-xl border-border/60 text-xs text-foreground"
                         >
-                          {batteryHref ? "Bater?a" : "Saldo"}
+                          {batteryHref ? "Mensajes" : "Saldo"}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardFooter className="flex-col items-start gap-1 text-sm">
-                      <div className="line-clamp-1 flex gap-2 font-medium">
-                        Disponible: {remainingMessages} mensajes
-                      </div>
-                      <div className="text-muted-foreground">
-                        Consumidos: {usedMessages === "--" ? "--" : `${usedMessages} msgs`}
+                      <div className="font-medium">
+                        Enviaste {usedMessages === "--" ? "--" : `${usedMessages} mensajes`}
                       </div>
                       {batteryHref ? (
-                        <a
+                        <Link
                           href={batteryHref}
                           className="text-sm font-medium text-primary hover:text-primary/80"
                         >
-                          Ver detalle
-                        </a>
+                          ¿Quieres aumentar tu limite? Clic aquí
+                        </Link>
                       ) : null}
                     </CardFooter>
                   </Card>
