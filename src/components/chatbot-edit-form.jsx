@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
-import { CheckCircle2Icon } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { CheckCircle2Icon, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }) {
@@ -47,39 +48,64 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
   const [banWordsList, setBanWordsList] = useState(initialBanWords)
   const [banWordInput, setBanWordInput] = useState("")
   const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
   const router = useRouter()
 
   const personalityTemplates = [
     {
       id: "ramoncito",
-      label: "Ramoncito",
-      description: "Directo y con urgencia para cerrar ventas",
-      value: "tono directo, urgencia alta, orientado a cerrar ventas rapido con llamadas a la accion claras",
+      label: "Amigable y Cercano",
+      description: "Tono casual y amistoso, ideal para comercio minorista",
+      value: "Amigable, cercano y conversacional. Uso moderado de emojis y lenguaje sencillo.",
+      style_sale: "Sugerente pero no insistente, enfocado en beneficios para el usuario.",
+      response_length: "Balance",
+      emoji: true,
+      signs: true,
     },
     {
       id: "miguel",
-      label: "Miguel",
-      description: "Configuracion actual",
-      value: base.style_communication ?? form.style_communication ?? "friendly, concise, and clear",
+      label: "Profesional",
+      description: "Tono formal y técnico para servicios B2B",
+      value: "Formal, preciso y técnico. Lenguaje profesional sin coloquialismos.",
+      style_sale: "Enfocado en datos, especificaciones y valor a largo plazo.",
+      response_length: "Detailed",
+      emoji: false,
+      signs: true,
     },
     {
       id: "daniel",
-      label: "Daniel",
-      description: "Formal y sin emotividad",
-      value: "tono robotico, formal y preciso, sin emotividad, respuestas secas y estructuradas",
+      label: "Consiso y directo",
+      description: "Respuestas breves y al punto",
+      value: "Directo y eficiente. Respuestas cortas sin información innecesaria.",
+      style_sale: "Presentación directa de características clave y precios.",
+      response_length: "Very concise",
+      emoji: false,
+      signs: false,
     },
     {
       id: "ronald",
-      label: "Ronald",
-      description: "Chill y relajado",
-      value: "tono chill, relajado y cercano, mensajes breves y tranquilos",
+      label: "Educativo",
+      description: "Explicativo y detallado para plataformas de aprendizaje",
+      value: "Explicativo, paciente y detallado. Uso de ejemplos y analogías.",
+      style_sale: "Enfocado en el valor educativo y beneficios de aprendizaje.",
+      response_length: "Very detailed",
+      emoji: false,
+      signs: true,
     },
   ]
 
   const applyTemplate = (template) => {
     if (!template) return
     setSelectedTemplate(template.id)
-    setForm((prev) => ({ ...prev, style_communication: template.value }))
+    setForm((prev) => ({
+      ...prev,
+      style_communication: template.value,
+      style_sale: template.style_sale,
+      response_length: template.response_length,
+      emoji: template.emoji,
+      signs: template.signs
+    }))
+    toast.success('Plantilla aplicada')
   }
 
   const handleChange = (e) => {
@@ -195,25 +221,47 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
       </div>
 
       <div className="rounded-xl border bg-card p-5 space-y-6">
-        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Personalidad</h4>
+        <div className="flex items-center justify-between">
+          <h4 className="text-lg font-semibold flex items-center gap-2">
+            <CheckCircle2Icon className="size-4 text-muted-foreground" />
+            Personalidad
+          </h4>
+          <Dialog open={isTemplatesModalOpen} onOpenChange={setIsTemplatesModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Sparkles className="size-4 mr-2" />
+                Plantillas
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Plantillas de personalidad</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-3 sm:grid-cols-2 mt-4">
+                {personalityTemplates.map((tpl) => (
+                  <Button
+                    key={tpl.id}
+                    type="button"
+                    variant={selectedTemplate === tpl.id ? "default" : "outline"}
+                    className="h-full justify-start text-center flex flex-col gap-1 p-4 whitespace-normal"
+                    onClick={() => {
+                      applyTemplate(tpl)
+                      setIsTemplatesModalOpen(false)
+                    }}
+                  >
+                    <span className={`font-semibold break-words ${selectedTemplate === tpl.id ? 'text-white' : ''}`}>
+                      {tpl.label}
+                    </span>
+                    <span className={`text-xs break-words text-center ${selectedTemplate === tpl.id ? 'text-white' : 'text-muted-foreground'}`}>
+                      {tpl.description}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
         <div className="grid gap-6 sm:grid-cols-2">
-          <div className="sm:col-span-2 space-y-3">
-            <div className="text-sm font-medium">Plantillas de personalidad</div>
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {personalityTemplates.map((tpl) => (
-                <Button
-                  key={tpl.id}
-                  type="button"
-                  variant={selectedTemplate === tpl.id ? "default" : "outline"}
-                  className="h-full justify-start text-left flex flex-col gap-1"
-                  onClick={() => applyTemplate(tpl)}
-                >
-                  <span className={`font-semibold text-sm ${selectedTemplate === tpl.id ? 'text-white' : ''}`}>{tpl.label}</span>
-                  <span className={`text-xs ${selectedTemplate === tpl.id ? 'text-white' : 'text-muted-foreground'}`}>{tpl.description}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
           <Field>
             <FieldLabel htmlFor="style_communication">Estilo de comunicación</FieldLabel>
             <Textarea id="style_communication" name="style_communication" value={form.style_communication} onChange={handleChange} rows={3} placeholder="friendly, concise, and clear" />
