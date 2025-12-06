@@ -21,7 +21,7 @@ const AuthLayout = ({ children }) => {
   };
 
   return (
-    <div className="h-screen bg-background">
+    <div className="h-screen bg-background pt-[var(--topbar-offset)]">
       {/* Selectores de tema e idioma en la esquina superior derecha */}
 
       {/* <div className="absolute top-4 right-4 z-10 flex items-center gap-2">

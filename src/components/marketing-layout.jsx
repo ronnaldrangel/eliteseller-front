@@ -4,7 +4,7 @@ import SelectUserAvatarMenu from "@/components/select-user-avatar-menu"
 
 export default function MarketingLayout({ children }) {
   return (
-    <div className="min-h-screen w-full">
+    <div className="min-h-screen w-full pt-[var(--topbar-offset)]">
       <div className="mx-auto max-w-6xl px-4 lg:px-6 py-8">
         <div className="flex items-center justify-between">
           <div>

@@ -3,7 +3,6 @@ import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react"
-import { Marquee } from "@/components/ui/marquee"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
@@ -50,13 +49,6 @@ function SidebarProvider({
   className,
   style,
   children,
-  topbarActive,
-  topbarItems,
-  topbarIconLight,
-  topbarIconDark,
-  topbarLogoLight,
-  topbarLogoDark,
-  topbarAnimated = true,
   ...props
 }) {
   const isMobile = useIsMobile()
@@ -115,53 +107,6 @@ function SidebarProvider({
 
   return (
     <SidebarContext.Provider value={contextValue}>
-      {topbarActive ? (
-        <div className="fixed inset-x-0 top-0 z-50 border-b" style={{ background: "linear-gradient(90deg, rgb(62, 134, 198) 0%, rgb(166, 102, 170) 25%, rgb(236, 68, 146) 50%, rgb(238, 68, 84) 75%, rgb(240, 84, 39) 100%)" }}>
-          <div className="flex items-center gap-3 px-4 lg:px-6 h-14">
-            <span className="inline-flex items-center gap-2">
-              {topbarIconLight ? (
-                <img src={topbarIconLight} alt="Icon" className="h-5 w-5 dark:hidden" />
-              ) : null}
-              {topbarIconDark ? (
-                <img src={topbarIconDark} alt="Icon" className="h-5 w-5 hidden dark:block" />
-              ) : null}
-              {topbarLogoLight ? (
-                <img src={topbarLogoLight} alt="Logo" className="h-5 w-auto dark:hidden" />
-              ) : null}
-              {topbarLogoDark ? (
-                <img src={topbarLogoDark} alt="Logo" className="h-5 w-auto hidden dark:block" />
-              ) : null}
-            </span>
-            {topbarAnimated ? (
-              <Marquee pauseOnHover className="flex-1 min-w-0 [--duration:20s] [--gap:1.5rem]">
-                {Array.isArray(topbarItems) && topbarItems.length > 0
-                  ? topbarItems.map((t, i) => (
-                      <span key={`top-${i}`} className="text-sm font-medium text-white">
-                        {t}
-                      </span>
-                    ))
-                  : (
-                      <span className="text-sm font-medium text-foreground"></span>
-                    )}
-              </Marquee>
-            ) : (
-              <div className="flex-1 min-w-0 overflow-x-auto">
-                <div className="flex items-center gap-6">
-                  {Array.isArray(topbarItems) && topbarItems.length > 0
-                    ? topbarItems.map((t, i) => (
-                        <span key={`top-${i}`} className="text-sm font-medium text-foreground whitespace-nowrap">
-                          {t}
-                        </span>
-                      ))
-                    : (
-                        <span className="text-sm font-medium text-foreground whitespace-nowrap"></span>
-                      )}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : null}
       <TooltipProvider delayDuration={0}>
         <div
           data-slot="sidebar-wrapper"
@@ -169,7 +114,6 @@ function SidebarProvider({
             {
               "--sidebar-width": SIDEBAR_WIDTH,
               "--sidebar-width-icon": SIDEBAR_WIDTH_ICON,
-              "--topbar-offset": topbarActive ? "3.5rem" : "0px",
               ...style
             }
           }
@@ -594,7 +538,7 @@ function SidebarMenuAction({
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[collapsible=icon]:hidden",
         showOnHover &&
-          "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
+        "peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0",
         className
       )}
       {...props} />
