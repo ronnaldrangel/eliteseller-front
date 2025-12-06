@@ -41,10 +41,11 @@ const AuthLayout = ({ children }) => {
       {/* Content */}
       <div className="relative z-10 grid min-h-[calc(100vh-var(--topbar-offset))] grid-cols-1 md:grid-cols-2 w-full">
         {/* Left Side - Login Form */}
-        <div className="flex items-center justify-center p-8">
+        <div className="flex items-center justify-center p-4">
           <Card className="w-full max-w-md border-border/50 bg-background">
-            <CardContent className="pt-6">
-              <div className="mb-6 flex justify-center">
+            <CardContent className="pt-4">
+
+              {/* <div className="mb-6 flex justify-center">
                 <Link href="https://eliteseller.app/" className="block">
                   {mounted ? (
                     <Image
@@ -63,7 +64,8 @@ const AuthLayout = ({ children }) => {
                     <div className="h-10 w-36 bg-muted rounded animate-pulse"></div>
                   )}
                 </Link>
-              </div>
+              </div> */}
+
               <main>{children}</main>
             </CardContent>
           </Card>
