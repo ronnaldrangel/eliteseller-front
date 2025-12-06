@@ -70,7 +70,7 @@ const AuthLayout = ({ children }) => {
         </div>
 
         {/* Right Side - Image Content */}
-        <div className="flex items-center justify-center p-8">
+        <div className="hidden md:flex items-center justify-center p-8">
           <Card className="w-full max-w-xl border-none bg-transparent shadow-none">
             <CardContent className="p-0 flex justify-center">
               <Image
