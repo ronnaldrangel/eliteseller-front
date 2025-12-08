@@ -19,8 +19,6 @@ export function ContactsClientTable({ columns, data }) {
   const [saleStatus, setSaleStatus] = useState("all");
   const [hotness, setHotness] = useState("all");
   const [fbAds, setFbAds] = useState("all");
-   const [dateFrom, setDateFrom] = useState("");
-   const [dateTo, setDateTo] = useState("");
 
   const hotnessOptions = useMemo(() => {
     const unique = new Set();
@@ -76,7 +74,7 @@ export function ContactsClientTable({ columns, data }) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto]">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_1fr_auto]">
           <div className="space-y-2 sm:col-span-2 lg:col-span-1">
             <Label htmlFor="contact-search">Buscar contactos</Label>
             <div className="relative">
@@ -138,28 +136,6 @@ export function ContactsClientTable({ columns, data }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="date-from">Fecha desde</Label>
-            <Input
-              id="date-from"
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="h-10"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="date-to">Fecha hasta</Label>
-            <Input
-              id="date-to"
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="h-10"
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="fbads-filter">ID de FB Ads</Label>
             <Select
               value={fbAds}
@@ -197,8 +173,6 @@ export function ContactsClientTable({ columns, data }) {
         saleStatusFilter={saleStatus}
         hotnessFilter={hotness}
         fbAdsFilter={fbAds}
-        dateFrom={dateFrom}
-        dateTo={dateTo}
       />
     </div>
   );
