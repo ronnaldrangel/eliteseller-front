@@ -75,6 +75,7 @@ export const normalizeTriggerEntry = (entry) => {
     id: entityId ? String(entityId) : documentId ? String(documentId) : String(key),
     documentId: documentId ? String(documentId) : null,
     name: attributes.name ?? "",
+    contexto: attributes.contexto ?? "",
     keywords: keywordsValue,
     keywords_ai: attributes.keywords_ai ?? "",
     available: attributes.available ?? false,

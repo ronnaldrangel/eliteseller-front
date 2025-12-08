@@ -38,6 +38,7 @@ const normalizeTrigger = (entry) => {
     id: String(entry.documentId ?? entry.id ?? randomId()),
     documentId: entry.documentId ? String(entry.documentId) : null,
     name: entry.name ?? "",
+    contexto: entry.contexto ?? "",
     keywords: entry.keywords ?? "",
     keywords_ai: entry.keywords_ai ?? "",
     available: entry.available ?? false,

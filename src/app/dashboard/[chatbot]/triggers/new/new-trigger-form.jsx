@@ -97,6 +97,7 @@ export default function NewTriggerForm({
   const [form, setForm] = useState({
     name: initialTrigger?.name ?? "",
     keywords_ai: initialTrigger?.keywords_ai ?? "",
+    contexto: initialTrigger?.contexto ?? "",
     available: initialTrigger?.available ?? true,
   });
 
@@ -332,6 +333,7 @@ export default function NewTriggerForm({
             name: form.name.trim(),
             keywords: joined,
             // keywords_ai: joinedAi,
+            contexto: form.contexto?.trim() || "",
             available: Boolean(form.available),
           },
         };
@@ -468,6 +470,7 @@ export default function NewTriggerForm({
             name: form.name.trim(),
             keywords: joined,
             // keywords_ai: joinedAi,
+            contexto: form.contexto?.trim() || "",
             available: Boolean(form.available),
           },
         };
@@ -1078,6 +1081,32 @@ export default function NewTriggerForm({
                         disparador.
                       </FieldDescription>
                       <FieldError>{errors.name}</FieldError>
+                    </FieldContent>
+                  </Field>
+                </FieldGroup>
+
+                <FieldGroup className="gap-6">
+                  <Field data-invalid={errors.contexto ? true : undefined}>
+                    <FieldLabel htmlFor="trigger-contexto">
+                      Contexto para la IA
+                    </FieldLabel>
+                    <FieldContent>
+                      <Textarea
+                        id="trigger-contexto"
+                        placeholder="Describe el contexto que la IA debe considerar al responder"
+                        rows={4}
+                        value={form.contexto}
+                        onChange={(event) =>
+                          setForm((previous) => ({
+                            ...previous,
+                            contexto: event.target.value,
+                          }))
+                        }
+                      />
+                      <FieldDescription>
+                        Texto opcional que se enviara a la IA para mejorar las respuestas de este disparador.
+                      </FieldDescription>
+                      <FieldError>{errors.contexto}</FieldError>
                     </FieldContent>
                   </Field>
                 </FieldGroup>

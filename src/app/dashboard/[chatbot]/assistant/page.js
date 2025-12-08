@@ -11,6 +11,7 @@ import ChatbotPayments from "@/components/chatbot-payments";
 import ChatbotFaqs from "@/components/chatbot-faqs";
 import ChatbotAdvancedSettings from "@/components/chatbot-advanced-settings";
 import ChatbotReviews from "@/components/chatbot-reviews";
+import RagPageClient from "../rag/rag-page-client";
 
 export default async function AppsPage({ params }) {
   const session = await auth();
@@ -42,7 +43,7 @@ export default async function AppsPage({ params }) {
     const url = buildStrapiUrl(
       `/api/chatbots/${encodeURIComponent(
         chatbot.slug
-      )}?populate[faqs]=true&populate[payments]=true&populate[reviews][populate]=images`
+      )}?populate[faqs]=true&populate[payments]=true&populate[reviews][populate]=images&populate[rag][fields][0]=url&populate[rag][fields][1]=name&populate[rag][fields][2]=mime&populate[rag][fields][3]=createdAt`
     );
     const res = await fetch(url, {
       method: "GET",
@@ -84,6 +85,21 @@ export default async function AppsPage({ params }) {
     : Array.isArray(attrs?.faqs)
       ? attrs.faqs
       : [];
+  const ragItems = Array.isArray(attrs?.rag?.data)
+    ? attrs.rag.data
+    : Array.isArray(attrs?.rag)
+      ? attrs.rag
+      : [];
+  const ragFiles = ragItems.map((m) => {
+    const a = m.attributes || m || {};
+    return {
+      id: m.id || a.id,
+      name: a.name || `archivo-${m.id || a.id}`,
+      url: a.url || null,
+      mime: a.mime || null,
+      createdAt: a.createdAt || null,
+    };
+  });
   const reviewsItems = Array.isArray(attrs?.reviews?.data)
     ? attrs.reviews.data
     : Array.isArray(attrs?.reviews)
@@ -98,6 +114,8 @@ export default async function AppsPage({ params }) {
   const chatbotSlugForUpdate =
     chatbots[0]?.slug || chatbot.slug || chatbot.documentId;
   const chatbotIdForUpdate = chatbots[0]?.documentId || documentId;
+  const chatbotDocumentIdForUpdate =
+    chatbots[0]?.documentId || attrs?.documentId || documentId;
 
   return (
     <div className="flex flex-1 flex-col">
@@ -115,10 +133,11 @@ export default async function AppsPage({ params }) {
 
         <div className="px-4 lg:px-6 w-full max-w-7xl mx-auto">
           <Tabs defaultValue="todo" className="w-full">
-            <TabsList className="w-full inline-flex sm:grid sm:grid-cols-4 overflow-x-auto">
+            <TabsList className="w-full inline-flex sm:grid sm:grid-cols-5 overflow-x-auto">
               <TabsTrigger value="todo" className="flex-1 sm:flex-none whitespace-nowrap">Personalidad</TabsTrigger>
               <TabsTrigger value="faqs" className="flex-1 sm:flex-none whitespace-nowrap">Conocimiento</TabsTrigger>
               <TabsTrigger value="pagos" className="flex-1 sm:flex-none whitespace-nowrap">Pagos</TabsTrigger>
+              <TabsTrigger value="rag" className="flex-1 sm:flex-none whitespace-nowrap">RAG</TabsTrigger>
               <TabsTrigger value="avanzado" className="flex-1 sm:flex-none whitespace-nowrap">Avanzado</TabsTrigger>
             </TabsList>
 
@@ -206,6 +225,16 @@ export default async function AppsPage({ params }) {
                   items={paymentsItems}
                   token={session.strapiToken}
                   chatbotId={chatbots[0]?.documentId || documentId}
+                />
+              </TabsContent>
+              <TabsContent value="rag" forceMount>
+                <RagPageClient
+                  chatbotSlug={chatbot.slug}
+                  chatbotId={chatbots[0]?.id || chatbots[0]?.documentId || documentId}
+                  chatbotDocumentId={chatbotDocumentIdForUpdate}
+                  token={session.strapiToken}
+                  existingFiles={ragFiles}
+                  loadError={error}
                 />
               </TabsContent>
               <TabsContent value="avanzado" forceMount>
