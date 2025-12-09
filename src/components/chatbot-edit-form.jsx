@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { buildStrapiUrl } from "@/lib/strapi"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -9,10 +10,19 @@ import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
-import { CheckCircle2Icon } from "lucide-react"
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { CheckCircle2Icon, Sparkles } from "lucide-react"
+import { toast } from "sonner"
 
-export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) {
+export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }) {
   const base = initialData?.attributes || initialData || {}
+  const initialBanWords = Array.isArray(base.ban_words)
+    ? base.ban_words.map((w) => (typeof w === "string" ? w.trim() : "")).filter(Boolean)
+    : String(base.ban_words || "")
+      .split(/[,;\n]/)
+      .map((w) => w.trim())
+      .filter(Boolean)
 
   const [form, setForm] = useState({
     chatbot_name: base.chatbot_name ?? "EliteSellet",
@@ -24,7 +34,6 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
     target: base.target ?? "broad consumer audience",
     emoji: typeof base.emoji === 'boolean' ? base.emoji : !!base.emoji,
     signs: typeof base.signs === 'boolean' ? base.signs : !!base.signs,
-    ban_words: base.ban_words ?? "",
     available_emojis: base.available_emojis ?? "",
     style_sale: base.style_sale ?? "consultative",
     style_communication: base.style_communication ?? "friendly, concise, and clear",
@@ -32,11 +41,72 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
     welcome_message: base.welcome_message ?? "",
     confirmation_message: base.confirmation_message ?? "",
     human_derivation_message: base.human_derivation_message ?? "",
+    catalog_message: base.catalog_message ?? "",
   })
 
   const [status, setStatus] = useState({ loading: false, type: null, message: null })
+  const [banWordsList, setBanWordsList] = useState(initialBanWords)
+  const [banWordInput, setBanWordInput] = useState("")
+  const [selectedTemplate, setSelectedTemplate] = useState(null)
+  const [isTemplatesModalOpen, setIsTemplatesModalOpen] = useState(false)
+  const router = useRouter()
 
+  const personalityTemplates = [
+    {
+      id: "ramoncito",
+      label: "Amigable y Cercano",
+      description: "Tono casual y amistoso, ideal para comercio minorista",
+      value: "Amigable, cercano y conversacional. Uso moderado de emojis y lenguaje sencillo.",
+      style_sale: "Sugerente pero no insistente, enfocado en beneficios para el usuario.",
+      response_length: "Balance",
+      emoji: true,
+      signs: true,
+    },
+    {
+      id: "miguel",
+      label: "Profesional",
+      description: "Tono formal y técnico para servicios B2B",
+      value: "Formal, preciso y técnico. Lenguaje profesional sin coloquialismos.",
+      style_sale: "Enfocado en datos, especificaciones y valor a largo plazo.",
+      response_length: "Detailed",
+      emoji: false,
+      signs: true,
+    },
+    {
+      id: "daniel",
+      label: "Consiso y directo",
+      description: "Respuestas breves y al punto",
+      value: "Directo y eficiente. Respuestas cortas sin información innecesaria.",
+      style_sale: "Presentación directa de características clave y precios.",
+      response_length: "Very concise",
+      emoji: false,
+      signs: false,
+    },
+    {
+      id: "ronald",
+      label: "Educativo",
+      description: "Explicativo y detallado para plataformas de aprendizaje",
+      value: "Explicativo, paciente y detallado. Uso de ejemplos y analogías.",
+      style_sale: "Enfocado en el valor educativo y beneficios de aprendizaje.",
+      response_length: "Very detailed",
+      emoji: false,
+      signs: true,
+    },
+  ]
 
+  const applyTemplate = (template) => {
+    if (!template) return
+    setSelectedTemplate(template.id)
+    setForm((prev) => ({
+      ...prev,
+      style_communication: template.value,
+      style_sale: template.style_sale,
+      response_length: template.response_length,
+      emoji: template.emoji,
+      signs: template.signs
+    }))
+    toast.success('Plantilla aplicada')
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -60,11 +130,11 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
         ...form,
         emoji: !!form.emoji,
         signs: !!form.signs,
-        ban_words: form.ban_words === "" ? null : form.ban_words,
+        ban_words: banWordsList.length === 0 ? null : banWordsList,
         available_emojis: form.available_emojis === "" ? null : form.available_emojis,
       }
 
-      const res = await fetch(buildStrapiUrl(`/api/chatbots/${chatbotId}`), {
+      const res = await fetch(buildStrapiUrl(`/api/chatbots/${chatbotSlug}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -77,20 +147,24 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
 
       if (!res.ok) {
         const msg = body?.error?.message || 'No se pudo actualizar el chatbot'
-        setStatus({ loading: false, type: 'error', message: msg })
+        setStatus({ loading: false, type: null, message: null })
+        toast.error(msg)
       } else {
-        setStatus({ loading: false, type: 'success', message: 'Guardado correctamente' })
+        setStatus({ loading: false, type: null, message: null })
+        toast.success('Guardado correctamente')
+        router.refresh()
       }
     } catch (err) {
-      setStatus({ loading: false, type: 'error', message: 'Error de red al actualizar' })
+      setStatus({ loading: false, type: null, message: null })
+      toast.error('Error de red al actualizar')
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-8">
+      <div className="rounded-xl border bg-card p-5 space-y-6">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Información básica</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="chatbot_name">Nombre del chatbot</FieldLabel>
             <Input id="chatbot_name" name="chatbot_name" value={form.chatbot_name} onChange={handleChange} />
@@ -101,30 +175,30 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
           </Field>
           <Field>
             <FieldLabel htmlFor="gender">Género</FieldLabel>
-            <Select value={form.gender || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))}>
-              <SelectTrigger id="gender" className="w-full">
-                <SelectValue placeholder="Selecciona género" />
+            <ToggleGroup
+              type="single"
+              value={form.gender || ""}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))}
+              className="w-full grid grid-cols-1 md:inline-flex md:w-fit md:overflow-hidden md:rounded-md md:border md:p-0"
+              variant="outline">
+              <ToggleGroupItem value="male" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">Masculino</ToggleGroupItem>
+              <ToggleGroupItem value="female" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">Femenino</ToggleGroupItem>
+              <ToggleGroupItem value="neutral" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">No especificado</ToggleGroupItem>
+            </ToggleGroup>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="country">País</FieldLabel>
+            <Select value={form.country || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, country: value }))}>
+              <SelectTrigger id="country" className="w-full">
+                <SelectValue placeholder="Selecciona país" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="male">Masculino</SelectItem>
-                <SelectItem value="female">Femenino</SelectItem>
-                <SelectItem value="neutral">Neutral</SelectItem>
+                <SelectItem value="Peru">Perú</SelectItem>
+                <SelectItem value="Mexico">México</SelectItem>
+                <SelectItem value="Colombia">Colombia</SelectItem>
               </SelectContent>
             </Select>
           </Field>
-          <Field>
-             <FieldLabel htmlFor="country">País</FieldLabel>
-             <Select value={form.country || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, country: value }))}>
-               <SelectTrigger id="country" className="w-full">
-                 <SelectValue placeholder="Selecciona país" />
-               </SelectTrigger>
-               <SelectContent>
-                 <SelectItem value="Peru">Perú</SelectItem>
-                 <SelectItem value="Mexico">México</SelectItem>
-                 <SelectItem value="Colombia">Colombia</SelectItem>
-               </SelectContent>
-             </Select>
-           </Field>
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="company_description">Descripción de la empresa</FieldLabel>
             <Textarea id="company_description" name="company_description" value={form.company_description} onChange={handleChange} rows={3} />
@@ -132,52 +206,154 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
         </div>
       </div>
 
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
-        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Personalidad</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+      <div className="rounded-xl border bg-card p-5 space-y-6">
+        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Audiencia e instrucciones</h4>
+        <div className="grid gap-6 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="target">Público objetivo</FieldLabel>
+            <Input id="target" name="target" value={form.target} onChange={handleChange} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="instructions">Instrucciones</FieldLabel>
+            <Input id="instructions" name="instructions" value={form.instructions} onChange={handleChange} />
+          </Field>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-card p-5 space-y-6">
+        <div className="flex items-center justify-between">
+          <h4 className="text-lg font-semibold flex items-center gap-2">
+            <CheckCircle2Icon className="size-4 text-muted-foreground" />
+            Personalidad
+          </h4>
+          <Dialog open={isTemplatesModalOpen} onOpenChange={setIsTemplatesModalOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Sparkles className="size-4 mr-2" />
+                Plantillas
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
+              <DialogHeader>
+                <DialogTitle>Plantillas de personalidad</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-3 sm:grid-cols-2 mt-4">
+                {personalityTemplates.map((tpl) => (
+                  <Button
+                    key={tpl.id}
+                    type="button"
+                    variant={selectedTemplate === tpl.id ? "default" : "outline"}
+                    className="h-full justify-start text-center flex flex-col gap-1 p-4 whitespace-normal"
+                    onClick={() => {
+                      applyTemplate(tpl)
+                      setIsTemplatesModalOpen(false)
+                    }}
+                  >
+                    <span className={`font-semibold break-words ${selectedTemplate === tpl.id ? 'text-white' : ''}`}>
+                      {tpl.label}
+                    </span>
+                    <span className={`text-xs break-words text-center ${selectedTemplate === tpl.id ? 'text-white' : 'text-muted-foreground'}`}>
+                      {tpl.description}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+        <div className="grid gap-6 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="style_communication">Estilo de comunicación</FieldLabel>
             <Textarea id="style_communication" name="style_communication" value={form.style_communication} onChange={handleChange} rows={3} placeholder="friendly, concise, and clear" />
           </Field>
           <Field>
             <FieldLabel htmlFor="style_sale">Estilo de venta</FieldLabel>
-            <Input id="style_sale" name="style_sale" value={form.style_sale} onChange={handleChange} placeholder="consultative" />
+            <Textarea id="style_sale" name="style_sale" value={form.style_sale} onChange={handleChange} placeholder="consultative" />
           </Field>
 
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="response_length">Longitud de respuesta</FieldLabel>
-            <Select value={form.response_length || undefined} onValueChange={(value) => setForm((prev) => ({ ...prev, response_length: value }))}>
-              <SelectTrigger id="response_length" className="w-full">
-                <SelectValue placeholder="Selecciona longitud" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Very concise">Very concise</SelectItem>
-                <SelectItem value="Concise">Concise</SelectItem>
-                <SelectItem value="Balance">Balance</SelectItem>
-                <SelectItem value="Detailed">Detailed</SelectItem>
-                <SelectItem value="Very detailed">Very detailed</SelectItem>
-              </SelectContent>
-            </Select>
+            <ToggleGroup
+              type="single"
+              value={form.response_length || "Balance"}
+              onValueChange={(value) => setForm((prev) => ({ ...prev, response_length: value }))}
+              className="w-full grid grid-cols-1 gap-2 md:gap-0 md:inline-flex md:w-fit md:overflow-hidden md:rounded-md md:border md:p-0"
+              variant="outline"
+            >
+              <ToggleGroupItem value="Very concise" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Muy concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Concise" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Concisa</ToggleGroupItem>
+              <ToggleGroupItem value="Balance" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Balanceada</ToggleGroupItem>
+              <ToggleGroupItem value="Detailed" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Detallada</ToggleGroupItem>
+              <ToggleGroupItem value="Very detailed" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md text-xs sm:text-sm">Muy detallada</ToggleGroupItem>
+            </ToggleGroup>
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="emoji">Usar emojis</FieldLabel>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 rounded-full border bg-muted/30 px-4 py-2">
               <Switch id="emoji" checked={form.emoji} onCheckedChange={handleToggleEmoji} />
-              <span className="text-sm text-muted-foreground">Activa o desactiva el uso de emojis</span>
+              <span className="text-sm">¿Usar emojis?</span>
             </div>
           </Field>
           <Field>
-            <FieldLabel htmlFor="signs">Usar signos</FieldLabel>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3 rounded-full border bg-muted/30 px-4 py-2">
               <Switch id="signs" checked={form.signs} onCheckedChange={handleToggleSigns} />
-              <span className="text-sm text-muted-foreground">Activa o desactiva signos</span>
+              <span className="text-sm">¿Usar signos?</span>
             </div>
           </Field>
 
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="ban_words">Palabras prohibidas</FieldLabel>
-            <Textarea id="ban_words" name="ban_words" value={form.ban_words} onChange={handleChange} rows={3} placeholder="ej. estafa, gratis" />
+            <div>
+              <div className="flex flex-wrap gap-2">
+                {banWordsList.map((word, index) => (
+                  <span
+                    key={`${word}-${index}`}
+                    className="inline-flex items-center rounded-md border border-muted-foreground/20 bg-muted/20 px-2 py-1 text-xs"
+                  >
+                    {word}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setBanWordsList((prev) => prev.filter((_, i) => i !== index))
+                      }
+                      className="ml-2 rounded p-0.5 text-muted-foreground hover:bg-muted/40"
+                      aria-label={`Quitar palabra ${word}`}
+                    >
+                      x
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <Input
+                id="ban_words"
+                placeholder="Escribe una palabra y presiona enter"
+                value={banWordInput}
+                onChange={(e) => setBanWordInput(e.target.value)}
+                onBlur={() => {
+                  const next = banWordInput.trim()
+                  if (next) {
+                    setBanWordsList((prev) => (prev.includes(next) ? prev : [...prev, next]))
+                    setBanWordInput("")
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    const next = banWordInput.trim()
+                    if (next) {
+                      setBanWordsList((prev) => (prev.includes(next) ? prev : [...prev, next]))
+                      setBanWordInput("")
+                    }
+                  } else if (e.key === "Backspace" && banWordInput.length === 0) {
+                    setBanWordsList((prev) => prev.slice(0, -1))
+                  }
+                }}
+                className="mt-2"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                Se guardan al presionar Enter o al salir del campo.
+              </p>
+            </div>
           </Field>
           <Field className="sm:col-span-2">
             <FieldLabel htmlFor="available_emojis">Emojis disponibles</FieldLabel>
@@ -191,23 +367,9 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
         </div>
       </div>
 
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
-        <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Audiencia e instrucciones</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="target">Público objetivo</FieldLabel>
-            <Input id="target" name="target" value={form.target} onChange={handleChange} />
-          </Field>
-          <Field>
-             <FieldLabel htmlFor="instructions">Instrucciones</FieldLabel>
-             <Input id="instructions" name="instructions" value={form.instructions} onChange={handleChange} />
-           </Field>
-        </div>
-      </div>
-
-      <div className="rounded-lg border bg-muted/10 p-4 space-y-4">
+      <div className="rounded-xl border bg-card p-5 space-y-6">
         <h4 className="text-lg font-semibold flex items-center gap-2"><CheckCircle2Icon className="size-4 text-muted-foreground" /> Mensajes</h4>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="welcome_message">Mensaje de bienvenida</FieldLabel>
             <Textarea id="welcome_message" name="welcome_message" value={form.welcome_message} onChange={handleChange} rows={3} />
@@ -220,18 +382,17 @@ export default function ChatbotEditForm({ initialData = {}, chatbotId, token }) 
             <FieldLabel htmlFor="human_derivation_message">Mensaje de derivación a humano</FieldLabel>
             <Textarea id="human_derivation_message" name="human_derivation_message" value={form.human_derivation_message} onChange={handleChange} rows={3} />
           </Field>
+          <Field className="sm:col-span-2">
+            <FieldLabel htmlFor="catalog_message">Mensaje del catálogo</FieldLabel>
+            <Textarea id="catalog_message" name="catalog_message" value={form.catalog_message} onChange={handleChange} rows={4} />
+          </Field>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button type="submit" disabled={status.loading}>
+      <div className="flex w-full items-center gap-3 mb-6">
+        <Button type="submit" className="w-full" disabled={status.loading}>
           {status.loading ? 'Guardando…' : 'Guardar cambios'}
         </Button>
-        {status.type && (
-          <span className={status.type === 'success' ? 'text-green-600 text-sm' : 'text-red-600 text-sm'}>
-            {status.message}
-          </span>
-        )}
       </div>
     </form>
   )

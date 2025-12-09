@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import AuthLayout from "../../../components/AuthLayout"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,15 @@ export default function ForgotPasswordPage() {
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [tsToken, setTsToken] = useState("")
+  const [tsBound, setTsBound] = useState(null)
+
+  useEffect(() => {
+    if (!isLoading) {
+      tsBound?.reset?.()
+      tsBound?.execute?.()
+      setTsToken("")
+    }
+  }, [isLoading, tsBound])
 
   const validateForm = () => {
     if (!email) {
@@ -35,6 +44,7 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isLoading) return
     
     if (!validateForm()) return
 
@@ -123,14 +133,22 @@ export default function ForgotPasswordPage() {
               <Field>
                 <Turnstile
                   sitekey={SITE_KEY}
-                  onVerify={(token) => setTsToken(token)}
+                  refreshExpired="auto"
+                  retry="auto"
+                  responseField={false}
+                  onLoad={(widgetId, bound) => setTsBound(bound)}
+                  onExpire={() => setTsToken("")}
+                  onVerify={(token, bound) => {
+                    setTsBound(bound)
+                    setTsToken(token)
+                  }}
                 />
                 <input type="hidden" name="cf-turnstile-response" value={tsToken} />
               </Field>
             ) : null}
 
             <Field>
-              <Button type="submit" disabled={isLoading} className="w-full">
+              <Button type="submit" disabled={isLoading || (SITE_KEY && !tsToken)} className="w-full">
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import AccountProfileForm from "@/components/account-profile-form";
 import AccountPasswordForm from "@/components/account-password-form";
 import { motion, AnimatePresence } from "framer-motion";
+import { useTranslation } from "@/contexts/language-context";
 
 export default function AccountAnimatedTabs({
   displayName,
@@ -15,15 +16,21 @@ export default function AccountAnimatedTabs({
   initialName,
   initialPhone,
 }) {
+  const { t } = useTranslation();
+
   return (
-    <Tabs defaultValue="perfil" className="w-full">
+    <Tabs defaultValue="profile" className="w-full">
       <TabsList className="w-full grid grid-cols-2">
-        <TabsTrigger value="perfil">Perfil</TabsTrigger>
-        <TabsTrigger value="seguridad">Seguridad</TabsTrigger>
+        <TabsTrigger value="profile">
+          {t("account.tabs.profile", { fallback: "Perfil" })}
+        </TabsTrigger>
+        <TabsTrigger value="security">
+          {t("account.tabs.security", { fallback: "Seguridad" })}
+        </TabsTrigger>
       </TabsList>
 
       <div className="mt-2 p-4 border rounded-md">
-        <TabsContent value="perfil">
+        <TabsContent value="profile">
           <AnimatePresence mode="wait">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -41,22 +48,26 @@ export default function AccountAnimatedTabs({
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold tracking-tight leading-none">{displayName}</span>
-                      <span className="text-xs rounded-md border px-2 py-0.5 text-muted-foreground">{providerLabel}</span>
+                      <span className="text-xs rounded-md border px-2 py-0.5 text-muted-foreground">
+                        {providerLabel}
+                      </span>
                     </div>
-                    <span className="leading-none text-sm text-muted-foreground">
-                      {displayEmail}
-                    </span>
+                    <span className="leading-none text-sm text-muted-foreground">{displayEmail}</span>
                   </div>
                 </div>
               </div>
-              <h2 className="text-lg font-semibold">Editar perfil</h2>
-              <p className="text-sm text-muted-foreground">Actualiza tu nombre y teléfono.</p>
+              <h2 className="text-lg font-semibold">
+                {t("account.profile.title", { fallback: "Editar perfil" })}
+              </h2>
+              {/* <p className="text-sm text-muted-foreground">
+                {t("account.profile.subtitle", { fallback: "Actualiza tu nombre y telefono." })}
+              </p> */}
               <AccountProfileForm initialName={initialName} initialPhone={initialPhone} />
             </motion.div>
           </AnimatePresence>
         </TabsContent>
 
-        <TabsContent value="seguridad">
+        <TabsContent value="security">
           <AnimatePresence mode="wait">
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -65,8 +76,14 @@ export default function AccountAnimatedTabs({
               transition={{ type: "tween", duration: 0.2 }}
               className="space-y-4"
             >
-              <h2 className="text-lg font-semibold">Cambiar contraseña</h2>
-              <p className="text-sm text-muted-foreground">Introduce tu contraseña actual y la nueva.</p>
+              <h2 className="text-lg font-semibold">
+                {t("account.security.title", { fallback: "Cambiar contrasena" })}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {t("account.security.subtitle", {
+                  fallback: "Introduce tu contrasena actual y la nueva.",
+                })}
+              </p>
               <AccountPasswordForm />
             </motion.div>
           </AnimatePresence>

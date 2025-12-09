@@ -7,6 +7,7 @@ import {
   ArrowUpCircleIcon,
   BarChartIcon,
   CameraIcon,
+  BellRing,
   ClipboardListIcon,
   DatabaseIcon,
   FileCodeIcon,
@@ -84,6 +85,32 @@ const data = {
         />
       ),
     },
+    // {
+    //   title: "Etiquetas",
+    //   url: "/tags",
+    //   icon: () => (
+    //     <Image
+    //       src="/icons/tags.webp"
+    //       alt="Etiquetas"
+    //       width={16}
+    //       height={16}
+    //       className="size-4 rounded-sm object-cover"
+    //     />
+    //   ),
+    // },
+    {
+      title: "Disparadores",
+      url: "/triggers",
+      icon: () => (
+        <Image
+          src="/icons/triggers.webp"
+          alt="Disparadores"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
     {
       title: "Productos",
       url: "/products",
@@ -98,17 +125,56 @@ const data = {
       ),
     },
     // {
+    //   title: "Pedidos",
+    //   url: "/sales",
+    //   icon: () => (
+    //     <Image
+    //       src="/icons/sales.png"
+    //       alt="Ventas"
+    //       width={16}
+    //       height={16}
+    //       className="size-4 rounded-sm object-cover"
+    //     />
+    //   ),
+    // },
+    {
+      title: "Contactos",
+      url: "/contacts",
+      icon: () => (
+        <Image
+          src="/icons/contacts.png"
+          alt="Contactos"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
+    {
+      title: "Recordatorio",
+      url: "/reminders",
+      icon: () => (
+        <Image
+          src="/icons/bell.png"
+          alt="Contactos"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
+    // {
     //   title: "Metricas",
     //   url: "/metrics",
     //   icon: ChartBarIcon,
     // },
     {
-      title: "Mi vendedor",
+      title: "Asistente AI",
       url: "/assistant",
       icon: () => (
         <Image
           src="/icons/vendedor.png"
-          alt="Mi vendedor"
+          alt="Asistente AI"
           width={16}
           height={16}
           className="size-4 rounded-sm object-cover"
@@ -129,12 +195,25 @@ const data = {
       ),
       items: [
         { title: "WhatsApp", url: "/integrations/whatsapp" },
-        { title: "Shopify", url: "/integrations/shopify" },
-        { title: "n8n", url: "/integrations/n8n" },
+        // { title: "Shopify", url: "/integrations/shopify" },
+        // { title: "n8n", url: "/integrations/n8n" },
       ],
     },
   ],
   navSecondary: [
+    {
+      title: "Batería",
+      url: "/battery",
+      icon: () => (
+        <Image
+          src="/icons/battery.webp"
+          alt="Batería"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
     {
       title: "Ayuda",
       url: "/help",
@@ -165,21 +244,32 @@ const data = {
 }
 
 export function AppSidebar({
+  chatbotSlug,
   ...props
 }) {
-  const { data: session } = useSession()
-  const { selectedChatbotId } = useChatbot()
+  const [mounted, setMounted] = React.useState(false)
 
-  const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
-  const withChatbotSegment = (path) => {
-    if (!cid) return "/select"
-    const trimmed = path.startsWith('/') ? path : `/${path}`
-    if (trimmed === '/dashboard') return `/dashboard/${cid}`
-    return `/dashboard/${cid}${trimmed}`
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const { data: session } = useSession()
+  // const { selectedChatbotId } = useChatbot()
+  const slug = chatbotSlug || null
+
+  if (!mounted) {
+    return null;
   }
 
+  // const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
+  const withChatbotSegment = (path) => {
+    if (!slug) return "/select" // ← Usa slug en lugar de cid
+    const trimmed = path.startsWith('/') ? path : `/${path}`
+    if (trimmed === '/dashboard') return `/dashboard/${slug}`
+    return `/dashboard/${slug}${trimmed}`
+  }
   const navMainDynamic = data.navMain.map((item) => {
-    const dynamicPaths = ["/dashboard", "/home", "/chats", "/products", "/metrics", "/assistant", "/integrations"]
+    const dynamicPaths = ["/dashboard", "/home", "/chats", "/tags", "/triggers", "/products", "/sales", "/assistant", "/integrations", "/contacts", "/reminders"]
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs
       const mappedSubItems = item.items.map((sub) => ({
@@ -195,7 +285,7 @@ export function AppSidebar({
   })
 
   const navSecondaryDynamic = data.navSecondary.map((item) => {
-    const dynamicSecondary = ["/help", "/docs", "/affiliates"]
+    const dynamicSecondary = ["/battery", "/help", "/docs", "/affiliates"]
     if (dynamicSecondary.includes(item.url)) {
       return { ...item, url: withChatbotSegment(item.url) }
     }
@@ -229,7 +319,7 @@ export function AppSidebar({
           />
         </div>
         <div className="pt-1">
-          <TeamSwitcher />
+          <TeamSwitcher chatbotSlug={chatbotSlug} />
         </div>
       </SidebarHeader>
       {/* <SidebarMenu>

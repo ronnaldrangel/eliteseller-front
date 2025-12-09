@@ -2,13 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import {
-  BellIcon,
-  CreditCardIcon,
-  LogOutIcon,
-  MoreVerticalIcon,
-  UserCircleIcon,
-} from "lucide-react"
+import { CreditCardIcon, LogOutIcon, MoreVerticalIcon, UserCircleIcon } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 import {
@@ -37,10 +31,16 @@ export function NavUser({
   user
 }) {
   const { isMobile } = useSidebar()
-  const { selectedChatbotId } = useChatbot()
+  const { selectedChatbot } = useChatbot()
 
   const withChatbotSegment = (path) => {
-    return selectedChatbotId ? `/dashboard/${selectedChatbotId}${path}` : "/select"
+    const segment = selectedChatbot?.routeSegment
+    if (!segment) {
+      return "/select"
+    }
+
+    const normalizedPath = path.startsWith("/") ? path : `/${path}`
+    return `/dashboard/${encodeURIComponent(segment)}${normalizedPath}`
   }
 
   const initials = React.useMemo(() => {
@@ -100,13 +100,13 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href={withChatbotSegment('/account')}>
+                <Link href={'/account'}>
                   <UserCircleIcon />
                   Mi Cuenta
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={withChatbotSegment('/billing')}>
+                <Link href='/billing'>
                   <CreditCardIcon />
                   Facturacion
                 </Link>

@@ -1,74 +1,94 @@
-"use client"
+"use client";
 
-import React, { useEffect, useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
-import { useTheme } from 'next-themes'
-import { ModeToggle } from './mode-toggle'
-import LanguageSelector from './language-selector'
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useTheme } from "next-themes";
+import { Card, CardContent } from "@/components/ui/card";
 
 const AuthLayout = ({ children }) => {
-  const [mounted, setMounted] = useState(false)
-  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false);
+  const [videoFailed, setVideoFailed] = useState(false);
+  const { theme, resolvedTheme } = useTheme();
 
   useEffect(() => {
-    setMounted(true)
-  }, [])
-  
+    setMounted(true);
+  }, []);
+
+  const handleVideoError = () => {
+    setVideoFailed(true);
+  };
+
   return (
-    <div className="h-screen bg-background">
-      {/* Selectores de tema e idioma en la esquina superior derecha */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-        <LanguageSelector />
-        <ModeToggle />
+    <div className="relative min-h-screen w-full overflow-hidden bg-background pt-[var(--topbar-offset)]">
+      {/* Background Video/Image */}
+      <div className="absolute inset-0 z-0">
+        {mounted && (
+          <Image
+            src={
+              resolvedTheme === "dark"
+                ? "/images/background/auth-dark.webp"
+                : "/images/background/auth-light.webp"
+            }
+            alt="Background"
+            fill
+            className="object-cover"
+            priority
+          />
+        )}
       </div>
 
-      {/* Logo en la esquina superior izquierda */}
-      <div className="absolute top-4 left-4 z-10">
-        <Link href="/" className="block">
-          {mounted ? (
-            <Image
-              src={theme === "dark" ? "/images/logo-white.png" : "/images/logo-black.png"}
-              alt="Logo"
-              width={140}
-              height={24}
-              priority
-              className="h-10 w-auto"
-            />
-          ) : (
-            <div className="h-8 w-24 bg-muted rounded animate-pulse"></div>
-          )}
-        </Link>
-      </div>
+      {/* Content */}
+      <div className="relative z-10 grid min-h-[calc(100vh-var(--topbar-offset))] grid-cols-1 md:grid-cols-2 w-full">
+        {/* Left Side - Login Form */}
+        <div className="flex flex-col justify-center p-4 md:p-8 h-full">
+          <Card className="w-full h-full border-border/50 bg-background flex flex-col justify-center">
+            <CardContent className="pt-4 w-full max-w-2xl mx-auto flex flex-col justify-center h-full">
 
-      <div className="flex min-h-full flex-1">
-        {/* Lado izquierdo - Formulario */}
-        <div className="flex flex-1 w-full lg:w-1/2 flex-col justify-center px-8 pt-12 pb-2 sm:px-6 lg:flex-none lg:px-20 xl:px-24 bg-background">
-          <div className="mx-auto w-full max-w-sm lg:w-96">
-            {/* Contenido principal */}
-            <main>{children}</main>
-            {/* Aviso legal dentro del contenedor, más abajo */}
-            {/* <p className="mt-16 text-xs text-muted-foreground text-center leading-snug">
-              Al continuar, acepta los Términos de servicio y la Política de privacidad de Run8in,
-              y recibir correos electrónicos periódicos con actualizaciones.
-            </p> */}
-          </div>
+              <div className="mb-6 flex">
+                <Link href="https://eliteseller.app/" className="block">
+                  {mounted ? (
+                    <Image
+                      src={
+                        resolvedTheme === "dark"
+                          ? "/images/logo-white.png"
+                          : "/images/logo-black.png"
+                      }
+                      alt="Logo"
+                      width={140}
+                      height={24}
+                      priority
+                      className="h-8 w-auto"
+                    />
+                  ) : (
+                    <div className="h-10 w-36 bg-muted rounded animate-pulse"></div>
+                  )}
+                </Link>
+              </div>
+
+              <main className="w-full">{children}</main>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Lado derecho - Video de fondo */}
-        <div className="relative hidden w-1/2 lg:block">
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            src="/videos/bg-auth.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-          />
+        {/* Right Side - Image Content */}
+        <div className="hidden md:flex items-center justify-center p-8">
+          <Card className="w-full max-w-xl border-none bg-transparent shadow-none">
+            <CardContent className="p-0 flex justify-center">
+              <Image
+                src="/images/background/image.png"
+                alt="Auth illustration"
+                width={600}
+                height={600}
+                className="w-full h-auto object-contain animate-float"
+                priority
+              />
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default AuthLayout
+export default AuthLayout;

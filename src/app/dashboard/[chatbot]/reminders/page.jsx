@@ -24,6 +24,7 @@ export default async function RemindersPage({ params }) {
   );
   if (!chatbot) redirect("/select");
 
+  // Estructura para almacenar datos padres (Remarketing) e hijos (Contents)
   let structuredData = {
     hot: { id: null, items: [] },
     normal: { id: null, items: [] },
@@ -34,8 +35,11 @@ export default async function RemindersPage({ params }) {
   try {
     const qs = new URLSearchParams();
     qs.set("filters[chatbot][documentId][$eq]", chatbot.documentId);
+
+    // Solicitamos la relación anidada y la media
     qs.set("populate[remarketing_contents][populate]", "media");
     qs.set("populate[remarketing_contents][sort]", "order:asc");
+
     qs.set("pagination[pageSize]", "100");
 
     const remarkRes = await fetch(
@@ -62,8 +66,10 @@ export default async function RemindersPage({ params }) {
         const type = attrs.hotness;
 
         if (type && structuredData[type]) {
+          // Guardamos ID del padre
           structuredData[type].id = item.documentId || item.id;
 
+          // Procesamos los hijos (Contents)
           const contents =
             attrs.remarketing_contents?.data ||
             attrs.remarketing_contents ||
@@ -91,7 +97,7 @@ export default async function RemindersPage({ params }) {
     }
   } catch (e) {
     console.error(e);
-    reminderError = "Error al cargar configuracion.";
+    reminderError = "Error al cargar configuración.";
   }
 
   return (
@@ -101,8 +107,7 @@ export default async function RemindersPage({ params }) {
           <div>
             <h1 className="text-2xl font-semibold">Recordatorios</h1>
             <p className="text-sm text-muted-foreground mt-2">
-              Configura mensajes y multimedia por temperatura de lead. Cada
-              mensaje tiene su propio tiempo de envio.
+              Configura mensajes y multimedia por temperatura de lead. Cada mensaje tiene su propio tiempo de envío.
             </p>
           </div>
         </div>

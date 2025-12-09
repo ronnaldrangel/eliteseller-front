@@ -3,6 +3,7 @@
 import * as React from "react";
 import md5 from "blueimp-md5";
 import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -57,6 +58,16 @@ export default function SelectUserAvatarMenu() {
           <div className="font-medium">{name}</div>
           {email && <div className="text-xs text-muted-foreground">{email}</div>}
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
+          <Link href="/select">Inicio</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
+          <Link href="/account">Mi cuenta</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
+          <Link href="/billing">Facturación</Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/auth/login" })}>
           Cerrar sesión

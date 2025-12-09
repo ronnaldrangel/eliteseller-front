@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// Item individual (texto o media) con tiempo
+// --- Subcomponente: Item Individual (Texto o Media) con tiempo ---
 function ContentItem({ item, index, onUpdate, onRemove }) {
   const isMedia = item.type === "media";
   const mime = String(item.mediaMime || (item.file && item.file.type) || "");
@@ -134,6 +134,7 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
   );
 }
 
+// --- Modal para gestionar los recordatorios ---
 function ReminderForm({
   typeKey,
   config,
@@ -146,20 +147,22 @@ function ReminderForm({
   onSaveSuccess,
 }) {
   const [items, setItems] = useState(
-    Array.isArray(itemsProp) && itemsProp.length > 0 ? itemsProp : data.items || []
+    (Array.isArray(itemsProp) && itemsProp.length > 0)
+      ? itemsProp
+      : (data.items || [])
   );
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Sincroniza estado interno cuando el padre cambia (ej. tras copiar)
+  // Sync internal state when parent items change (e.g., after copy)
   useEffect(() => {
-    setItems(Array.isArray(itemsProp) ? itemsProp : data.items || []);
+    setItems(Array.isArray(itemsProp) ? itemsProp : (data.items || []));
   }, [itemsProp, data.items]);
 
   const addText = () => {
     const lastItem = items[items.length - 1];
     if (lastItem && lastItem.type === "text" && !lastItem.content?.trim()) {
-      toast.warning("Completa el mensaje vacio antes de anadir otro.");
+      toast.warning("Completa el mensaje vacío antes de añadir otro.");
       return;
     }
 
@@ -181,7 +184,7 @@ function ReminderForm({
   const addMedia = (e) => {
     const lastItem = items[items.length - 1];
     if (lastItem && lastItem.type === "text" && !lastItem.content?.trim()) {
-      toast.warning("Completa el mensaje vacio antes de anadir otro.");
+      toast.warning("Completa el mensaje vacío antes de añadir otro.");
       return;
     }
 
@@ -228,14 +231,15 @@ function ReminderForm({
   };
 
   const handleSave = async () => {
+    // Validar que todos los mensajes tengan tiempo
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
       if (!item.time_to_send || Number(item.time_to_send) <= 0) {
-        toast.error(`El mensaje ${i + 1} necesita un tiempo valido`);
+        toast.error(`El mensaje ${i + 1} necesita un tiempo válido`);
         return;
       }
       if (item.type === "text" && !item.content?.trim()) {
-        toast.error(`El mensaje ${i + 1} no puede estar vacio`);
+        toast.error(`El mensaje ${i + 1} no puede estar vacío`);
         return;
       }
     }
@@ -243,8 +247,8 @@ function ReminderForm({
     setIsSaving(true);
     try {
       let parentId = data.id;
-      const savedItems = [];
 
+      // Crear el Remarketing padre si no existe
       if (!parentId) {
         const createRes = await fetch(buildStrapiUrl("/api/remarketings"), {
           method: "POST",
@@ -261,9 +265,10 @@ function ReminderForm({
         });
         if (!createRes.ok) throw new Error("Error creando entidad padre");
         const createPayload = await createRes.json();
-        parentId = createPayload?.data?.documentId || createPayload?.data?.id;
+        parentId = createPayload.data.documentId || createPayload.data.id;
       }
 
+      // Obtener los registros existentes por orden
       let existingByOrder = {};
       try {
         const qsExisting = new URLSearchParams();
@@ -294,15 +299,14 @@ function ReminderForm({
             if (Number.isFinite(ord) && id) existingByOrder[ord] = id;
           });
         }
-      } catch {
-        // Si falla este paso, continuamos igualmente
-      }
+      } catch { }
 
+      // Procesar cada item
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         let mediaId = item.mediaId;
-        let mediaUrl = item.mediaUrl;
 
+        // Subir media si es necesario
         if (item.isNew && item.type === "media" && item.file) {
           const formData = new FormData();
           formData.append("files", item.file);
@@ -313,19 +317,13 @@ function ReminderForm({
             body: formData,
           });
 
-          if (!uploadRes.ok) {
-            const err = await uploadRes.json().catch(() => ({}));
-            throw new Error(err?.error?.message || "Error subiendo multimedia");
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            mediaId = uploadData[0].id;
           }
-
-          const uploadData = await uploadRes.json();
-          mediaId = uploadData?.[0]?.id;
-          mediaUrl =
-            uploadData?.[0]?.url ||
-            uploadData?.[0]?.formats?.thumbnail?.url ||
-            mediaUrl;
         }
 
+        // Convertir tiempo a minutos
         const timeValue = Number(item.time_to_send) || 0;
         const timeInMinutes =
           item.timeUnit === "hours" ? timeValue * 60 : timeValue;
@@ -340,34 +338,18 @@ function ReminderForm({
 
         const existingIdAtOrder = existingByOrder[i];
         const targetId = !item.isNew ? item.id || existingIdAtOrder : null;
-        let savedId = targetId || null;
 
         if (targetId) {
-          const res = await fetch(
-            buildStrapiUrl(`/api/remarketing-contents/${targetId}`),
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ data: payload }),
-            }
-          );
-
-          const resJson = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            const message =
-              resJson?.error?.message || `Error (${res.status}) al actualizar`;
-            throw new Error(message);
-          }
-          savedId =
-            resJson?.data?.documentId ||
-            resJson?.data?.id ||
-            targetId ||
-            item.id;
+          await fetch(buildStrapiUrl(`/api/remarketing-contents/${targetId}`), {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ data: payload }),
+          });
         } else {
-          const res = await fetch(buildStrapiUrl("/api/remarketing-contents"), {
+          await fetch(buildStrapiUrl("/api/remarketing-contents"), {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -375,29 +357,11 @@ function ReminderForm({
             },
             body: JSON.stringify({ data: payload }),
           });
-
-          const resJson = await res.json().catch(() => ({}));
-          if (!res.ok) {
-            const message =
-              resJson?.error?.message || `Error (${res.status}) al crear`;
-            throw new Error(message);
-          }
-          savedId = resJson?.data?.documentId || resJson?.data?.id || savedId;
         }
-
-        savedItems.push({
-          ...item,
-          id: savedId || item.id,
-          mediaId: mediaId ?? null,
-          mediaUrl: mediaUrl ?? item.mediaUrl ?? null,
-          isNew: false,
-          file: undefined,
-        });
       }
 
-      const allIdsToDelete = Array.from(
-        new Set([...(itemsToDelete || []), ...((forceDeleteIds || []).filter(Boolean))])
-      );
+      // Eliminar items marcados y forzados por reemplazo
+      const allIdsToDelete = Array.from(new Set([...(itemsToDelete || []), ...((forceDeleteIds || []).filter(Boolean))]));
       for (const idToDelete of allIdsToDelete) {
         await fetch(buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`), {
           method: "DELETE",
@@ -405,17 +369,9 @@ function ReminderForm({
         });
       }
 
-      const finalItems = savedItems.map((it) => ({
-        ...it,
-        isNew: false,
-      }));
-      setItems(finalItems);
-      if (typeof onItemsChange === "function") onItemsChange(finalItems);
       setItemsToDelete([]);
       toast.success(`Recordatorios guardados para ${config.label}`);
-      if (typeof onSaveSuccess === "function") {
-        onSaveSuccess(typeKey, finalItems);
-      }
+      onSaveSuccess();
     } catch (error) {
       console.error(error);
       toast.error("Error al guardar");
@@ -429,7 +385,7 @@ function ReminderForm({
       <div className="space-y-4 py-4">
         {items.length === 0 && (
           <div className="text-center py-8 border border-dashed rounded-lg bg-background/30 text-sm text-muted-foreground">
-            No hay mensajes configurados. Anade el primer mensaje.
+            No hay mensajes configurados. Añade el primer mensaje.
           </div>
         )}
 
@@ -444,8 +400,13 @@ function ReminderForm({
         ))}
 
         <div className="flex gap-2 pt-4">
-          <Button onClick={addText} variant="outline" size="sm" className="flex-1">
-            <MessageSquare className="w-4 h-4 mr-2" /> Anadir mensaje
+          <Button
+            onClick={addText}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+          >
+            <MessageSquare className="w-4 h-4 mr-2" /> Añadir mensaje
           </Button>
 
           <div className="relative flex-1">
@@ -464,7 +425,7 @@ function ReminderForm({
               size="sm"
               className="w-full"
             >
-              <ImageIcon className="w-4 h-4 mr-2" /> Anadir multimedia
+              <ImageIcon className="w-4 h-4 mr-2" /> Añadir multimedia
             </Button>
           </div>
         </div>
@@ -485,20 +446,8 @@ function ReminderForm({
   );
 }
 
-function RemarketingCard({
-  typeKey,
-  config,
-  data,
-  chatbotId,
-  token,
-  items,
-  onItemsChange,
-  onCopy,
-  forceDeleteIds,
-  onSaveSuccess,
-  copyTargetValue = "",
-  onCopySelectChange,
-}) {
+// --- Tarjeta de Sección (Hot/Normal/Cold) ---
+function RemarketingCard({ typeKey, config, data, chatbotId, token, items, onItemsChange, onCopy, forceDeleteIds, onSaveSuccess }) {
   const Icon = config.icon;
   const messageCount = items?.length || 0;
 
@@ -516,21 +465,14 @@ function RemarketingCard({
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Copiar a</span>
-            <Select
-              value={copyTargetValue}
-              onValueChange={(val) => onCopySelectChange?.(val)}
-            >
+            <Select onValueChange={(val) => onCopy && onCopy(val)}>
               <SelectTrigger className="h-8 w-28 text-xs">
                 <SelectValue placeholder="Seleccionar" />
               </SelectTrigger>
               <SelectContent>
-                {["hot", "normal", "cold"]
-                  .filter((k) => k !== typeKey)
-                  .map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {k === "hot" ? "Hot" : k === "normal" ? "Normal" : "Cold"}
-                    </SelectItem>
-                  ))}
+                {(["hot", "normal", "cold"]).filter((k) => k !== typeKey).map((k) => (
+                  <SelectItem key={k} value={k}>{k === "hot" ? "Hot" : k === "normal" ? "Normal" : "Cold"}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -540,8 +482,8 @@ function RemarketingCard({
         </p>
         {messageCount > 0 && (
           <p className="text-sm text-muted-foreground">
-            {messageCount} {messageCount === 1 ? "mensaje" : "mensajes"} configurado
-            {messageCount === 1 ? "" : "s"}
+            {messageCount} {messageCount === 1 ? "mensaje" : "mensajes"}{" "}
+            configurado{messageCount === 1 ? "" : "s"}
           </p>
         )}
       </div>
@@ -561,6 +503,7 @@ function RemarketingCard({
   );
 }
 
+// --- Componente Principal ---
 export default function ReminderMessages({
   token,
   chatbotSlug,
@@ -572,7 +515,7 @@ export default function ReminderMessages({
       key: "hot",
       label: "Hot",
       description:
-        "Mensajes de seguimiento inmediato para leads con alta intencion de compra.",
+        "Mensajes de seguimiento inmediato para leads con alta intención de compra.",
       icon: Flame,
       badgeClass:
         "bg-amber-50 text-amber-800 ring-amber-200 dark:bg-amber-950/40 dark:text-amber-100",
@@ -583,7 +526,7 @@ export default function ReminderMessages({
       key: "normal",
       label: "Normal",
       description:
-        "Mensajes regulares para mantener la conversacion activa con leads interesados.",
+        "Mensajes regulares para mantener la conversación activa con leads interesados.",
       icon: Sparkles,
       badgeClass:
         "bg-emerald-50 text-emerald-800 ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-100",
@@ -594,7 +537,7 @@ export default function ReminderMessages({
       key: "cold",
       label: "Cold",
       description:
-        "Mensajes para reenganchar contactos frios que han perdido interes.",
+        "Mensajes para reenganchar contactos fríos que han perdido interés.",
       icon: Snowflake,
       badgeClass:
         "bg-sky-50 text-sky-800 ring-sky-200 dark:bg-sky-950/40 dark:text-sky-100",
@@ -602,6 +545,11 @@ export default function ReminderMessages({
         "bg-sky-50/70 dark:bg-sky-950/30 border-sky-200/60 dark:border-sky-900",
     },
   ];
+
+  const handleSaveSuccess = () => {
+    // Aquí podrías recargar los datos o actualizar el estado
+    // window.location.reload();
+  };
 
   const [itemsByType, setItemsByType] = useState(() => {
     const initial = {};
@@ -623,12 +571,6 @@ export default function ReminderMessages({
   });
 
   const [forceDeleteByType, setForceDeleteByType] = useState({});
-  const [copyTargetByType, setCopyTargetByType] = useState({});
-
-  const handleSaveSuccess = (typeKey, savedItems = []) => {
-    setItemsByType((prev) => ({ ...prev, [typeKey]: savedItems }));
-    setForceDeleteByType((prev) => ({ ...prev, [typeKey]: [] }));
-  };
 
   return (
     <div>
@@ -650,55 +592,29 @@ export default function ReminderMessages({
               }));
 
               const copied = (prevItems[cfg.key] || []).map((it, idx) => {
-                const tempPrefix =
-                  it.type === "media" ? "temp-media" : "temp-txt";
-                const isVid =
-                  it.isVideo ?? String(it.mediaMime || "").startsWith("video");
-                const hasFile = !!it.file;
+                const tempPrefix = it.type === "media" ? "temp-media" : "temp-txt";
+                const isVid = it.isVideo ?? String(it.mediaMime || "").startsWith("video");
                 const next = {
                   ...it,
                   id: `${tempPrefix}-${Date.now()}-${idx}`,
                   isNew: true,
                 };
                 if (it.type === "media") {
+                  next.previewUrl = it.mediaUrl || it.previewUrl || undefined;
                   next.isVideo = isVid;
-                  if (hasFile) {
-                    // Copiamos el archivo pendiente para subirlo en el destino
-                    next.file = it.file;
-                    next.previewUrl = it.previewUrl || it.mediaUrl || undefined;
-                    next.mediaId = null;
-                    next.mediaUrl = null;
-                    next.mediaMime = it.file?.type || it.mediaMime || null;
-                  } else {
-                    next.previewUrl = it.mediaUrl || it.previewUrl || undefined;
-                    next.mediaId = it.mediaId || null;
-                    next.mediaUrl = it.mediaUrl || null;
-                    next.mediaMime = it.mediaMime || null;
-                    next.file = undefined;
-                  }
+                  // mantener referencias para que se creen contenidos apuntando a la misma media
+                  next.mediaId = it.mediaId || null;
+                  next.mediaUrl = it.mediaUrl || null;
+                  next.mediaMime = it.mediaMime || null;
+                  next.file = undefined;
                 }
                 return next;
               });
 
               const next = { ...prevItems, [destKey]: copied };
-              toast.success(
-                `Copiado desde ${cfg.label} a ${
-                  destKey === "hot" ? "Hot" : destKey === "normal" ? "Normal" : "Cold"
-                }`
-              );
-              setCopyTargetByType((prev) => ({ ...prev, [cfg.key]: "" }));
+              toast.success(`Copiado desde ${cfg.label} a ${destKey === "hot" ? "Hot" : destKey === "normal" ? "Normal" : "Cold"}`);
               return next;
             });
-          };
-
-          const handleCopySelectChange = (val) => {
-            setCopyTargetByType((prev) => ({ ...prev, [cfg.key]: val }));
-            if (onCopy) onCopy(val);
-            // Reset para permitir volver a elegir el mismo destino
-            setTimeout(
-              () => setCopyTargetByType((prev) => ({ ...prev, [cfg.key]: "" })),
-              0
-            );
           };
 
           return (
@@ -714,8 +630,6 @@ export default function ReminderMessages({
               onCopy={onCopy}
               forceDeleteIds={forceDeleteByType[cfg.key] || []}
               onSaveSuccess={handleSaveSuccess}
-              copyTargetValue={copyTargetByType[cfg.key] || ""}
-              onCopySelectChange={handleCopySelectChange}
             />
           );
         })}

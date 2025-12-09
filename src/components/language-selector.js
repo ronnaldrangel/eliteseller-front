@@ -1,72 +1,73 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Button } from "@/components/ui/button"
+import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
+import { useTranslation } from "@/contexts/language-context";
 
 const LanguageSelector = () => {
-  const [mounted, setMounted] = useState(false)
-  const [currentLanguage, setCurrentLanguage] = useState('es')
+  const { language, setLanguage, ready, t } = useTranslation();
 
-  const languages = [
-    { code: 'es', name: 'Español', flag: '🇪🇸' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
-    { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  ]
-
-  useEffect(() => {
-    setMounted(true)
-    const savedLanguage = typeof window !== 'undefined'
-      ? localStorage.getItem('language') || 'es'
-      : 'es'
-    setCurrentLanguage(savedLanguage)
-  }, [])
+  const languages = useMemo(
+    () => [
+      { code: "es", name: "Espanol", flag: "🇪🇸" },
+      { code: "en", name: "English", flag: "🇺🇸" },
+      { code: "fr", name: "Francais", flag: "🇫🇷" },
+    ],
+    []
+  );
 
   const handleLanguageChange = (languageCode) => {
-    setCurrentLanguage(languageCode)
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('language', languageCode)
-    }
-    // Aquí podrías disparar un evento o actualizar un contexto global
+    setLanguage(languageCode);
+  };
+
+  if (!ready) {
+    return <div className="w-9 h-9 bg-muted rounded-md animate-pulse" />;
   }
 
-  if (!mounted) {
-    return (
-      <div className="w-9 h-9 bg-muted rounded-md animate-pulse"></div>
-    )
-  }
-
-  const currentLang = languages.find(lang => lang.code === currentLanguage)
+  const currentLang = languages.find((lang) => lang.code === language) || languages[0];
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label="Seleccionar idioma" className="border-0">
-          <span className="text-sm">{currentLang?.flag}</span>
-          <span className="sr-only">Idioma actual: {currentLang?.name}</span>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={t("common.languageSelector", { fallback: "Seleccionar idioma" })}
+          className="border-0"
+        >
+          <span className="text-sm" aria-hidden="true">
+            {currentLang?.flag}
+          </span>
+          <span className="sr-only">
+            {t("common.currentLanguage", {
+              fallback: "Idioma actual: {{language}}",
+              values: { language: currentLang?.name || "" },
+            })}
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
-        {languages.map((language) => (
+        {languages.map((item) => (
           <DropdownMenuItem
-            key={language.code}
-            onClick={() => handleLanguageChange(language.code)}
-            className={currentLanguage === language.code ? "font-medium text-primary" : ""}
+            key={item.code}
+            onClick={() => handleLanguageChange(item.code)}
+            className={language === item.code ? "font-medium text-primary" : ""}
           >
-            <span className="mr-2">{language.flag}</span>
-            <span>{language.name}</span>
+            <span className="mr-2" aria-hidden="true">
+              {item.flag}
+            </span>
+            <span>{item.name}</span>
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}
+  );
+};
 
-export default LanguageSelector
+export default LanguageSelector;

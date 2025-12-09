@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { signIn } from "next-auth/react"
 import AuthLayout from "../../../components/AuthLayout"
@@ -33,12 +33,21 @@ export default function RegisterPage() {
   })
   const [showPassword, setShowPassword] = useState(false)
   const [tsToken, setTsToken] = useState("")
+  const [tsBound, setTsBound] = useState(null)
+
+  useEffect(() => {
+    // Al terminar un envío, resetear el widget y limpiar token
+    if (!isLoading) {
+      tsBound?.reset?.()
+      tsBound?.execute?.()
+      setTsToken("")
+    }
+  }, [isLoading, tsBound])
 
   const generateUsernameFromEmail = (email) => {
     if (!email || typeof email !== "string") return ""
-    const local = email.split("@")[0] || ""
-    // Sanitizar: minúsculas y caracteres permitidos a-z 0-9 . _ -
-    return local.toLowerCase().replace(/[^a-z0-9._-]/g, "")
+    // Usar todo el email y eliminar caracteres no alfanuméricos
+    return String(email).toLowerCase().replace(/[^a-z0-9]/g, "")
   }
 
   const validateForm = () => {
@@ -73,6 +82,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isLoading) return
     
     if (!validateForm()) return
 
@@ -328,16 +338,24 @@ export default function RegisterPage() {
 
             {SITE_KEY ? (
               <Field>
-                <Turnstile
-                  sitekey={SITE_KEY}
-                  onVerify={(token) => setTsToken(token)}
-                />
-                <input type="hidden" name="cf-turnstile-response" value={tsToken} />
-              </Field>
-            ) : null}
+            <Turnstile
+              sitekey={SITE_KEY}
+              refreshExpired="auto"
+              retry="auto"
+              responseField={false}
+              onLoad={(widgetId, bound) => setTsBound(bound)}
+              onExpire={() => setTsToken("")}
+              onVerify={(token, bound) => {
+                setTsBound(bound)
+                setTsToken(token)
+              }}
+            />
+            <input type="hidden" name="cf-turnstile-response" value={tsToken} />
+          </Field>
+        ) : null}
 
-            <Field>
-              <Button type="submit" disabled={isLoading} className="w-full">
+        <Field>
+              <Button type="submit" disabled={isLoading || (SITE_KEY && !tsToken)} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -356,7 +374,7 @@ export default function RegisterPage() {
               <Link href="/privacy" className="underline underline-offset-4">Política de privacidad</Link>.
             </p> */}
 
-            <FieldSeparator>O continúa con</FieldSeparator>
+            {/* <FieldSeparator>O continúa con</FieldSeparator>
 
             <Field>
             <Button
@@ -374,7 +392,8 @@ export default function RegisterPage() {
               </svg>
               Continuar con Google
             </Button>
-            </Field>
+            </Field> */}
+            
           </FieldGroup>
           </form>
 

@@ -3,6 +3,7 @@ import "./globals.css";
 import SessionProvider from "@/components/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Topbar } from "@/components/ui/topbar";
 import Providers from "./providers";
 
 const inter = Inter({
@@ -32,11 +33,12 @@ export default function RootLayout({ children }) {
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
           <SessionProvider>
+            <Topbar />
             <Providers>{children}</Providers>
             <Toaster />
           </SessionProvider>

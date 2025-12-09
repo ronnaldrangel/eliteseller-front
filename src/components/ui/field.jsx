@@ -1,16 +1,13 @@
-"use client"
+"use client";
 
-import { useMemo } from "react"
+import { useMemo } from "react";
 import { cva } from "class-variance-authority";
 
-import { cn } from "@/lib/utils"
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 
-function FieldSet({
-  className,
-  ...props
-}) {
+function FieldSet({ className, ...props }) {
   return (
     <fieldset
       data-slot="field-set"
@@ -19,15 +16,12 @@ function FieldSet({
         "has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function FieldLegend({
-  className,
-  variant = "legend",
-  ...props
-}) {
+function FieldLegend({ className, variant = "legend", ...props }) {
   return (
     <legend
       data-slot="field-legend"
@@ -38,14 +32,12 @@ function FieldLegend({
         "data-[variant=label]:text-sm",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function FieldGroup({
-  className,
-  ...props
-}) {
+function FieldGroup({ className, ...props }) {
   return (
     <div
       data-slot="field-group"
@@ -53,62 +45,61 @@ function FieldGroup({
         "group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 [&>[data-slot=field-group]]:gap-4",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-const fieldVariants = cva("group/field flex w-full gap-3 data-[invalid=true]:text-destructive", {
-  variants: {
-    orientation: {
-      vertical: ["flex-col [&>*]:w-full [&>.sr-only]:w-auto"],
-      horizontal: [
-        "flex-row items-center",
-        "[&>[data-slot=field-label]]:flex-auto",
-        "has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-      ],
-      responsive: [
-        "flex-col [&>*]:w-full [&>.sr-only]:w-auto @md/field-group:flex-row @md/field-group:items-center @md/field-group:[&>*]:w-auto",
-        "@md/field-group:[&>[data-slot=field-label]]:flex-auto",
-        "@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
-      ],
+const fieldVariants = cva(
+  "group/field flex w-full gap-3 data-[invalid=true]:text-destructive",
+  {
+    variants: {
+      orientation: {
+        vertical: ["flex-col [&>*]:w-full [&>.sr-only]:w-auto"],
+        horizontal: [
+          "flex-row items-center",
+          "[&>[data-slot=field-label]]:flex-auto",
+          "has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+        ],
+        responsive: [
+          "flex-col [&>*]:w-full [&>.sr-only]:w-auto @md/field-group:flex-row @md/field-group:items-center @md/field-group:[&>*]:w-auto",
+          "@md/field-group:[&>[data-slot=field-label]]:flex-auto",
+          "@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+        ],
+      },
     },
-  },
-  defaultVariants: {
-    orientation: "vertical",
-  },
-})
+    defaultVariants: {
+      orientation: "vertical",
+    },
+  }
+);
 
-function Field({
-  className,
-  orientation = "vertical",
-  ...props
-}) {
+function Field({ className, orientation = "vertical", ...props }) {
   return (
     <div
       role="group"
       data-slot="field"
       data-orientation={orientation}
       className={cn(fieldVariants({ orientation }), className)}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function FieldContent({
-  className,
-  ...props
-}) {
+function FieldContent({ className, ...props }) {
   return (
     <div
       data-slot="field-content"
-      className={cn("group/field-content flex flex-1 flex-col gap-1.5 leading-snug", className)}
-      {...props} />
+      className={cn(
+        "group/field-content flex flex-1 flex-col gap-1.5 leading-snug",
+        className
+      )}
+      {...props}
+    />
   );
 }
 
-function FieldLabel({
-  className,
-  ...props
-}) {
+function FieldLabel({ className, ...props }) {
   return (
     <Label
       data-slot="field-label"
@@ -118,14 +109,12 @@ function FieldLabel({
         "has-data-[state=checked]:bg-primary/5 has-data-[state=checked]:border-primary dark:has-data-[state=checked]:bg-primary/10",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function FieldTitle({
-  className,
-  ...props
-}) {
+function FieldTitle({ className, ...props }) {
   return (
     <div
       data-slot="field-label"
@@ -133,14 +122,12 @@ function FieldTitle({
         "flex w-fit items-center gap-2 text-sm leading-snug font-medium group-data-[disabled=true]/field:opacity-50",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function FieldDescription({
-  className,
-  ...props
-}) {
+function FieldDescription({ className, ...props }) {
   return (
     <p
       data-slot="field-description"
@@ -150,15 +137,12 @@ function FieldDescription({
         "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
         className
       )}
-      {...props} />
+      {...props}
+    />
   );
 }
 
-function FieldSeparator({
-  children,
-  className,
-  ...props
-}) {
+function FieldSeparator({ children, className, ...props }) {
   return (
     <div
       data-slot="field-separator"
@@ -167,48 +151,52 @@ function FieldSeparator({
         "relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2",
         className
       )}
-      {...props}>
-      <Separator className="absolute inset-0 top-1/2" />
-      {children && (
-        <span
-          className="bg-background text-muted-foreground relative mx-auto block w-fit px-2"
-          data-slot="field-separator-content">
-          {children}
-        </span>
+      {...props}
+    >
+      {children ? (
+        <div className="flex items-center gap-3">
+          <Separator className="flex-1" />
+          <span
+            className="whitespace-nowrap text-sm"
+            data-slot="field-separator-content"
+          >
+            {children}
+          </span>
+          <Separator className="flex-1" />
+        </div>
+      ) : (
+        <Separator className="w-full" />
       )}
     </div>
   );
 }
 
-function FieldError({
-  className,
-  children,
-  errors,
-  ...props
-}) {
+function FieldError({ className, children, errors, ...props }) {
   const content = useMemo(() => {
     if (children) {
-      return children
+      return children;
     }
 
     if (!errors) {
-      return null
+      return null;
     }
 
     if (errors?.length === 1 && errors[0]?.message) {
-      return errors[0].message
+      return errors[0].message;
     }
 
     return (
       <ul className="ml-4 flex list-disc flex-col gap-1">
-        {errors.map((error, index) =>
-          error?.message && <li key={index}>{error.message}</li>)}
+        {errors.map(
+          (error, index) =>
+            error?.message && <li key={index}>{error.message}</li>
+        )}
       </ul>
     );
-  }, [children, errors])
+  }, [children, errors]);
 
   if (!content) {
-    return null
+    return null;
   }
 
   return (
@@ -216,7 +204,8 @@ function FieldError({
       role="alert"
       data-slot="field-error"
       className={cn("text-destructive text-sm font-normal", className)}
-      {...props}>
+      {...props}
+    >
       {content}
     </div>
   );
@@ -233,4 +222,4 @@ export {
   FieldSet,
   FieldContent,
   FieldTitle,
-}
+};

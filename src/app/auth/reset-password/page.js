@@ -38,6 +38,7 @@ function ResetPasswordContent() {
   const [error, setError] = useState("")
   const [code, setCode] = useState("")
   const [tsToken, setTsToken] = useState("")
+  const [tsBound, setTsBound] = useState(null)
   
   const searchParams = useSearchParams()
 
@@ -71,6 +72,7 @@ function ResetPasswordContent() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isLoading) return
     
     if (!validateForm()) return
 
@@ -172,13 +174,21 @@ function ResetPasswordContent() {
                 <Field>
                   <Turnstile
                     sitekey={SITE_KEY}
-                    onVerify={(token) => setTsToken(token)}
+                    refreshExpired="auto"
+                    retry="auto"
+                    responseField={false}
+                    onLoad={(widgetId, bound) => setTsBound(bound)}
+                    onExpire={() => setTsToken("")}
+                    onVerify={(token, bound) => {
+                      setTsBound(bound)
+                      setTsToken(token)
+                    }}
                   />
                   <input type="hidden" name="cf-turnstile-response" value={tsToken} />
                 </Field>
               ) : null}
 
-              <Button type="submit" disabled={isLoading || !code} className="w-full">
+              <Button type="submit" disabled={isLoading || !code || (SITE_KEY && !tsToken)} className="w-full">
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

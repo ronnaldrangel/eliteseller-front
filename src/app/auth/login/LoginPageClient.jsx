@@ -25,6 +25,7 @@ export default function LoginPageClient() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (isLoading) return
     const form = new FormData(e.currentTarget)
     const email = form.get('email')?.toString() || ''
     const password = form.get('password')?.toString() || ''

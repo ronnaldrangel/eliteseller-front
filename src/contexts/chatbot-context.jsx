@@ -6,37 +6,53 @@ const ChatbotContext = createContext(null)
 
 export function ChatbotProvider({ children }) {
   const [chatbots, setChatbots] = useState([])
-  const [selectedChatbotId, setSelectedChatbotId] = useState(null)
+  const [selectedChatbot, setSelectedChatbot] = useState(null)
 
-  // Restaurar selección desde localStorage
+  // Restore selection from storage (includes legacy string format)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("selectedChatbotId")
-      if (saved) setSelectedChatbotId(saved)
+      const stored = localStorage.getItem("selectedChatbot")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (parsed && typeof parsed === "object") {
+          setSelectedChatbot(parsed)
+          return
+        }
+      }
+
+      const legacy = localStorage.getItem("selectedChatbotId")
+      if (legacy) {
+        setSelectedChatbot({
+          routeSegment: legacy,
+        })
+      }
     } catch (_) {}
   }, [])
 
-  // Persistir selección
+  // Persist selection using the new JSON shape
   useEffect(() => {
     try {
-      if (selectedChatbotId) {
-        localStorage.setItem("selectedChatbotId", selectedChatbotId)
+      if (selectedChatbot) {
+        localStorage.setItem("selectedChatbot", JSON.stringify(selectedChatbot))
+        localStorage.removeItem("selectedChatbotId")
       } else {
+        localStorage.removeItem("selectedChatbot")
         localStorage.removeItem("selectedChatbotId")
       }
     } catch (_) {}
-  }, [selectedChatbotId])
+  }, [selectedChatbot])
 
-  const value = useMemo(() => ({
-    chatbots,
-    selectedChatbotId,
-    setChatbots,
-    setSelectedChatbotId,
-  }), [chatbots, selectedChatbotId])
-
-  return (
-    <ChatbotContext.Provider value={value}>{children}</ChatbotContext.Provider>
+  const value = useMemo(
+    () => ({
+      chatbots,
+      selectedChatbot,
+      setChatbots,
+      setSelectedChatbot,
+    }),
+    [chatbots, selectedChatbot]
   )
+
+  return <ChatbotContext.Provider value={value}>{children}</ChatbotContext.Provider>
 }
 
 export function useChatbot() {

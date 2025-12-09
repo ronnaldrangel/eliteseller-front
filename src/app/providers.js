@@ -1,43 +1,96 @@
 "use client";
 
 import { ChatbotProvider } from "@/contexts/chatbot-context";
+import { LanguageProvider } from "@/contexts/language-context";
 import { SWRConfig } from "swr";
 import { useSession } from "next-auth/react";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const CenteredSpinner = () => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm">
-    <div className="loader"></div>
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 dark:bg-black/80 backdrop-blur-sm">
+    {/* <div className="loader"></div> */}
+    <Loader2 className="animate-spin h-8 w-8 text-primary dark:text-white/80" />
   </div>
 );
 
 const Providers = ({ children }) => {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(false);
-  }, [pathname, searchParams]);
+  }, [pathname]);
 
   useEffect(() => {
     const handleClick = (e) => {
-      const target = e.target.closest("a");
       if (
-        target &&
-        target.href &&
-        !target.target &&
-        target.href.startsWith(window.location.origin)
+        e.defaultPrevented ||
+        e.metaKey ||
+        e.ctrlKey ||
+        e.shiftKey ||
+        e.altKey
       ) {
+        return;
+      }
+
+      const anchor = e.target.closest("a");
+      if (
+        !anchor ||
+        !anchor.href ||
+        anchor.target ||
+        anchor.hasAttribute("download")
+      ) {
+        return;
+      }
+
+      try {
+        const destination = new URL(anchor.href);
+        const current = new URL(window.location.href);
+
+        if (destination.origin !== current.origin) {
+          return;
+        }
+
+        const samePath = destination.pathname === current.pathname;
+        const sameSearch = destination.search === current.search;
+
+        if (samePath && sameSearch) {
+          return;
+        }
+
         setLoading(true);
+      } catch (_) {
+        // Ignore malformed URLs
       }
     };
 
     document.addEventListener("click", handleClick, true);
     return () => document.removeEventListener("click", handleClick, true);
-  }, []);
+  }, [pathname]);
+
+  useEffect(() => {
+    const originalPush = router.push;
+    const originalReplace = router.replace;
+
+    router.push = (...args) => {
+      setLoading(true);
+      return originalPush.apply(router, args);
+    };
+
+    router.replace = (...args) => {
+      setLoading(true);
+      return originalReplace.apply(router, args);
+    };
+
+    return () => {
+      router.push = originalPush;
+      router.replace = originalReplace;
+    };
+  }, [router]);
 
   const fetcher = async (url) => {
     const res = await fetch(url, {
@@ -63,11 +116,13 @@ const Providers = ({ children }) => {
   return (
     <>
       {loading && <CenteredSpinner />}
-      <SWRConfig
-        value={{ fetcher, revalidateOnFocus: false, dedupingInterval: 30000 }}
-      >
-        <ChatbotProvider>{children}</ChatbotProvider>
-      </SWRConfig>
+      <LanguageProvider>
+        <SWRConfig
+          value={{ fetcher, revalidateOnFocus: false, dedupingInterval: 30000 }}
+        >
+          <ChatbotProvider>{children}</ChatbotProvider>
+        </SWRConfig>
+      </LanguageProvider>
     </>
   );
 };
