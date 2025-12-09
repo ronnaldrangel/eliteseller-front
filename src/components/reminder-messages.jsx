@@ -247,6 +247,7 @@ function ReminderForm({
     setIsSaving(true);
     try {
       let parentId = data.id;
+      const savedItems = [];
 
       // Crear el Remarketing padre si no existe
       if (!parentId) {
@@ -305,6 +306,7 @@ function ReminderForm({
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
         let mediaId = item.mediaId;
+        let mediaUrl = item.mediaUrl;
 
         // Subir media si es necesario
         if (item.isNew && item.type === "media" && item.file) {
@@ -317,10 +319,17 @@ function ReminderForm({
             body: formData,
           });
 
-          if (uploadRes.ok) {
-            const uploadData = await uploadRes.json();
-            mediaId = uploadData[0].id;
+          if (!uploadRes.ok) {
+            const err = await uploadRes.json().catch(() => ({}));
+            throw new Error(err?.error?.message || "Error subiendo multimedia");
           }
+
+          const uploadData = await uploadRes.json();
+          mediaId = uploadData?.[0]?.id;
+          mediaUrl =
+            uploadData?.[0]?.url ||
+            uploadData?.[0]?.formats?.thumbnail?.url ||
+            mediaUrl;
         }
 
         // Convertir tiempo a minutos
@@ -338,18 +347,33 @@ function ReminderForm({
 
         const existingIdAtOrder = existingByOrder[i];
         const targetId = !item.isNew ? item.id || existingIdAtOrder : null;
+        let savedId = targetId || null;
 
         if (targetId) {
-          await fetch(buildStrapiUrl(`/api/remarketing-contents/${targetId}`), {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ data: payload }),
-          });
+          const res = await fetch(
+            buildStrapiUrl(`/api/remarketing-contents/${targetId}`),
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ data: payload }),
+            }
+          );
+          const resJson = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const message =
+              resJson?.error?.message || `Error (${res.status}) al actualizar`;
+            throw new Error(message);
+          }
+          savedId =
+            resJson?.data?.documentId ||
+            resJson?.data?.id ||
+            targetId ||
+            item.id;
         } else {
-          await fetch(buildStrapiUrl("/api/remarketing-contents"), {
+          const res = await fetch(buildStrapiUrl("/api/remarketing-contents"), {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -357,7 +381,23 @@ function ReminderForm({
             },
             body: JSON.stringify({ data: payload }),
           });
+          const resJson = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            const message =
+              resJson?.error?.message || `Error (${res.status}) al crear`;
+            throw new Error(message);
+          }
+          savedId = resJson?.data?.documentId || resJson?.data?.id || savedId;
         }
+
+        savedItems.push({
+          ...item,
+          id: savedId || item.id,
+          mediaId: mediaId ?? null,
+          mediaUrl: mediaUrl ?? item.mediaUrl ?? null,
+          isNew: false,
+          file: undefined, // ya subido o no aplica
+        });
       }
 
       // Eliminar items marcados y forzados por reemplazo
@@ -369,9 +409,17 @@ function ReminderForm({
         });
       }
 
+      const finalItems = savedItems.map((it) => ({
+        ...it,
+        isNew: false,
+      }));
+      setItems(finalItems);
+      if (typeof onItemsChange === "function") onItemsChange(finalItems);
       setItemsToDelete([]);
       toast.success(`Recordatorios guardados para ${config.label}`);
-      onSaveSuccess();
+      if (typeof onSaveSuccess === "function") {
+        onSaveSuccess(typeKey, finalItems);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Error al guardar");
@@ -546,9 +594,9 @@ export default function ReminderMessages({
     },
   ];
 
-  const handleSaveSuccess = () => {
-    // Aquí podrías recargar los datos o actualizar el estado
-    // window.location.reload();
+  const handleSaveSuccess = (typeKey, savedItems = []) => {
+    setItemsByType((prev) => ({ ...prev, [typeKey]: savedItems }));
+    setForceDeleteByType((prev) => ({ ...prev, [typeKey]: [] }));
   };
 
   const [itemsByType, setItemsByType] = useState(() => {
@@ -594,19 +642,29 @@ export default function ReminderMessages({
               const copied = (prevItems[cfg.key] || []).map((it, idx) => {
                 const tempPrefix = it.type === "media" ? "temp-media" : "temp-txt";
                 const isVid = it.isVideo ?? String(it.mediaMime || "").startsWith("video");
+                const hasFile = !!it.file;
                 const next = {
                   ...it,
                   id: `${tempPrefix}-${Date.now()}-${idx}`,
                   isNew: true,
                 };
                 if (it.type === "media") {
-                  next.previewUrl = it.mediaUrl || it.previewUrl || undefined;
                   next.isVideo = isVid;
-                  // mantener referencias para que se creen contenidos apuntando a la misma media
-                  next.mediaId = it.mediaId || null;
-                  next.mediaUrl = it.mediaUrl || null;
-                  next.mediaMime = it.mediaMime || null;
-                  next.file = undefined;
+                  if (hasFile) {
+                    // Si todavía no se subió, copiamos también el archivo para subirlo en destino
+                    next.file = it.file;
+                    next.previewUrl = it.previewUrl || it.mediaUrl || undefined;
+                    next.mediaId = null;
+                    next.mediaUrl = null;
+                    next.mediaMime = it.file?.type || it.mediaMime || null;
+                  } else {
+                    next.previewUrl = it.mediaUrl || it.previewUrl || undefined;
+                    // Reutiliza media ya subida
+                    next.mediaId = it.mediaId || null;
+                    next.mediaUrl = it.mediaUrl || null;
+                    next.mediaMime = it.mediaMime || null;
+                    next.file = undefined;
+                  }
                 }
                 return next;
               });

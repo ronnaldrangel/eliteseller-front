@@ -88,7 +88,8 @@ export default async function RemindersPage({ params }) {
               mediaMime: mediaData
                 ? mediaData.attributes?.mime || mediaData.mime
                 : null,
-              mediaId: mediaData ? mediaData.documentId || mediaData.id : null,
+              // preferimos el id numérico para que Strapi acepte la relación
+              mediaId: mediaData ? mediaData.id || mediaData.documentId : null,
               time_to_send: cAttrs.time_to_send || "",
             };
           });
