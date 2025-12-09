@@ -32,7 +32,7 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
   const mime = String(item.mediaMime || (item.file && item.file.type) || "");
   const isVid = !!(item.isVideo || mime.startsWith("video"));
   const isImg = mime.startsWith("image");
-  const fileName = (() => {
+  const rawFileName = (() => {
     if (item.file && item.file.name) return item.file.name;
     if (item.mediaUrl && typeof item.mediaUrl === "string") {
       try {
@@ -43,6 +43,18 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
       }
     }
     return "archivo";
+  })();
+  const fileName = (() => {
+    const name = String(rawFileName || "archivo");
+    const max = 50;
+    if (name.length <= max) return name;
+    const dotIdx = name.lastIndexOf(".");
+    const ext = dotIdx >= 0 ? name.slice(dotIdx) : "";
+    const base = dotIdx >= 0 ? name.slice(0, dotIdx) : name;
+    const ell = "...";
+    const remain = max - (ell.length + ext.length);
+    if (remain <= 0) return ell + ext;
+    return base.slice(0, remain) + ell + ext;
   })();
 
   return (
@@ -101,12 +113,12 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
                   className="w-full h-48 object-cover"
                 />
               ) : (
-                <div className="w-full rounded border p-3 flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-slate-500" />
-                  <span className="text-xs truncate" title={fileName}>
+              <div className="w-full rounded border p-3 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-slate-500" />
+                  <span className="text-xs truncate" title={rawFileName}>
                     {fileName}
                   </span>
-                </div>
+              </div>
               )
             ) : (
               <Textarea
