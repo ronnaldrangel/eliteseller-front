@@ -46,7 +46,7 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
   })();
   const fileName = (() => {
     const name = String(rawFileName || "archivo");
-    const max = 50;
+    const max = 30;
     if (name.length <= max) return name;
     const dotIdx = name.lastIndexOf(".");
     const ext = dotIdx >= 0 ? name.slice(dotIdx) : "";
@@ -58,9 +58,9 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
   })();
 
   return (
-    <div className="p-4 bg-background/50 rounded-lg border mb-3">
-      <div className="grid grid-cols-[1fr_36px] gap-4 items-center">
-        <div className="flex flex-col gap-3">
+    <div className="p-4 bg-background/50 rounded-lg border mb-3 max-w-full overflow-hidden">
+      <div className="grid grid-cols-[1fr_36px] gap-4 items-center min-w-0">
+        <div className="flex flex-col gap-3 min-w-0">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-muted-foreground">
               Mensaje {index + 1}
@@ -113,9 +113,9 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
                   className="w-full h-48 object-cover"
                 />
               ) : (
-              <div className="w-full rounded border p-3 flex items-center gap-2">
+              <div className="w-full rounded border p-3 flex items-center gap-2 min-w-0">
                 <FileText className="w-5 h-5 text-slate-500" />
-                  <span className="text-xs truncate" title={rawFileName}>
+                  <span className="text-xs truncate flex-1 min-w-0" title={rawFileName}>
                     {fileName}
                   </span>
               </div>
@@ -605,7 +605,7 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, items, onIte
 
   return (
     <div
-      className={`flex flex-col rounded-xl border p-6 ${config.areaClass} h-full`}
+      className={`flex flex-col rounded-xl border p-6 ${config.areaClass} h-full max-w-full overflow-hidden`}
     >
       <div className="space-y-3 mb-4">
         <div className="flex items-center justify-between">
@@ -726,8 +726,8 @@ export default function ReminderMessages({
   const [forceDeleteByType, setForceDeleteByType] = useState({});
 
   return (
-    <div>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
+    <div className="w-full">
+      <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3 items-stretch">
         {messageTypes.map((cfg) => {
           const data = initialData[cfg.key] || { items: [] };
           const onItemsChange = (next) =>
