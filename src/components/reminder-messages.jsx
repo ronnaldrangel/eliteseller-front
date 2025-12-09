@@ -419,9 +419,40 @@ function ReminderForm({
         new Set([...(itemsToDelete || []), ...((forceDeleteIds || []).filter(Boolean))])
       );
       for (const rawId of allIdsToDelete) {
-        const idToDelete =
+        const candidateId =
           (typeof rawId === "object" && rawId !== null && rawId.id) || rawId;
-        if (!idToDelete) continue;
+        if (!candidateId) continue;
+
+        let idToDelete = candidateId;
+
+        // Si vino solo documentId, resolvemos el id numérico antes de borrar para evitar residuos
+        if (isNaN(Number(idToDelete))) {
+          try {
+            const qsDel = new URLSearchParams();
+            qsDel.set("filters[documentId][$eq]", idToDelete);
+            qsDel.set("pagination[pageSize]", "1");
+            const lookup = await fetch(
+              buildStrapiUrl(`/api/remarketing-contents?${qsDel.toString()}`),
+              {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                cache: "no-store",
+              }
+            );
+            if (lookup.ok) {
+              const body = await lookup.json().catch(() => ({}));
+              const first = Array.isArray(body?.data) ? body.data[0] : null;
+              const resolved = first?.id || first?.documentId;
+              if (resolved) idToDelete = resolved;
+            }
+          } catch (err) {
+            console.warn("No se pudo resolver id para borrar", err);
+          }
+        }
+
         const delRes = await fetch(
           buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`),
           {

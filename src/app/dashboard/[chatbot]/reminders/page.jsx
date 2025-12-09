@@ -78,6 +78,14 @@ export default async function RemindersPage({ params }) {
           structuredData[type].items = contents.map((contentItem) => {
             const cAttrs = contentItem.attributes || contentItem;
             const mediaData = cAttrs.media?.data || cAttrs.media;
+            const mediaAttrs = mediaData?.attributes || mediaData || {};
+            const ext = String(mediaAttrs.ext || mediaAttrs.extname || "").toLowerCase();
+            const mimeFromApi = mediaAttrs.mime || mediaAttrs.mimetype || "";
+            // Si el ext indica pdf (u otro no visual), forzamos mime para evitar mostrar thumbnails aleatorios
+            const normalizedMime =
+              ext === ".pdf" || mimeFromApi === "application/pdf"
+                ? "application/pdf"
+                : mimeFromApi;
 
             return {
               // Conservamos id numérico cuando exista
@@ -88,9 +96,7 @@ export default async function RemindersPage({ params }) {
               mediaUrl: mediaData
                 ? mediaData.attributes?.url || mediaData.url
                 : null,
-              mediaMime: mediaData
-                ? mediaData.attributes?.mime || mediaData.mime
-                : null,
+              mediaMime: mediaData ? normalizedMime : null,
               // preferimos el id numérico para que Strapi acepte la relación
               mediaId: mediaData ? mediaData.id || mediaData.documentId : null,
               mediaDocumentId: mediaData
