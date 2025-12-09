@@ -357,9 +357,12 @@ function ReminderForm({
           time_to_send: timeInMinutes,
         };
 
-        const existingIdAtOrder = existingByOrder[i];
+        const existingAtOrder = existingByOrder[i] || {};
         const targetId = !item.isNew
-          ? item.id || item.documentId || (existingIdAtOrder && (existingIdAtOrder.id || existingIdAtOrder.documentId))
+          ? item.documentId ||
+            existingAtOrder.documentId ||
+            item.id ||
+            existingAtOrder.id
           : null;
         let savedId = targetId || null;
         let savedDocumentId = item.documentId || item.id || null;
