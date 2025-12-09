@@ -6,13 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Select,
   SelectTrigger,
   SelectValue,
@@ -28,7 +21,6 @@ import {
   MessageSquare,
   Trash2,
   FileVideo,
-  Plus,
   ImageIcon,
   FileText,
 } from "lucide-react";
@@ -143,9 +135,7 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
 }
 
 // --- Modal para gestionar los recordatorios ---
-function ReminderModal({
-  isOpen,
-  onClose,
+function ReminderForm({
   typeKey,
   config,
   data,
@@ -362,7 +352,6 @@ function ReminderModal({
       setItemsToDelete([]);
       toast.success(`Recordatorios guardados para ${config.label}`);
       onSaveSuccess();
-      onClose();
     } catch (error) {
       console.error(error);
       toast.error("Error al guardar");
@@ -371,89 +360,74 @@ function ReminderModal({
     }
   };
 
-  const Icon = config.icon;
-
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            Tiempos de Intervalo
-          </DialogTitle>
-          <DialogDescription>Agregue múltiples tiempos para crear un sistema de remarketing escalonado</DialogDescription>
-        </DialogHeader>
+    <div>
+      <div className="space-y-4 py-4">
+        {items.length === 0 && (
+          <div className="text-center py-8 border border-dashed rounded-lg bg-background/30 text-sm text-muted-foreground">
+            No hay mensajes configurados. Añade el primer mensaje.
+          </div>
+        )}
 
-        <div className="space-y-4 py-4">
-          {items.length === 0 && (
-            <div className="text-center py-8 border border-dashed rounded-lg bg-background/30 text-sm text-muted-foreground">
-              No hay mensajes configurados. Añade el primer mensaje.
-            </div>
-          )}
+        {items.map((item, idx) => (
+          <ContentItem
+            key={item.id}
+            item={item}
+            index={idx}
+            onUpdate={(updated) => updateItem(idx, updated)}
+            onRemove={() => removeItem(idx)}
+          />
+        ))}
 
-          {items.map((item, idx) => (
-            <ContentItem
-              key={item.id}
-              item={item}
-              index={idx}
-              onUpdate={(updated) => updateItem(idx, updated)}
-              onRemove={() => removeItem(idx)}
+        <div className="flex gap-2 pt-4">
+          <Button
+            onClick={addText}
+            variant="outline"
+            size="sm"
+            className="flex-1"
+          >
+            <MessageSquare className="w-4 h-4 mr-2" /> Añadir mensaje
+          </Button>
+
+          <div className="relative flex-1">
+            <input
+              type="file"
+              id={`upload-modal-${typeKey}`}
+              className="hidden"
+              accept="image/*,video/*"
+              onChange={addMedia}
             />
-          ))}
-
-          <div className="flex gap-2 pt-4">
             <Button
-              onClick={addText}
+              onClick={() =>
+                document.getElementById(`upload-modal-${typeKey}`)?.click()
+              }
               variant="outline"
               size="sm"
-              className="flex-1"
+              className="w-full"
             >
-              <MessageSquare className="w-4 h-4 mr-2" /> Añadir mensaje
+              <ImageIcon className="w-4 h-4 mr-2" /> Añadir multimedia
             </Button>
-
-            <div className="relative flex-1">
-              <input
-                type="file"
-                id={`upload-modal-${typeKey}`}
-                className="hidden"
-                accept="image/*,video/*"
-                onChange={addMedia}
-              />
-              <Button
-                onClick={() =>
-                  document.getElementById(`upload-modal-${typeKey}`)?.click()
-                }
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                <ImageIcon className="w-4 h-4 mr-2" /> Añadir multimedia
-              </Button>
-            </div>
           </div>
         </div>
-
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose} disabled={isSaving}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
-            {isSaving ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Guardando...
-              </>
-            ) : (
-              "Guardar cambios"
-            )}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+      <div className="flex justify-end gap-2 pt-4 border-t">
+        <Button onClick={handleSave} disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Guardando...
+            </>
+          ) : (
+            "Guardar cambios"
+          )}
+        </Button>
+      </div>
+    </div>
   );
 }
 
 // --- Tarjeta de Sección (Hot/Normal/Cold) ---
-function RemarketingCard({ typeKey, config, data, chatbotId, token, onEdit }) {
+function RemarketingCard({ typeKey, config, data, chatbotId, token, onSaveSuccess }) {
   const Icon = config.icon;
   const messageCount = data.items?.length || 0;
 
@@ -479,12 +453,14 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, onEdit }) {
         )}
       </div>
 
-      <div className="mt-auto">
-        <Button onClick={onEdit} variant="default" className="w-full" size="sm">
-          <Plus className="w-4 h-4 mr-2" />
-          Añadir recordatorio
-        </Button>
-      </div>
+      <ReminderForm
+        typeKey={typeKey}
+        config={config}
+        data={data}
+        chatbotId={chatbotId}
+        token={token}
+        onSaveSuccess={onSaveSuccess}
+      />
     </div>
   );
 }
@@ -496,8 +472,6 @@ export default function ReminderMessages({
   chatbotId,
   initialData = { hot: {}, normal: {}, cold: {} },
 }) {
-  const [currentModal, setCurrentModal] = useState(null);
-  const [modalData, setModalData] = useState({});
 
   const messageTypes = [
     {
@@ -535,31 +509,6 @@ export default function ReminderMessages({
     },
   ];
 
-  const handleOpenModal = (typeKey) => {
-    const config = messageTypes.find((t) => t.key === typeKey);
-    const data = initialData[typeKey] || { items: [] };
-
-    // Convertir time_to_send de vuelta a unidades amigables
-    const processedItems = data.items.map((item) => {
-      const minutes = Number(item.time_to_send) || 0;
-      const isHours = minutes > 0 && minutes % 60 === 0;
-
-      return {
-        ...item,
-        timeUnit: isHours ? "hours" : "minutes",
-        time_to_send: isHours ? String(minutes / 60) : String(minutes),
-      };
-    });
-
-    setModalData({ ...data, items: processedItems });
-    setCurrentModal({ typeKey, config });
-  };
-
-  const handleCloseModal = () => {
-    setCurrentModal(null);
-    setModalData({});
-  };
-
   const handleSaveSuccess = () => {
     // Aquí podrías recargar los datos o actualizar el estado
     window.location.reload();
@@ -568,31 +517,31 @@ export default function ReminderMessages({
   return (
     <div>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
-        {messageTypes.map((config) => (
-          <RemarketingCard
-            key={config.key}
-            typeKey={config.key}
-            config={config}
-            data={initialData[config.key] || { items: [] }}
-            chatbotId={chatbotId}
-            token={token}
-            onEdit={() => handleOpenModal(config.key)}
-          />
-        ))}
+        {messageTypes.map((config) => {
+          const data = initialData[config.key] || { items: [] };
+          const processedItems = (data.items || []).map((item) => {
+            const minutes = Number(item.time_to_send) || 0;
+            const isHours = minutes > 0 && minutes % 60 === 0;
+            return {
+              ...item,
+              timeUnit: isHours ? "hours" : "minutes",
+              time_to_send: isHours ? String(minutes / 60) : String(minutes),
+            };
+          });
+          const merged = { ...data, items: processedItems };
+          return (
+            <RemarketingCard
+              key={config.key}
+              typeKey={config.key}
+              config={config}
+              data={merged}
+              chatbotId={chatbotId}
+              token={token}
+              onSaveSuccess={handleSaveSuccess}
+            />
+          );
+        })}
       </div>
-
-      {currentModal && (
-        <ReminderModal
-          isOpen={true}
-          onClose={handleCloseModal}
-          typeKey={currentModal.typeKey}
-          config={currentModal.config}
-          data={modalData}
-          chatbotId={chatbotId}
-          token={token}
-          onSaveSuccess={handleSaveSuccess}
-        />
-      )}
     </div>
   );
 }
