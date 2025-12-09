@@ -428,63 +428,77 @@ function ReminderForm({
         const rawObj = typeof rawId === "object" && rawId !== null ? rawId : null;
         const candidateId = rawObj?.id || rawId;
         const candidateDocId = rawObj?.documentId || rawId;
-        let idToDelete = candidateId;
 
-        // Resolver id por documentId si no tenemos id o si es el mismo valor
-        if (!idToDelete || idToDelete === candidateDocId) {
-          const docForLookup = candidateDocId;
-          if (docForLookup) {
-            try {
-              const qsDel = new URLSearchParams();
-              qsDel.set("filters[documentId][$eq]", docForLookup);
-              qsDel.set("pagination[pageSize]", "1");
-              const lookup = await fetch(
-                buildStrapiUrl(`/api/remarketing-contents?${qsDel.toString()}`),
-                {
-                  method: "GET",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  cache: "no-store",
-                }
-              );
-              if (lookup.ok) {
-                const body = await lookup.json().catch(() => ({}));
-                const first = Array.isArray(body?.data) ? body.data[0] : null;
-                const resolved = first?.id || first?.documentId;
-                if (resolved) idToDelete = resolved;
-              }
-            } catch (err) {
-              console.warn("No se pudo resolver id para borrar", err);
+        const tryDelete = async (identifier) => {
+          const res = await fetch(
+            buildStrapiUrl(`/api/remarketing-contents/${identifier}`),
+            {
+              method: "DELETE",
+              headers: { Authorization: `Bearer ${token}` },
             }
-          }
-        }
-
-        if (!idToDelete) continue;
-
-        const delRes = await fetch(
-          buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`),
-          {
-            method: "DELETE",
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        if (!delRes.ok) {
-          const delJson = await delRes.json().catch(() => ({}));
-
-          // Reintento: si falló y tenemos documentId, intenta resolver y borrar otra vez
-          if (candidateDocId && (!rawObj?.retried)) {
-            const retryObj = rawObj ? { ...rawObj, retried: true } : { documentId: candidateDocId, retried: true };
-            allIdsToDelete.push(retryObj);
-            continue;
-          }
-
-          throw new Error(
-            delJson?.error?.message ||
-              `Error (${delRes.status}) eliminando contenido`
           );
+          if (!res.ok) {
+            const resJson = await res.json().catch(() => ({}));
+            throw new Error(
+              resJson?.error?.message ||
+                `Error (${res.status}) eliminando contenido`
+            );
+          }
+        };
+
+        // 1) intenta con documentId (UUID) si existe
+        if (candidateDocId) {
+          try {
+            await tryDelete(candidateDocId);
+            continue;
+          } catch (err) {
+            // si falló con documentId, probamos con id numérico
+          }
         }
+
+        // 2) intenta con id numérico si lo tenemos
+        if (candidateId && candidateId !== candidateDocId) {
+          try {
+            await tryDelete(candidateId);
+            continue;
+          } catch (err) {
+            // si falló, buscamos por documentId para resolver id
+          }
+        }
+
+        // 3) lookup por documentId para resolver id numérico y borrar
+        if (candidateDocId) {
+          try {
+            const qsDel = new URLSearchParams();
+            qsDel.set("filters[documentId][$eq]", candidateDocId);
+            qsDel.set("pagination[pageSize]", "1");
+            const lookup = await fetch(
+              buildStrapiUrl(`/api/remarketing-contents?${qsDel.toString()}`),
+              {
+                method: "GET",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                cache: "no-store",
+              }
+            );
+            if (lookup.ok) {
+              const body = await lookup.json().catch(() => ({}));
+              const first = Array.isArray(body?.data) ? body.data[0] : null;
+              const resolved = first?.id || first?.documentId;
+              if (resolved) {
+                await tryDelete(resolved);
+                continue;
+              }
+            }
+          } catch (err) {
+            // seguimos a throw final
+          }
+        }
+
+        // Si llegamos aquí, no pudimos borrar
+        throw new Error("No se pudo eliminar el contenido (id/documentId no encontrados)");
       }
 
       const finalItems = savedItems.map((it) => ({
