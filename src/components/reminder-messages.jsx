@@ -223,7 +223,10 @@ function ReminderForm({
   const removeItem = (index) => {
     const itemToRemove = items[index];
     if (!itemToRemove.isNew && itemToRemove.id) {
-      setItemsToDelete([...itemsToDelete, itemToRemove.id]);
+      setItemsToDelete([
+        ...itemsToDelete,
+        { id: itemToRemove.id, documentId: itemToRemove.documentId },
+      ]);
     }
     const next = items.filter((_, i) => i !== index);
     setItems(next);
@@ -419,39 +422,43 @@ function ReminderForm({
         new Set([...(itemsToDelete || []), ...((forceDeleteIds || []).filter(Boolean))])
       );
       for (const rawId of allIdsToDelete) {
-        const candidateId =
-          (typeof rawId === "object" && rawId !== null && rawId.id) || rawId;
-        if (!candidateId) continue;
-
+        const rawObj = typeof rawId === "object" && rawId !== null ? rawId : null;
+        const candidateId = rawObj?.id || rawId;
+        const candidateDocId = rawObj?.documentId || rawId;
         let idToDelete = candidateId;
 
-        // Si vino solo documentId, resolvemos el id numérico antes de borrar para evitar residuos
-        if (isNaN(Number(idToDelete))) {
-          try {
-            const qsDel = new URLSearchParams();
-            qsDel.set("filters[documentId][$eq]", idToDelete);
-            qsDel.set("pagination[pageSize]", "1");
-            const lookup = await fetch(
-              buildStrapiUrl(`/api/remarketing-contents?${qsDel.toString()}`),
-              {
-                method: "GET",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-                cache: "no-store",
+        // Resolver id por documentId si no tenemos id o si es el mismo valor
+        if (!idToDelete || idToDelete === candidateDocId) {
+          const docForLookup = candidateDocId;
+          if (docForLookup) {
+            try {
+              const qsDel = new URLSearchParams();
+              qsDel.set("filters[documentId][$eq]", docForLookup);
+              qsDel.set("pagination[pageSize]", "1");
+              const lookup = await fetch(
+                buildStrapiUrl(`/api/remarketing-contents?${qsDel.toString()}`),
+                {
+                  method: "GET",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  cache: "no-store",
+                }
+              );
+              if (lookup.ok) {
+                const body = await lookup.json().catch(() => ({}));
+                const first = Array.isArray(body?.data) ? body.data[0] : null;
+                const resolved = first?.id || first?.documentId;
+                if (resolved) idToDelete = resolved;
               }
-            );
-            if (lookup.ok) {
-              const body = await lookup.json().catch(() => ({}));
-              const first = Array.isArray(body?.data) ? body.data[0] : null;
-              const resolved = first?.id || first?.documentId;
-              if (resolved) idToDelete = resolved;
+            } catch (err) {
+              console.warn("No se pudo resolver id para borrar", err);
             }
-          } catch (err) {
-            console.warn("No se pudo resolver id para borrar", err);
           }
         }
+
+        if (!idToDelete) continue;
 
         const delRes = await fetch(
           buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`),
@@ -462,6 +469,14 @@ function ReminderForm({
         );
         if (!delRes.ok) {
           const delJson = await delRes.json().catch(() => ({}));
+
+          // Reintento: si falló y tenemos documentId, intenta resolver y borrar otra vez
+          if (candidateDocId && (!rawObj?.retried)) {
+            const retryObj = rawObj ? { ...rawObj, retried: true } : { documentId: candidateDocId, retried: true };
+            allIdsToDelete.push(retryObj);
+            continue;
+          }
+
           throw new Error(
             delJson?.error?.message ||
               `Error (${delRes.status}) eliminando contenido`
