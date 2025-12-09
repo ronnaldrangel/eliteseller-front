@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -141,11 +141,23 @@ function ReminderForm({
   data,
   chatbotId,
   token,
+  itemsProp,
+  onItemsChange,
+  forceDeleteIds = [],
   onSaveSuccess,
 }) {
-  const [items, setItems] = useState(data.items || []);
+  const [items, setItems] = useState(
+    (Array.isArray(itemsProp) && itemsProp.length > 0)
+      ? itemsProp
+      : (data.items || [])
+  );
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Sync internal state when parent items change (e.g., after copy)
+  useEffect(() => {
+    setItems(Array.isArray(itemsProp) ? itemsProp : (data.items || []));
+  }, [itemsProp, data.items]);
 
   const addText = () => {
     const lastItem = items[items.length - 1];
@@ -154,7 +166,7 @@ function ReminderForm({
       return;
     }
 
-    setItems([
+    const next = [
       ...items,
       {
         id: `temp-txt-${Date.now()}`,
@@ -164,7 +176,9 @@ function ReminderForm({
         timeUnit: "minutes",
         isNew: true,
       },
-    ]);
+    ];
+    setItems(next);
+    if (typeof onItemsChange === "function") onItemsChange(next);
   };
 
   const addMedia = (e) => {
@@ -180,7 +194,7 @@ function ReminderForm({
     const objectUrl = URL.createObjectURL(file);
     const isVideo = file.type.startsWith("video/");
 
-    setItems([
+    const next = [
       ...items,
       {
         id: `temp-media-${Date.now()}`,
@@ -193,7 +207,9 @@ function ReminderForm({
         timeUnit: "minutes",
         isNew: true,
       },
-    ]);
+    ];
+    setItems(next);
+    if (typeof onItemsChange === "function") onItemsChange(next);
     e.target.value = null;
   };
 
@@ -201,6 +217,7 @@ function ReminderForm({
     const newItems = [...items];
     newItems[index] = newItem;
     setItems(newItems);
+    if (typeof onItemsChange === "function") onItemsChange(newItems);
   };
 
   const removeItem = (index) => {
@@ -208,7 +225,9 @@ function ReminderForm({
     if (!itemToRemove.isNew && itemToRemove.id) {
       setItemsToDelete([...itemsToDelete, itemToRemove.id]);
     }
-    setItems(items.filter((_, i) => i !== index));
+    const next = items.filter((_, i) => i !== index);
+    setItems(next);
+    if (typeof onItemsChange === "function") onItemsChange(next);
   };
 
   const handleSave = async () => {
@@ -313,7 +332,7 @@ function ReminderForm({
           content: item.content || "",
           order: i,
           remarketing: parentId,
-          media: mediaId,
+          media: mediaId ?? null,
           time_to_send: timeInMinutes,
         };
 
@@ -341,8 +360,9 @@ function ReminderForm({
         }
       }
 
-      // Eliminar items marcados
-      for (const idToDelete of itemsToDelete) {
+      // Eliminar items marcados y forzados por reemplazo
+      const allIdsToDelete = Array.from(new Set([...(itemsToDelete || []), ...((forceDeleteIds || []).filter(Boolean))]));
+      for (const idToDelete of allIdsToDelete) {
         await fetch(buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`), {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -427,20 +447,35 @@ function ReminderForm({
 }
 
 // --- Tarjeta de Sección (Hot/Normal/Cold) ---
-function RemarketingCard({ typeKey, config, data, chatbotId, token, onSaveSuccess }) {
+function RemarketingCard({ typeKey, config, data, chatbotId, token, items, onItemsChange, onCopy, forceDeleteIds, onSaveSuccess }) {
   const Icon = config.icon;
-  const messageCount = data.items?.length || 0;
+  const messageCount = items?.length || 0;
 
   return (
     <div
       className={`flex flex-col rounded-xl border p-6 ${config.areaClass} h-full`}
     >
       <div className="space-y-3 mb-4">
-        <div
-          className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${config.badgeClass}`}
-        >
-          <Icon className="h-4 w-4" />
-          {config.label}
+        <div className="flex items-center justify-between">
+          <div
+            className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${config.badgeClass}`}
+          >
+            <Icon className="h-4 w-4" />
+            {config.label}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Copiar a</span>
+            <Select onValueChange={(val) => onCopy && onCopy(val)}>
+              <SelectTrigger className="h-8 w-28 text-xs">
+                <SelectValue placeholder="Seleccionar" />
+              </SelectTrigger>
+              <SelectContent>
+                {(["hot", "normal", "cold"]).filter((k) => k !== typeKey).map((k) => (
+                  <SelectItem key={k} value={k}>{k === "hot" ? "Hot" : k === "normal" ? "Normal" : "Cold"}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">
           {config.description}
@@ -459,6 +494,9 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, onSaveSucces
         data={data}
         chatbotId={chatbotId}
         token={token}
+        itemsProp={items}
+        onItemsChange={onItemsChange}
+        forceDeleteIds={forceDeleteIds}
         onSaveSuccess={onSaveSuccess}
       />
     </div>
@@ -472,7 +510,6 @@ export default function ReminderMessages({
   chatbotId,
   initialData = { hot: {}, normal: {}, cold: {} },
 }) {
-
   const messageTypes = [
     {
       key: "hot",
@@ -511,32 +548,87 @@ export default function ReminderMessages({
 
   const handleSaveSuccess = () => {
     // Aquí podrías recargar los datos o actualizar el estado
-    window.location.reload();
+    // window.location.reload();
   };
+
+  const [itemsByType, setItemsByType] = useState(() => {
+    const initial = {};
+    for (const mt of messageTypes) {
+      const d = initialData[mt.key] || { items: [] };
+      const processed = (d.items || []).map((item) => {
+        const minutes = Number(item.time_to_send) || 0;
+        const isHours = minutes > 0 && minutes % 60 === 0;
+        return {
+          ...item,
+          timeUnit: isHours ? "hours" : "minutes",
+          time_to_send: isHours ? String(minutes / 60) : String(minutes),
+          isNew: false,
+        };
+      });
+      initial[mt.key] = processed;
+    }
+    return initial;
+  });
+
+  const [forceDeleteByType, setForceDeleteByType] = useState({});
 
   return (
     <div>
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 items-stretch">
-        {messageTypes.map((config) => {
-          const data = initialData[config.key] || { items: [] };
-          const processedItems = (data.items || []).map((item) => {
-            const minutes = Number(item.time_to_send) || 0;
-            const isHours = minutes > 0 && minutes % 60 === 0;
-            return {
-              ...item,
-              timeUnit: isHours ? "hours" : "minutes",
-              time_to_send: isHours ? String(minutes / 60) : String(minutes),
-            };
-          });
-          const merged = { ...data, items: processedItems };
+        {messageTypes.map((cfg) => {
+          const data = initialData[cfg.key] || { items: [] };
+          const onItemsChange = (next) =>
+            setItemsByType((prev) => ({ ...prev, [cfg.key]: next }));
+
+          const onCopy = (destKey) => {
+            setItemsByType((prevItems) => {
+              const idsToDelete = (prevItems[destKey] || [])
+                .filter((it) => !it.isNew && it.id)
+                .map((it) => it.id);
+
+              setForceDeleteByType((prevDel) => ({
+                ...prevDel,
+                [destKey]: idsToDelete,
+              }));
+
+              const copied = (prevItems[cfg.key] || []).map((it, idx) => {
+                const tempPrefix = it.type === "media" ? "temp-media" : "temp-txt";
+                const isVid = it.isVideo ?? String(it.mediaMime || "").startsWith("video");
+                const next = {
+                  ...it,
+                  id: `${tempPrefix}-${Date.now()}-${idx}`,
+                  isNew: true,
+                };
+                if (it.type === "media") {
+                  next.previewUrl = it.mediaUrl || it.previewUrl || undefined;
+                  next.isVideo = isVid;
+                  // mantener referencias para que se creen contenidos apuntando a la misma media
+                  next.mediaId = it.mediaId || null;
+                  next.mediaUrl = it.mediaUrl || null;
+                  next.mediaMime = it.mediaMime || null;
+                  next.file = undefined;
+                }
+                return next;
+              });
+
+              const next = { ...prevItems, [destKey]: copied };
+              toast.success(`Copiado desde ${cfg.label} a ${destKey === "hot" ? "Hot" : destKey === "normal" ? "Normal" : "Cold"}`);
+              return next;
+            });
+          };
+
           return (
             <RemarketingCard
-              key={config.key}
-              typeKey={config.key}
-              config={config}
-              data={merged}
+              key={cfg.key}
+              typeKey={cfg.key}
+              config={cfg}
+              data={data}
               chatbotId={chatbotId}
               token={token}
+              items={itemsByType[cfg.key] || []}
+              onItemsChange={onItemsChange}
+              onCopy={onCopy}
+              forceDeleteIds={forceDeleteByType[cfg.key] || []}
               onSaveSuccess={handleSaveSuccess}
             />
           );
