@@ -246,11 +246,12 @@ function ReminderForm({
 
     setIsSaving(true);
     try {
-      let parentId = data.id;
+      const parentId = data.id || data.documentId;
+      let effectiveParentId = parentId;
       const savedItems = [];
 
       // Crear el Remarketing padre si no existe
-      if (!parentId) {
+      if (!effectiveParentId) {
         const createRes = await fetch(buildStrapiUrl("/api/remarketings"), {
           method: "POST",
           headers: {
@@ -266,14 +267,17 @@ function ReminderForm({
         });
         if (!createRes.ok) throw new Error("Error creando entidad padre");
         const createPayload = await createRes.json();
-        parentId = createPayload.data.documentId || createPayload.data.id;
+        effectiveParentId =
+          createPayload.data.id || createPayload.data.documentId;
       }
 
       // Obtener los registros existentes por orden
       let existingByOrder = {};
       try {
         const qsExisting = new URLSearchParams();
-        qsExisting.set("filters[remarketing][documentId][$eq]", parentId);
+        // buscamos por documentId y por id para asegurar match
+        qsExisting.set("filters[$or][0][remarketing][documentId][$eq]", effectiveParentId);
+        qsExisting.set("filters[$or][1][remarketing][id][$eq]", effectiveParentId);
         qsExisting.set("pagination[pageSize]", "100");
         qsExisting.set("sort", "order:asc");
 
@@ -296,8 +300,11 @@ function ReminderForm({
           existingItems.forEach((entry, idx) => {
             const attrs = entry.attributes || entry;
             const ord = Number(attrs.order ?? idx);
-            const id = entry.documentId || entry.id;
-            if (Number.isFinite(ord) && id) existingByOrder[ord] = id;
+            const id = entry.id || entry.documentId;
+            const documentId = entry.documentId || entry.id;
+            if (Number.isFinite(ord) && (id || documentId)) {
+              existingByOrder[ord] = { id, documentId };
+            }
           });
         }
       } catch { }
@@ -305,7 +312,8 @@ function ReminderForm({
       // Procesar cada item
       for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        let mediaId = item.mediaId;
+        let mediaId = item.mediaId || item.mediaDocumentId;
+        let mediaDocumentId = item.mediaDocumentId || null;
         let mediaUrl = item.mediaUrl;
 
         // Subir media si es necesario
@@ -326,6 +334,7 @@ function ReminderForm({
 
           const uploadData = await uploadRes.json();
           mediaId = uploadData?.[0]?.id;
+          mediaDocumentId = uploadData?.[0]?.documentId || uploadData?.[0]?.id;
           mediaUrl =
             uploadData?.[0]?.url ||
             uploadData?.[0]?.formats?.thumbnail?.url ||
@@ -340,14 +349,17 @@ function ReminderForm({
         const payload = {
           content: item.content || "",
           order: i,
-          remarketing: parentId,
+          remarketing: effectiveParentId,
           media: mediaId ?? null,
           time_to_send: timeInMinutes,
         };
 
         const existingIdAtOrder = existingByOrder[i];
-        const targetId = !item.isNew ? item.id || existingIdAtOrder : null;
+        const targetId = !item.isNew
+          ? item.id || item.documentId || (existingIdAtOrder && (existingIdAtOrder.id || existingIdAtOrder.documentId))
+          : null;
         let savedId = targetId || null;
+        let savedDocumentId = item.documentId || item.id || null;
 
         if (targetId) {
           const res = await fetch(
@@ -367,11 +379,9 @@ function ReminderForm({
               resJson?.error?.message || `Error (${res.status}) al actualizar`;
             throw new Error(message);
           }
-          savedId =
-            resJson?.data?.documentId ||
-            resJson?.data?.id ||
-            targetId ||
-            item.id;
+          savedId = resJson?.data?.id || targetId || item.id;
+          savedDocumentId =
+            resJson?.data?.documentId || resJson?.data?.id || savedDocumentId;
         } else {
           const res = await fetch(buildStrapiUrl("/api/remarketing-contents"), {
             method: "POST",
@@ -387,13 +397,17 @@ function ReminderForm({
               resJson?.error?.message || `Error (${res.status}) al crear`;
             throw new Error(message);
           }
-          savedId = resJson?.data?.documentId || resJson?.data?.id || savedId;
+          savedId = resJson?.data?.id || savedId;
+          savedDocumentId =
+            resJson?.data?.documentId || resJson?.data?.id || savedDocumentId;
         }
 
         savedItems.push({
           ...item,
           id: savedId || item.id,
+          documentId: savedDocumentId || item.documentId,
           mediaId: mediaId ?? null,
+          mediaDocumentId: mediaDocumentId || item.mediaDocumentId || null,
           mediaUrl: mediaUrl ?? item.mediaUrl ?? null,
           isNew: false,
           file: undefined, // ya subido o no aplica
@@ -401,12 +415,27 @@ function ReminderForm({
       }
 
       // Eliminar items marcados y forzados por reemplazo
-      const allIdsToDelete = Array.from(new Set([...(itemsToDelete || []), ...((forceDeleteIds || []).filter(Boolean))]));
-      for (const idToDelete of allIdsToDelete) {
-        await fetch(buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`), {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        });
+      const allIdsToDelete = Array.from(
+        new Set([...(itemsToDelete || []), ...((forceDeleteIds || []).filter(Boolean))])
+      );
+      for (const rawId of allIdsToDelete) {
+        const idToDelete =
+          (typeof rawId === "object" && rawId !== null && rawId.id) || rawId;
+        if (!idToDelete) continue;
+        const delRes = await fetch(
+          buildStrapiUrl(`/api/remarketing-contents/${idToDelete}`),
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!delRes.ok) {
+          const delJson = await delRes.json().catch(() => ({}));
+          throw new Error(
+            delJson?.error?.message ||
+              `Error (${delRes.status}) eliminando contenido`
+          );
+        }
       }
 
       const finalItems = savedItems.map((it) => ({
@@ -631,8 +660,8 @@ export default function ReminderMessages({
           const onCopy = (destKey) => {
             setItemsByType((prevItems) => {
               const idsToDelete = (prevItems[destKey] || [])
-                .filter((it) => !it.isNew && it.id)
-                .map((it) => it.id);
+                .filter((it) => !it.isNew && (it.id || it.documentId))
+                .map((it) => it.id || it.documentId);
 
               setForceDeleteByType((prevDel) => ({
                 ...prevDel,
@@ -646,6 +675,7 @@ export default function ReminderMessages({
                 const next = {
                   ...it,
                   id: `${tempPrefix}-${Date.now()}-${idx}`,
+                  documentId: it.documentId || it.id || null,
                   isNew: true,
                 };
                 if (it.type === "media") {
@@ -655,12 +685,14 @@ export default function ReminderMessages({
                     next.file = it.file;
                     next.previewUrl = it.previewUrl || it.mediaUrl || undefined;
                     next.mediaId = null;
+                    next.mediaDocumentId = null;
                     next.mediaUrl = null;
                     next.mediaMime = it.file?.type || it.mediaMime || null;
                   } else {
                     next.previewUrl = it.mediaUrl || it.previewUrl || undefined;
                     // Reutiliza media ya subida
                     next.mediaId = it.mediaId || null;
+                    next.mediaDocumentId = it.mediaDocumentId || null;
                     next.mediaUrl = it.mediaUrl || null;
                     next.mediaMime = it.mediaMime || null;
                     next.file = undefined;

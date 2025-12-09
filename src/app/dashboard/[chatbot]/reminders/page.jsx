@@ -66,8 +66,9 @@ export default async function RemindersPage({ params }) {
         const type = attrs.hotness;
 
         if (type && structuredData[type]) {
-          // Guardamos ID del padre
-          structuredData[type].id = item.documentId || item.id;
+          // Guardamos ambos identificadores del padre
+          structuredData[type].id = item.id || item.documentId;
+          structuredData[type].documentId = item.documentId || item.id;
 
           // Procesamos los hijos (Contents)
           const contents =
@@ -79,7 +80,9 @@ export default async function RemindersPage({ params }) {
             const mediaData = cAttrs.media?.data || cAttrs.media;
 
             return {
-              id: contentItem.documentId || contentItem.id,
+              // Conservamos id numérico cuando exista
+              id: contentItem.id || contentItem.documentId,
+              documentId: contentItem.documentId || contentItem.id,
               content: cAttrs.content || "",
               type: mediaData ? "media" : "text",
               mediaUrl: mediaData
@@ -90,6 +93,9 @@ export default async function RemindersPage({ params }) {
                 : null,
               // preferimos el id numérico para que Strapi acepte la relación
               mediaId: mediaData ? mediaData.id || mediaData.documentId : null,
+              mediaDocumentId: mediaData
+                ? mediaData.documentId || mediaData.id
+                : null,
               time_to_send: cAttrs.time_to_send || "",
             };
           });
