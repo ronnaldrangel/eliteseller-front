@@ -603,7 +603,8 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, items, onIte
             <Icon className="h-4 w-4" />
             {config.label}
           </div>
-          <div className="flex items-center gap-2">
+          {/* TE FUISTE COMENTADO ERICK */}
+          {/* <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">Copiar a</span>
             <Select onValueChange={(val) => onCopy && onCopy(val)}>
               <SelectTrigger className="h-8 w-28 text-xs">
@@ -615,7 +616,7 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, items, onIte
                 ))}
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">
           {config.description}
