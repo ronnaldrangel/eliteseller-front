@@ -58,20 +58,20 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
   })();
 
   return (
-    <div className="p-4 bg-background/50 rounded-lg border mb-3 max-w-full overflow-hidden">
-      <div className="grid grid-cols-[1fr_36px] gap-4 items-center min-w-0">
+    <div className="p-3 sm:p-4 bg-background/50 rounded-lg border mb-3 max-w-full overflow-hidden">
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_36px] gap-3 sm:gap-4 items-start sm:items-center min-w-0">
         <div className="flex flex-col gap-3 min-w-0">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <span className="text-sm font-bold text-muted-foreground">
               Mensaje {index + 1}
             </span>
-            <div className="flex gap-2 items-center">
-              <Label className="text-xs text-muted-foreground">Tiempo:</Label>
+            <div className="flex flex-wrap gap-2 items-center">
+              <Label className="text-xs text-muted-foreground whitespace-nowrap">Tiempo:</Label>
               <Input
                 type="number"
                 min="1"
                 placeholder="15"
-                className="w-20 h-8 text-sm"
+                className="w-16 sm:w-20 h-8 text-sm"
                 value={item.time_to_send || ""}
                 onChange={(e) =>
                   onUpdate({ ...item, time_to_send: e.target.value })
@@ -81,7 +81,7 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
                 value={item.timeUnit || "minutes"}
                 onValueChange={(val) => onUpdate({ ...item, timeUnit: val })}
               >
-                <SelectTrigger className="w-28 h-8 text-xs">
+                <SelectTrigger className="w-24 sm:w-28 h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -113,12 +113,12 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
                   className="w-full h-48 object-cover"
                 />
               ) : (
-              <div className="w-full rounded border p-3 flex items-center gap-2 min-w-0">
-                <FileText className="w-5 h-5 text-slate-500" />
+                <div className="w-full rounded border p-3 flex items-center gap-2 min-w-0">
+                  <FileText className="w-5 h-5 text-slate-500" />
                   <span className="text-xs truncate flex-1 min-w-0" title={rawFileName}>
                     {fileName}
                   </span>
-              </div>
+                </div>
               )
             ) : (
               <Textarea
@@ -130,7 +130,7 @@ function ContentItem({ item, index, onUpdate, onRemove }) {
             )}
           </div>
         </div>
-        <div className="flex items-center justify-center">
+        <div className="flex items-center justify-end sm:justify-center mt-2 sm:mt-0">
           <Button
             aria-label="Eliminar mensaje"
             variant="ghost"
@@ -372,9 +372,9 @@ function ReminderForm({
         const existingAtOrder = existingByOrder[i] || {};
         const targetId = !item.isNew
           ? item.documentId ||
-            existingAtOrder.documentId ||
-            item.id ||
-            existingAtOrder.id
+          existingAtOrder.documentId ||
+          item.id ||
+          existingAtOrder.id
           : null;
         let savedId = targetId || null;
         let savedDocumentId = item.documentId || item.id || null;
@@ -453,7 +453,7 @@ function ReminderForm({
             const resJson = await res.json().catch(() => ({}));
             throw new Error(
               resJson?.error?.message ||
-                `Error (${res.status}) eliminando contenido`
+              `Error (${res.status}) eliminando contenido`
             );
           }
         };
@@ -551,17 +551,17 @@ function ReminderForm({
           />
         ))}
 
-        <div className="flex gap-2 pt-4">
+        <div className="flex flex-col sm:flex-row gap-2 pt-4">
           <Button
             onClick={addText}
             variant="outline"
             size="sm"
-            className="flex-1"
+            className="flex-1 w-full sm:w-auto"
           >
             <MessageSquare className="w-4 h-4 mr-2" /> Añadir mensaje
           </Button>
 
-          <div className="relative flex-1">
+          <div className="relative flex-1 w-full sm:w-auto">
             <input
               type="file"
               id={`upload-modal-${typeKey}`}
@@ -605,7 +605,7 @@ function RemarketingCard({ typeKey, config, data, chatbotId, token, items, onIte
 
   return (
     <div
-      className={`flex flex-col rounded-xl border p-6 ${config.areaClass} h-full max-w-full overflow-hidden`}
+      className={`flex flex-col rounded-xl border p-4 sm:p-6 ${config.areaClass} h-full max-w-full overflow-hidden`}
     >
       <div className="space-y-3 mb-4">
         <div className="flex items-center justify-between">
@@ -727,7 +727,7 @@ export default function ReminderMessages({
 
   return (
     <div className="w-full">
-      <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3 items-stretch">
+      <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3 items-stretch">
         {messageTypes.map((cfg) => {
           const data = initialData[cfg.key] || { items: [] };
           const onItemsChange = (next) =>

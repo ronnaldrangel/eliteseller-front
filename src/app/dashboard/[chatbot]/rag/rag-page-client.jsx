@@ -187,8 +187,8 @@ export default function RagPageClient({ chatbotSlug, chatbotId, chatbotDocumentI
       <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold">Sistema Rag</h1>
-            <p className="text-sm text-muted-foreground">Sube y gestiona archivos para enriquecer el contexto de tu chatbot.</p>
+            <h1 className="text-2xl font-semibold">Sistema R.A.G</h1>
+            <p className="text-sm text-muted-foreground">Sube y gestiona archivos para el conocimiento avanzado de tu chatbot.</p>
           </div>
         </div>
 
