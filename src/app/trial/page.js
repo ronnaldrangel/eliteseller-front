@@ -107,7 +107,7 @@ export default async function TrialPlansPage() {
           <CardTitle>{title}</CardTitle>
           <CardDescription>
             <span className={`${priceClass} text-foreground`}>{trial_price}</span>
-            <span className="ml-1">por 7 dias</span>
+            <span className="ml-1">por 30 dias</span>
           </CardDescription>
           {beforePrice && (
             <div className="mt-1 text-xs">
@@ -139,7 +139,7 @@ export default async function TrialPlansPage() {
   return (
     <MarketingLayout>
       <div className="mt-2">
-        <h1 className="text-2xl font-semibold">🎉 Empieza tus 7 días gratis</h1>
+        <h1 className="text-2xl font-semibold">🎉 Empieza tus 30 días gratis</h1>
         <p className="text-sm text-muted-foreground mt-2">
           Elige el plan que mejor se adapte a tu negocio y comienza tu prueba
           gratuita.
