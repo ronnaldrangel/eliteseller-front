@@ -177,7 +177,7 @@ export function TeamSwitcher({
     if (idx !== -1 && idx + 1 < parts.length) {
       parts[idx + 1] = team.routeSegment;
       const dest = parts.join("/") || `/dashboard/${team.routeSegment}`;
-      router.replace(dest);
+      if(pathname !== dest) router.replace(dest);
     } else {
       router.push(`/dashboard/${team.routeSegment}/home`);
     }
