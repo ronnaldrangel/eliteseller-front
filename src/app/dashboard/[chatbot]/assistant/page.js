@@ -105,6 +105,12 @@ export default async function AppsPage({ params }) {
     : Array.isArray(attrs?.reviews)
       ? attrs.reviews
       : [];
+  const activeRag =
+    typeof attrs?.active_rag === "boolean"
+      ? attrs.active_rag
+      : typeof attrs?.activeRag === "boolean"
+        ? attrs.activeRag
+        : !!(attrs?.active_rag ?? attrs?.activeRag);
   const autoAssignement =
     typeof attrs?.auto_assignment === "boolean"
       ? attrs.auto_assignment
@@ -243,6 +249,7 @@ export default async function AppsPage({ params }) {
                   chatbotSlug={chatbotSlugForUpdate}
                   token={session.strapiToken}
                   initialAutoAssignement={autoAssignement}
+                  initialActiveRag={activeRag}
                 />
               </TabsContent>
             </div>
