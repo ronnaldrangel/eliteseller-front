@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { buildStrapiUrl } from "@/lib/strapi";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 
@@ -13,16 +11,12 @@ export default function ChatbotAdvancedSettings({
   chatbotId,
   token,
   initialAutoAssignement = false,
-  initialActiveRag = false,
 }) {
   const safeInitial =
     typeof initialAutoAssignement === "boolean"
       ? initialAutoAssignement
       : !!initialAutoAssignement;
-  const safeActiveRag =
-    typeof initialActiveRag === "boolean" ? initialActiveRag : !!initialActiveRag;
   const [autoAssignEnabled, setAutoAssignEnabled] = useState(safeInitial);
-  const [activeRagEnabled, setActiveRagEnabled] = useState(safeActiveRag);
   const [loadingField, setLoadingField] = useState(null);
 
   const targetId = chatbotSlug;
@@ -93,19 +87,7 @@ export default function ChatbotAdvancedSettings({
     });
   };
 
-  const toggleActiveRag = async (nextValue = !activeRagEnabled) => {
-    await updateBooleanField({
-      fieldKeys: ["active_rag", "activeRag"],
-      nextValue,
-      onSuccess: setActiveRagEnabled,
-      successMessage: (value) =>
-        value ? "RAG activado para el chatbot." : "RAG desactivado para el chatbot.",
-    });
-  };
-
   const loadingAutoAssign = loadingField === "auto_assignment";
-  const loadingActiveRag =
-    loadingField === "active_rag" || loadingField === "activeRag";
 
   return (
     <div className="space-y-4">
@@ -126,28 +108,6 @@ export default function ChatbotAdvancedSettings({
               checked={autoAssignEnabled}
               disabled={loadingAutoAssign || !token || !targetId}
               onCheckedChange={(checked) => toggleAutoAssign(checked)}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="rounded-xl border bg-card p-6 space-y-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="space-y-1">
-            <p className="text-base font-semibold">Activar RAG</p>
-            <p className="text-sm text-muted-foreground">
-              Controla si el chatbot puede usar los archivos de RAG en sus respuestas.
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant={activeRagEnabled ? "default" : "secondary"}>
-              {activeRagEnabled ? "Activado" : "Desactivado"}
-            </Badge>
-            <Switch
-              id="active-rag-switch"
-              checked={activeRagEnabled}
-              disabled={loadingActiveRag || !token || !targetId}
-              onCheckedChange={(checked) => toggleActiveRag(checked)}
             />
           </div>
         </div>

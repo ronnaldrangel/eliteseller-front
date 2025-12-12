@@ -241,6 +241,7 @@ export default async function AppsPage({ params }) {
                   token={session.strapiToken}
                   existingFiles={ragFiles}
                   loadError={error}
+                  initialActiveRag={activeRag}
                 />
               </TabsContent>
               <TabsContent value="avanzado" forceMount>
@@ -249,7 +250,6 @@ export default async function AppsPage({ params }) {
                   chatbotSlug={chatbotSlugForUpdate}
                   token={session.strapiToken}
                   initialAutoAssignement={autoAssignement}
-                  initialActiveRag={activeRag}
                 />
               </TabsContent>
             </div>

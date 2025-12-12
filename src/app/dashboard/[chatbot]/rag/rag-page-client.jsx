@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
 import { buildStrapiUrl } from "@/lib/strapi"
 import { Upload, FileIcon, FileSpreadsheetIcon, FileTextIcon, Trash2, XIcon } from "lucide-react"
 import { toast } from "sonner"
@@ -57,14 +59,52 @@ function formatBytes(bytes) {
   return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${units[i]}`
 }
 
-export default function RagPageClient({ chatbotSlug, chatbotId, chatbotDocumentId, token, existingFiles = [], loadError }) {
+export default function RagPageClient({ chatbotSlug, chatbotId, chatbotDocumentId, token, existingFiles = [], loadError, initialActiveRag = false }) {
   const [selectedFiles, setSelectedFiles] = useState([])
   const [files, setFiles] = useState(Array.isArray(existingFiles) ? existingFiles : [])
   const [saving, setSaving] = useState(false)
   const [toDelete, setToDelete] = useState(null)
+  const [activeRag, setActiveRag] = useState(!!initialActiveRag)
+  const [toggleLoading, setToggleLoading] = useState(false)
 
   const resourceIdParam = chatbotSlug  // ?? chatbotDocumentId ?? chatbotId ?? 
   const canUpdate = useMemo(() => !!token && !!resourceIdParam, [token, resourceIdParam])
+
+  const toggleActiveRag = async (nextValue = !activeRag) => {
+    if (!canUpdate) {
+      toast.error("Faltan datos del chatbot para actualizar")
+      return
+    }
+    setToggleLoading(true)
+    const fieldKeys = ["active_rag", "activeRag"]
+    try {
+      for (let i = 0; i < fieldKeys.length; i++) {
+        const field = fieldKeys[i]
+        const res = await fetch(buildStrapiUrl(`/api/chatbots/${resourceIdParam}`), {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ data: { [field]: nextValue } }),
+        })
+        const body = await res.json().catch(() => ({}))
+        if (res.ok) {
+          setActiveRag(nextValue)
+          toast.success(nextValue ? "RAG activado para el chatbot." : "RAG desactivado para el chatbot.")
+          return
+        }
+        const isInvalidKey = res.status === 400 && (body?.error?.details?.key === field || body?.error?.name === "ValidationError")
+        if (isInvalidKey && i < fieldKeys.length - 1) continue
+        toast.error(body?.error?.message || "No se pudo actualizar el estado de RAG")
+        return
+      }
+    } catch (err) {
+      toast.error("Error de red al actualizar")
+    } finally {
+      setToggleLoading(false)
+    }
+  }
 
   const onDropChange = (fileList) => {
     const fs = Array.from(fileList || [])
@@ -195,6 +235,28 @@ export default function RagPageClient({ chatbotSlug, chatbotId, chatbotDocumentI
         {loadError ? (
           <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">{loadError}</div>
         ) : null}
+
+        <div className="grid grid-cols-1 gap-4">
+          <Card className="rounded-xl border bg-card">
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <div className="space-y-1">
+                <CardTitle className="text-base">Activar RAG</CardTitle>
+                <CardDescription>Habilita o desactiva el uso de los archivos RAG para este chatbot.</CardDescription>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge variant={activeRag ? "default" : "secondary"}>
+                  {activeRag ? "Activado" : "Desactivado"}
+                </Badge>
+                <Switch
+                  id="rag-toggle-switch"
+                  checked={activeRag}
+                  disabled={!canUpdate || toggleLoading}
+                  onCheckedChange={(checked) => toggleActiveRag(checked)}
+                />
+              </div>
+            </CardHeader>
+          </Card>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Columna izquierda: carga */}
