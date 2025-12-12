@@ -179,7 +179,7 @@ export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }
               type="single"
               value={form.gender || ""}
               onValueChange={(value) => setForm((prev) => ({ ...prev, gender: value }))}
-              className="w-full grid grid-cols-1 md:inline-flex md:w-fit md:overflow-hidden md:rounded-md md:border md:p-0"
+              className="w-full grid grid-cols-1 gap-2 md:gap-0 md:inline-flex md:w-fit md:overflow-hidden md:rounded-md md:border md:p-0"
               variant="outline">
               <ToggleGroupItem value="male" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">Masculino</ToggleGroupItem>
               <ToggleGroupItem value="female" className="w-full border rounded-xl md:border-0 md:rounded-none md:first:rounded-l-md md:last:rounded-r-md">Femenino</ToggleGroupItem>

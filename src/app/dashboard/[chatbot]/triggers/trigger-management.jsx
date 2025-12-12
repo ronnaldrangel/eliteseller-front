@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Trash2Icon } from "lucide-react";
+import { Trash2Icon, MoreHorizontal } from "lucide-react";
 
 import { buildStrapiUrl } from "@/lib/strapi";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,25 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const randomId = () =>
   typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
@@ -67,14 +86,15 @@ export default function TriggerManagement({
   // Escuchar evento de actualización de disparadores
   useEffect(() => {
     const handleTriggersUpdated = () => {
-      if (typeof router.refresh === 'function') {
+      if (typeof router.refresh === "function") {
         router.refresh();
       }
     };
 
-    if (typeof window !== 'undefined') {
-      window.addEventListener('triggers:updated', handleTriggersUpdated);
-      return () => window.removeEventListener('triggers:updated', handleTriggersUpdated);
+    if (typeof window !== "undefined") {
+      window.addEventListener("triggers:updated", handleTriggersUpdated);
+      return () =>
+        window.removeEventListener("triggers:updated", handleTriggersUpdated);
     }
   }, [router]);
 
@@ -83,11 +103,6 @@ export default function TriggerManagement({
       toast.error("Sesion no valida para eliminar.");
       return;
     }
-
-    const confirmed = window.confirm(
-      `¿Eliminar el disparador "${trigger.name || "Sin nombre"}"?`
-    );
-    if (!confirmed) return;
 
     const deleteId = trigger.documentId || trigger.id;
     const prev = [...triggers];
@@ -201,8 +216,20 @@ export default function TriggerManagement({
                 <TableRow key={trigger.id} className="even:bg-muted/10">
                   <TableCell>
                     <div
-                      className="truncate max-w-[180px]"
+                      className={`truncate max-w-[180px] ${trigger.name ? "hover:cursor-pointer hover:underline" : ""}`}
                       title={trigger.name || "Sin nombre"}
+                      onClick={
+                        trigger.name
+                          ? () => {
+                              const href = `/dashboard/${encodeURIComponent(
+                                chatbotSlug ?? chatbotId
+                              )}/triggers/${encodeURIComponent(
+                                trigger.documentId || trigger.id
+                              )}/edit`;
+                              router.push(href);
+                            }
+                          : null
+                      }
                     >
                       {trigger.name || "Sin nombre"}
                     </div>
@@ -228,31 +255,63 @@ export default function TriggerManagement({
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Button asChild variant="outline" size="sm">
-                        <Link
-                          href={`/dashboard/${encodeURIComponent(
-                            chatbotSlug ?? chatbotId
-                          )}/triggers/${encodeURIComponent(
-                            trigger.documentId || trigger.id
-                          )}/edit`}
-                          className="whitespace-nowrap"
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menú</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            const href = `/dashboard/${encodeURIComponent(
+                              chatbotSlug ?? chatbotId
+                            )}/triggers/${encodeURIComponent(
+                              trigger.documentId || trigger.id
+                            )}/edit`;
+                            router.push(href);
+                          }}
                         >
                           Editar
-                        </Link>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        aria-label="Eliminar disparador"
-                        title="Eliminar disparador"
-                        disabled={!token || !chatbotId}
-                        onClick={() => handleDelete(trigger)}
-                      >
-                        <Trash2Icon className="size-4" />
-                      </Button>
-                    </div>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onSelect={(event) => {
+                                event.preventDefault();
+                              }}
+                            >
+                              Eliminar
+                            </DropdownMenuItem>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                ¿Eliminar este disparador?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. El disparador
+                                se eliminará permanentemente.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                onClick={() => handleDelete(trigger)}
+                                disabled={!token || !chatbotId}
+                              >
+                                Confirmar
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))

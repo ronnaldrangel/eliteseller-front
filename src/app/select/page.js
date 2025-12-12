@@ -60,9 +60,9 @@ export default async function SelectPage() {
   const getPlanColor = (planId) => {
     if (!planId) return "bg-muted";
 
-    if (planId === "BASICO") {
+    if (planId === "BASICO" || planId === "TRIAL_BASICO") {
       return "bg-sky-600";
-    } else if (planId === "GALACTICO") {
+    } else if (planId === "GALACTICO" || planId === "TRIAL_GALACTICO") {
       return "bg-gradient-to-r from-purple-600 to-pink-600";
     }
     return "bg-muted";
@@ -137,7 +137,7 @@ export default async function SelectPage() {
                       className="h-20 w-20 rounded-md object-cover grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0 transition-all duration-200"
                     />
                     <div className="mt-3 font-medium md:line-clamp-2 text-sm md:text-lg space-y-2">
-                      <span className="block">{c.name}</span>
+                      <span className="block truncate">{c.name}</span>
                       {c.plan && (
                         <span
                           className={`inline py-1.5 px-2.5 rounded-md text-white text-xs font-medium capitalize ${getPlanColor(

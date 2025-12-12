@@ -536,7 +536,7 @@ function ReminderForm({
     <div>
       <div className="space-y-4 py-4">
         {items.length === 0 && (
-          <div className="text-center py-8 border border-dashed rounded-lg bg-background/30 text-sm text-muted-foreground">
+          <div className="text-center p-8 border border-dashed rounded-lg bg-background/30 text-sm text-muted-foreground">
             No hay mensajes configurados. Añade el primer mensaje.
           </div>
         )}
@@ -551,17 +551,17 @@ function ReminderForm({
           />
         ))}
 
-        <div className="flex flex-col sm:flex-row gap-2 pt-4">
+        <div className="flex flex-row flex-wrap gap-2 pt-4 w-full min-w-0">
           <Button
             onClick={addText}
             variant="outline"
             size="sm"
-            className="flex-1 w-full sm:w-auto"
+            className="flex-1 w-full text-xs md:text-sm"
           >
             <MessageSquare className="w-4 h-4 mr-2" /> Añadir mensaje
           </Button>
 
-          <div className="relative flex-1 w-full sm:w-auto">
+          <div className="relative flex-1 w-full">
             <input
               type="file"
               id={`upload-modal-${typeKey}`}
@@ -575,7 +575,7 @@ function ReminderForm({
               }
               variant="outline"
               size="sm"
-              className="w-full"
+              className="w-full text-xs md:text-sm"
             >
               <ImageIcon className="w-4 h-4 mr-2" /> Añadir multimedia
             </Button>
