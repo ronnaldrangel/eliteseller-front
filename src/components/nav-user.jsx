@@ -2,7 +2,7 @@
 
 import React from "react"
 import Link from "next/link"
-import { CreditCardIcon, LogOutIcon, MoreVerticalIcon, UserCircleIcon } from "lucide-react"
+import { CreditCardIcon, LogOutIcon, MoreVerticalIcon, UserCircleIcon, UsersIcon } from "lucide-react"
 import { signOut } from "next-auth/react"
 
 import {
@@ -109,6 +109,12 @@ export function NavUser({
                 <Link href='/billing'>
                   <CreditCardIcon />
                   Facturacion
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={withChatbotSegment("/affiliates/dashboard")}>
+                  <UsersIcon />
+                  Afiliados
                 </Link>
               </DropdownMenuItem>
               {/* <DropdownMenuItem>
