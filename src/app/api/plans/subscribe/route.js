@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { cookies } from "next/headers"
 
 export const dynamic = "force-dynamic"
 
@@ -13,10 +14,14 @@ export async function GET(request) {
   }
 
   try {
+    const cookieStore = cookies()
+    const affiliateRef = cookieStore.get("affiliate-ref-id")?.value || null
+    const payload = { plan_id, userId }
+    if (affiliateRef) payload.affiliate_ref_id = affiliateRef
     const res = await fetch("https://n8n.eliteseller.app/webhook/flow/subscribe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan_id, userId }),
+      body: JSON.stringify(payload),
       cache: "no-store",
       redirect: "manual",
     })

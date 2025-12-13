@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 export default auth((req) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
+  const ref = req.nextUrl.searchParams.get("ref")
 
   // Define protected routes
   const protectedRoutes = ["/dashboard", "/billing", "/order-confirmation"]
@@ -19,19 +20,29 @@ export default auth((req) => {
     pathname.startsWith(route)
   )
 
-  // Redirect logged-in users away from auth pages
+  let res = null
   if (isLoggedIn && isAuthRoute) {
-    return NextResponse.redirect(new URL("/select", req.url))
+    res = NextResponse.redirect(new URL("/select", req.url))
   }
 
-  // Redirect non-logged-in users away from protected pages
   if (!isLoggedIn && isProtectedRoute) {
     const loginUrl = new URL("/auth/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
-    return NextResponse.redirect(loginUrl)
+    res = NextResponse.redirect(loginUrl)
   }
 
-  return NextResponse.next()
+  if (!res) {
+    res = NextResponse.next()
+  }
+  if (ref) {
+    res.cookies.set("affiliate-ref-id", ref, {
+      maxAge: 30 * 24 * 60 * 60,
+      sameSite: "lax",
+      path: "/",
+      httpOnly: false,
+    })
+  }
+  return res
 })
 
 export const config = {
