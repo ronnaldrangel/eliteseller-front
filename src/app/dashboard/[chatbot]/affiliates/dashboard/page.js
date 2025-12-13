@@ -3,11 +3,13 @@
 import Link from "next/link";
 import {
   ArrowUpRight,
+  Banknote,
   CheckCircle2,
   Clock3,
+  DollarSign,
+  PercentCircle,
   PiggyBank,
   TrendingUp,
-  Users,
   Wallet,
 } from "lucide-react";
 
@@ -32,10 +34,10 @@ import {
 
 const STATS = [
   {
-    title: "Afiliados activos",
-    value: "128",
-    helper: "+12 este mes",
-    icon: Users,
+    title: "Monto acumulado",
+    value: "$3,110",
+    helper: "+$420 este mes",
+    icon: DollarSign,
   },
   {
     title: "Balance disponible",
@@ -44,16 +46,16 @@ const STATS = [
     icon: Wallet,
   },
   {
-    title: "Pendiente de pago",
-    value: "$680",
-    helper: "Próximo corte 30 dic",
-    icon: PiggyBank,
+    title: "Comisiones",
+    value: "20%",
+    helper: "Por cada pago confirmado",
+    icon: PercentCircle,
   },
   {
-    title: "Crecimiento",
-    value: "18%",
-    helper: "vs. último mes",
-    icon: TrendingUp,
+    title: "Mínimo de retiro",
+    value: "$20",
+    helper: "Alcanzado automáticamente",
+    icon: Banknote,
   },
 ];
 
