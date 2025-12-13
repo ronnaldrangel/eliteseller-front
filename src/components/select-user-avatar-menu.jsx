@@ -68,9 +68,9 @@ export default function SelectUserAvatarMenu() {
         <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
           <Link href="/billing">Facturación</Link>
         </DropdownMenuItem>
-        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
+        {/* <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
           <Link href="/affiliates">Afiliados</Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/auth/login" })}>
           Cerrar sesión
