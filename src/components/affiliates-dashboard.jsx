@@ -32,29 +32,36 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 
-const STATS = [
-  { title: "Afiliados activos", value: "128", helper: "+12 este mes", icon: Users },
-  { title: "Balance disponible", value: "$2,430", helper: "Listo para retirar", icon: Wallet },
-  { title: "Pendiente de pago", value: "$680", helper: "Próximo corte 30 dic", icon: PiggyBank },
-  { title: "Crecimiento", value: "18%", helper: "vs. último mes", icon: TrendingUp },
-];
-
-const PAYOUTS = [
-  { id: "P-4311", amount: "$420.00", status: "Pagado", date: "12 dic 2025" },
-  { id: "P-4302", amount: "$310.00", status: "En revisión", date: "05 dic 2025" },
-  { id: "P-4289", amount: "$265.00", status: "Pendiente", date: "28 nov 2025" },
-];
-
-const TOP_AFFILIATES = [
-  { name: "Laura Méndez", revenue: "$980", conversions: 26, rate: "4.1%" },
-  { name: "Equipo Ventas B2B", revenue: "$720", conversions: 18, rate: "3.4%" },
-  { name: "Influencer MX", revenue: "$610", conversions: 15, rate: "2.9%" },
-];
-
-export default function AffiliatesDashboard({ affiliatePath, userId }) {
+export default function AffiliatesDashboard({ affiliatePath, userId, commissionPercent = 0, referrals = [] }) {
   const fullLink =
     typeof window !== "undefined" ? `${window.location.origin}${affiliatePath}` : affiliatePath;
   const canCopy = !!userId;
+
+  // Calculations
+  const totalReferrals = referrals.length;
+  
+  const totalCommission = referrals.reduce((acc, ref) => {
+    const price = Number(ref.subscription?.plan?.price || 0);
+    return acc + (price * commissionPercent) / 100;
+  }, 0);
+
+  const paidCommission = referrals
+    .filter(r => r.referal_status === 'paid' || r.referal_status === 'completed')
+    .reduce((acc, ref) => {
+      const price = Number(ref.subscription?.plan?.price || 0);
+      return acc + (price * commissionPercent) / 100;
+    }, 0);
+
+  const pendingCommission = totalCommission - paidCommission;
+
+  // Sort by date (newest first)
+  const sortedReferrals = [...referrals].sort((a, b) => {
+    const dateA = new Date(a.subscription_date || a.createdAt);
+    const dateB = new Date(b.subscription_date || b.createdAt);
+    return dateB - dateA;
+  });
+
+  const recentReferrals = sortedReferrals.slice(0, 3);
 
   const handleCopy = async () => {
     try {
@@ -65,24 +72,31 @@ export default function AffiliatesDashboard({ affiliatePath, userId }) {
     }
   };
 
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(value);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    return new Date(dateString).toLocaleDateString('es-ES', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
   return (
     <div className="flex flex-col gap-6 px-4 py-4 md:px-6 md:py-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Panel de afiliados</h1>
           <p className="text-sm text-muted-foreground">
-            Resumen rápido de tu programa: rendimiento, pagos y actividad reciente.
+            Resumen rápido de tu programa: rendimiento, comisiones y actividad reciente.
           </p>
         </div>
-        {/* <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href={affiliatePath}>Ver enlace / activar</Link>
-          </Button>
-          <Button className="gap-2">
-            Exportar
-            <ArrowUpRight className="size-4" />
-          </Button>
-        </div> */}
       </div>
 
       <Card className="border-muted">
@@ -111,167 +125,150 @@ export default function AffiliatesDashboard({ affiliatePath, userId }) {
       </Card>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {STATS.map((stat) => (
-          <Card key={stat.title} className="border-muted">
-            <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
-              <div className="flex flex-col gap-1">
-                <CardDescription>{stat.title}</CardDescription>
-                <CardTitle className="text-2xl">{stat.value}</CardTitle>
-              </div>
-              <div className="rounded-md bg-muted p-2 text-muted-foreground">
-                <stat.icon className="size-5" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">{stat.helper}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2 border-muted">
-          <CardHeader>
-            <CardTitle>Progreso hacia el próximo pago</CardTitle>
-            <CardDescription>
-              Consolida tus ingresos y revisa cuánto falta para liberar el siguiente payout.
-            </CardDescription>
+        <Card className="border-muted">
+          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+            <div className="flex flex-col gap-1">
+              <CardDescription>Referidos Totales</CardDescription>
+              <CardTitle className="text-2xl">{totalReferrals}</CardTitle>
+            </div>
+            <div className="rounded-md bg-muted p-2 text-muted-foreground">
+              <Users className="size-5" />
+            </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-primary/5 text-primary">
-                  Objetivo $1,000
-                </Badge>
-                <span className="text-muted-foreground">Corte actual</span>
-              </div>
-              <span className="font-semibold">$680 / $1,000</span>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Suscripciones generadas</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="border-muted">
+          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+            <div className="flex flex-col gap-1">
+              <CardDescription>Comisión Total</CardDescription>
+              <CardTitle className="text-2xl">{formatCurrency(totalCommission)}</CardTitle>
             </div>
-            <Progress value={68} />
-            <div className="grid gap-3 md:grid-cols-3">
-              <div>
-                <p className="text-sm text-muted-foreground">Tiempo restante</p>
-                <p className="text-base font-semibold flex items-center gap-1">
-                  <Clock3 className="size-4 text-muted-foreground" />
-                  12 días
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Conversión promedio</p>
-                <p className="text-base font-semibold">3.6%</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Ticket por referido</p>
-                <p className="text-base font-semibold">$38</p>
-              </div>
+            <div className="rounded-md bg-muted p-2 text-muted-foreground">
+              <Wallet className="size-5" />
             </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Ingresos generados</p>
           </CardContent>
         </Card>
 
         <Card className="border-muted">
-          <CardHeader>
-            <CardTitle>Pagos recientes</CardTitle>
-            <CardDescription>Estado de tus últimos tres pagos.</CardDescription>
+          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+            <div className="flex flex-col gap-1">
+              <CardDescription>Pendiente de Pago</CardDescription>
+              <CardTitle className="text-2xl">{formatCurrency(pendingCommission)}</CardTitle>
+            </div>
+            <div className="rounded-md bg-muted p-2 text-muted-foreground">
+              <PiggyBank className="size-5" />
+            </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {PAYOUTS.map((payout) => {
-              const statusColor =
-                payout.status === "Pagado"
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
-                  : payout.status === "En revisión"
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
-                  : "bg-muted text-muted-foreground";
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Por liberar</p>
+          </CardContent>
+        </Card>
 
-              const StatusIcon =
-                payout.status === "Pagado" ? CheckCircle2 : payout.status === "En revisión" ? Clock3 : PiggyBank;
-
-              return (
-                <div
-                  key={payout.id}
-                  className="flex items-center justify-between rounded-lg border border-muted/60 px-3 py-2"
-                >
-                  <div>
-                    <p className="text-sm font-semibold">{payout.amount}</p>
-                    <p className="text-xs text-muted-foreground">{payout.date}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusIcon className="size-4 text-muted-foreground" />
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusColor}`}>
-                      {payout.status}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+        <Card className="border-muted">
+          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+            <div className="flex flex-col gap-1">
+              <CardDescription>Tu Comisión</CardDescription>
+              <CardTitle className="text-2xl">{commissionPercent}%</CardTitle>
+            </div>
+            <div className="rounded-md bg-muted p-2 text-muted-foreground">
+              <TrendingUp className="size-5" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">Por cada venta</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2 border-muted">
+        <Card className="lg:col-span-2 border-muted min-w-0">
           <CardHeader>
-            <CardTitle>Top afiliados</CardTitle>
-            <CardDescription>Referidos que más convierten este mes.</CardDescription>
+            <CardTitle>Detalle de Referidos</CardTitle>
+            <CardDescription>Historial completo de tus referidos y comisiones.</CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Afiliado</TableHead>
-                  <TableHead>Ingresos</TableHead>
-                  <TableHead>Conversiones</TableHead>
-                  <TableHead>Tasa</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {TOP_AFFILIATES.map((row) => (
-                  <TableRow key={row.name}>
-                    <TableCell className="font-medium">{row.name}</TableCell>
-                    <TableCell>{row.revenue}</TableCell>
-                    <TableCell>{row.conversions}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{row.rate}</Badge>
-                    </TableCell>
+            <div className="w-full overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="whitespace-nowrap">Fecha</TableHead>
+                    <TableHead className="whitespace-nowrap">Plan</TableHead>
+                    <TableHead className="whitespace-nowrap">Precio</TableHead>
+                    <TableHead className="whitespace-nowrap">Comisión</TableHead>
+                    <TableHead className="whitespace-nowrap">Estado</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {sortedReferrals.length > 0 ? (
+                    sortedReferrals.map((ref, i) => {
+                      const price = Number(ref.subscription?.plan?.price || 0);
+                      const commission = (price * commissionPercent) / 100;
+                      return (
+                        <TableRow key={ref.id || i}>
+                          <TableCell className="font-medium whitespace-nowrap">{formatDate(ref.subscription_date || ref.createdAt)}</TableCell>
+                          <TableCell className="whitespace-nowrap">{ref.subscription?.plan?.name || 'Desconocido'}</TableCell>
+                          <TableCell className="whitespace-nowrap">{formatCurrency(price)}</TableCell>
+                          <TableCell className="whitespace-nowrap">{formatCurrency(commission)}</TableCell>
+                          <TableCell className="whitespace-nowrap">
+                            <Badge variant="outline">{ref.referal_status}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
+                        No tienes referidos aún.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
 
         <Card className="border-muted">
           <CardHeader>
-            <CardTitle>Siguientes pasos</CardTitle>
-            <CardDescription>Acciones rápidas para mejorar el programa.</CardDescription>
+            <CardTitle>Actividad Reciente</CardTitle>
+            <CardDescription>Últimas 3 conversiones.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex gap-2">
-              <div className="mt-0.5">
-                <CheckCircle2 className="size-4 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Comparte tu enlace con 3 socios</p>
-                <p className="text-muted-foreground">Prioriza quienes ya generan tráfico.</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <div className="mt-0.5">
-                <TrendingUp className="size-4 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Lanza una campaña de bienvenida</p>
-                <p className="text-muted-foreground">Ofrece 10% extra en la primera compra.</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <div className="mt-0.5">
-                <Wallet className="size-4 text-primary" />
-              </div>
-              <div>
-                <p className="font-medium">Configura método de pago</p>
-                <p className="text-muted-foreground">Asegura transferencias sin fricción.</p>
-              </div>
-            </div>
+          <CardContent className="space-y-3">
+            {recentReferrals.length > 0 ? (
+              recentReferrals.map((ref, i) => {
+                const price = Number(ref.subscription?.plan?.price || 0);
+                const commission = (price * commissionPercent) / 100;
+                const statusColor =
+                  ref.referal_status === "paid" || ref.referal_status === "completed"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
+                    : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400";
+                
+                return (
+                  <div
+                    key={ref.id || i}
+                    className="flex items-center justify-between rounded-lg border border-muted/60 px-3 py-2"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold">{formatCurrency(commission)}</p>
+                      <p className="text-xs text-muted-foreground">{formatDate(ref.subscription_date || ref.createdAt)}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusColor}`}>
+                        {ref.referal_status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-4">Sin actividad reciente.</p>
+            )}
           </CardContent>
         </Card>
       </div>
