@@ -260,9 +260,9 @@ function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
   return (
     <div className="pointer-events-none fixed bottom-5 right-4 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
       {open ? (
-        <div className="pointer-events-auto w-[320px] overflow-hidden rounded-3xl border border-amber-200 bg-white shadow-2xl shadow-amber-100/70 sm:w-[380px]">
-          <div className="flex items-center gap-3 bg-amber-400 px-4 py-3 text-amber-950">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-amber-900 shadow-inner">
+        <div className="pointer-events-auto w-[320px] overflow-hidden rounded-3xl border border-border bg-card shadow-2xl sm:w-[380px]">
+          <div className="flex items-center gap-3 bg-primary px-4 py-3 text-primary-foreground">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-primary-foreground shadow-inner">
               <MessageSquare className="h-5 w-5" strokeWidth={2.2} />
             </div>
             <div className="flex flex-1 flex-col leading-tight">
@@ -272,15 +272,15 @@ function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/70 text-amber-950 transition hover:bg-amber-500"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-primary/90 text-primary-foreground transition hover:bg-primary"
               aria-label="Minimizar chat"
             >
               <ChevronDown className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="flex flex-col gap-3 bg-amber-50/50 px-4 py-3 text-xs text-muted-foreground">
-            <div className="text-center text-[11px] font-medium text-amber-700/80">
+          <div className="flex flex-col gap-3 bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+            <div className="text-center text-[11px] font-medium text-muted-foreground">
               {messages[0]?.time || ""}
             </div>
             <div ref={scrollRef} className="max-h-80 space-y-3 overflow-y-auto pr-1">
@@ -290,17 +290,17 @@ function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
                   <div key={message.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
                     <div
                       className={`flex max-w-[82%] flex-col gap-1 rounded-2xl border px-3 py-2 text-sm leading-relaxed shadow-sm ${isUser
-                        ? "border-amber-200 bg-white text-amber-900"
-                        : "border-amber-100 bg-amber-50 text-amber-900"
+                        ? "border-border/70 bg-background text-foreground"
+                        : "border-primary/20 bg-primary/10 text-foreground"
                         }`}
                     >
                       {!isUser ? (
-                        <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">
                           {message.author}
                         </span>
                       ) : null}
                       <p>{message.text}</p>
-                      <span className="text-[10px] text-amber-700/70">{message.time}</span>
+                      <span className="text-[10px] text-muted-foreground">{message.time}</span>
                     </div>
                   </div>
                 );
@@ -312,7 +312,7 @@ function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
                   key={chip.id}
                   type="button"
                   onClick={() => sendMessage(chip.label, { autoReply: chip.reply })}
-                  className="rounded-full border border-amber-300 px-4 py-1.5 text-xs font-medium text-amber-900 transition hover:-translate-y-[1px] hover:border-amber-400 hover:bg-white"
+                  className="rounded-full border border-border px-4 py-1.5 text-xs font-medium text-foreground transition hover:-translate-y-[1px] hover:border-primary hover:bg-primary/10"
                 >
                   {chip.label}
                 </button>
@@ -320,17 +320,17 @@ function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-amber-100 bg-white px-3 py-3">
-            <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)] focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-300">
+          <form onSubmit={handleSubmit} className="border-t border-border/60 bg-card px-3 py-3">
+            <div className="flex items-center gap-2 rounded-full border border-input bg-background px-3 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/60">
               <input
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
                 placeholder="Escribe un mensaje"
-                className="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-amber-800/60"
+                className="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
               />
               <button
                 type="submit"
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-400 text-amber-950 shadow-md transition hover:bg-amber-300"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition hover:bg-primary/90"
                 aria-label="Enviar mensaje"
               >
                 <SendHorizontal className="h-4 w-4" />
@@ -343,7 +343,7 @@ function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-500 bg-amber-400 text-amber-900 shadow-xl shadow-amber-200 transition hover:scale-105"
+        className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-primary/70 bg-primary text-primary-foreground shadow-xl shadow-primary/20 transition hover:scale-105"
         aria-label="Abrir chat de prueba"
       >
         <MessageSquare className="h-6 w-6" />
