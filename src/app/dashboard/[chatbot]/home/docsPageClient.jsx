@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 
 import {
@@ -23,6 +23,8 @@ import {
   TrendingUp,
   X as CloseIcon,
   MessageSquare,
+  SendHorizontal,
+  ChevronDown,
 } from "lucide-react";
 import {
   Area,
@@ -88,6 +90,50 @@ const RANGE_LIMIT_DAYS = {
   "7d": 7,
 };
 
+const CHAT_PREVIEW_MESSAGES = [
+  {
+    id: "m1",
+    author: "ECO",
+    role: "bot",
+    text: "Hola! Soy Eco, tu asistente virtual. Gracias por escribirnos.",
+    time: "4:51 PM",
+  },
+  {
+    id: "m2",
+    author: "ECO",
+    role: "bot",
+    text: "Estoy aqui para ayudarte.",
+    time: "4:51 PM",
+  },
+  {
+    id: "m3",
+    author: "ECO",
+    role: "bot",
+    text: "Recuerda que puedo ayudarte con preguntas sobre tu chatbot y automatizaciones.",
+    time: "4:51 PM",
+  },
+  {
+    id: "m4",
+    author: "ECO",
+    role: "bot",
+    text: "Si buscas informacion sobre tu bot, por favor continua.",
+    time: "4:51 PM",
+  },
+];
+
+const CHAT_QUICK_REPLIES = [
+  {
+    id: "has-account",
+    label: "Tengo cuenta en EliteSeller",
+    reply: "Perfecto, revisare tus chats y flujos para orientarte.",
+  },
+  {
+    id: "no-account",
+    label: "No tengo cuenta",
+    reply: "No pasa nada, puedes crear tu bot en minutos desde el dashboard.",
+  },
+];
+
 function formatThousands(value) {
   const raw = typeof value === "bigint" ? value.toString() : String(value ?? "0");
   const neg = raw.startsWith("-");
@@ -150,6 +196,160 @@ function formatShortDate(date) {
     day: "2-digit",
     month: "short",
   });
+}
+
+function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState(CHAT_PREVIEW_MESSAGES);
+  const [draft, setDraft] = useState("");
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const el = scrollRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [open, messages]);
+
+  const sendMessage = (text, { autoReply } = {}) => {
+    const value = (text ?? draft).trim();
+    if (!value) return;
+
+    const nowLabel = new Date().toLocaleTimeString("es-MX", {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: `u-${Date.now()}`,
+        author: "Tu",
+        role: "user",
+        text: value,
+        time: nowLabel,
+      },
+    ]);
+    setDraft("");
+
+    if (autoReply) {
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `b-${Date.now()}`,
+            author: chatbotName || "Chatbot",
+            role: "bot",
+            text: autoReply,
+            time: new Date().toLocaleTimeString("es-MX", {
+              hour: "numeric",
+              minute: "2-digit",
+            }),
+          },
+        ]);
+      }, 420);
+    }
+  };
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    sendMessage();
+  };
+
+  return (
+    <div className="pointer-events-none fixed bottom-5 right-4 z-40 flex flex-col items-end gap-3 sm:bottom-6 sm:right-6">
+      {open ? (
+        <div className="pointer-events-auto w-[320px] overflow-hidden rounded-3xl border border-amber-200 bg-white shadow-2xl shadow-amber-100/70 sm:w-[380px]">
+          <div className="flex items-center gap-3 bg-amber-400 px-4 py-3 text-amber-950">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-amber-900 shadow-inner">
+              <MessageSquare className="h-5 w-5" strokeWidth={2.2} />
+            </div>
+            <div className="flex flex-1 flex-col leading-tight">
+              <span className="text-sm font-semibold">{chatbotName}</span>
+              <span className="text-xs opacity-80">Podemos ayudarte?</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-amber-500/70 text-amber-950 transition hover:bg-amber-500"
+              aria-label="Minimizar chat"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-3 bg-amber-50/50 px-4 py-3 text-xs text-muted-foreground">
+            <div className="text-center text-[11px] font-medium text-amber-700/80">
+              {messages[0]?.time || ""}
+            </div>
+            <div ref={scrollRef} className="max-h-80 space-y-3 overflow-y-auto pr-1">
+              {messages.map((message) => {
+                const isUser = message.role === "user";
+                return (
+                  <div key={message.id} className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
+                    <div
+                      className={`flex max-w-[82%] flex-col gap-1 rounded-2xl border px-3 py-2 text-sm leading-relaxed shadow-sm ${isUser
+                        ? "border-amber-200 bg-white text-amber-900"
+                        : "border-amber-100 bg-amber-50 text-amber-900"
+                        }`}
+                    >
+                      {!isUser ? (
+                        <span className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                          {message.author}
+                        </span>
+                      ) : null}
+                      <p>{message.text}</p>
+                      <span className="text-[10px] text-amber-700/70">{message.time}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {CHAT_QUICK_REPLIES.map((chip) => (
+                <button
+                  key={chip.id}
+                  type="button"
+                  onClick={() => sendMessage(chip.label, { autoReply: chip.reply })}
+                  className="rounded-full border border-amber-300 px-4 py-1.5 text-xs font-medium text-amber-900 transition hover:-translate-y-[1px] hover:border-amber-400 hover:bg-white"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="border-t border-amber-100 bg-white px-3 py-3">
+            <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-white px-3 shadow-[0_6px_24px_-12px_rgba(0,0,0,0.35)] focus-within:border-amber-400 focus-within:ring-1 focus-within:ring-amber-300">
+              <input
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                placeholder="Escribe un mensaje"
+                className="h-10 flex-1 bg-transparent text-sm outline-none placeholder:text-amber-800/60"
+              />
+              <button
+                type="submit"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-400 text-amber-950 shadow-md transition hover:bg-amber-300"
+                aria-label="Enviar mensaje"
+              >
+                <SendHorizontal className="h-4 w-4" />
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-amber-500 bg-amber-400 text-amber-900 shadow-xl shadow-amber-200 transition hover:scale-105"
+        aria-label="Abrir chat de prueba"
+      >
+        <MessageSquare className="h-6 w-6" />
+      </button>
+    </div>
+  );
 }
 
 export default function DocsPageClient({
@@ -645,6 +845,7 @@ export default function DocsPageClient({
 
         </div>
       </div>
+      <ChatPreviewWidget chatbotName={chatbotSegment || "Chatbot"} />
     </div>
   );
 }
