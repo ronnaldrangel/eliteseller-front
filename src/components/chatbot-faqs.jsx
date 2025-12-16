@@ -187,12 +187,24 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
                   )}
                 </div>
                 <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 w-full sm:w-auto">
-                  <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto" onClick={() => openEdit(f)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto bg-white text-foreground border border-border hover:bg-muted shadow-sm dark:bg-black dark:text-white dark:border-white/20 dark:hover:bg-black/80"
+                    onClick={() => openEdit(f)}
+                  >
                     <PencilIcon className="size-4" />
                     Editar
                   </Button>
-                  <Button type="button" variant="destructive" size="sm" className="w-full sm:w-auto" onClick={() => setToDelete(f)}>
-                    <Trash2Icon className="size-4 text-amber-50" />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full sm:w-auto bg-destructive text-white border border-destructive hover:bg-destructive/90 shadow-sm dark:bg-destructive dark:text-white dark:border-destructive/80 dark:hover:bg-destructive/80"
+                    onClick={() => setToDelete(f)}
+                  >
+                    <Trash2Icon className="size-4" />
                     Eliminar
                   </Button>
                 </div>

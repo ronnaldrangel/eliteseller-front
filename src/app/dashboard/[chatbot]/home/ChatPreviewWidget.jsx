@@ -42,7 +42,7 @@ export default function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
         <motion.button
           type="button"
           onClick={() => setOpen(true)}
-          className="group fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 text-white shadow-xl shadow-primary/40"
+          className="group fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 text-white shadow-xl shadow-primary/40 transition-shadow duration-300 cursor-pointer hover:shadow-[0_0_0_4px_rgba(255,255,255,0.35),0_20px_35px_-10px_rgba(59,130,246,0.6)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           style={{
             background: "linear-gradient(120deg, #8b5cf6, #ec4899, #3b82f6, #8b5cf6)",
             backgroundSize: "300% 300%",

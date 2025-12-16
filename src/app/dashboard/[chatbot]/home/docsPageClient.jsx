@@ -31,7 +31,6 @@ import {
 } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import Link from "next/link";
-import ChatPreviewWidget from "./ChatPreviewWidget";
 
 const STAT_ITEMS = [
   {
@@ -646,7 +645,6 @@ export default function DocsPageClient({
 
         </div>
       </div>
-      <ChatPreviewWidget chatbotName={friendlyChatbotName || "Chatbot"} />
     </div>
   );
 }
