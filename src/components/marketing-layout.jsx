@@ -1,6 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
 import SelectUserAvatarMenu from "@/components/select-user-avatar-menu"
+import { ModeToggle } from "./mode-toggle"
 
 export default function MarketingLayout({ children }) {
   return (
@@ -30,6 +31,7 @@ export default function MarketingLayout({ children }) {
             </Link>
           </div>
           <div className="flex items-center gap-3">
+            <ModeToggle />
             <SelectUserAvatarMenu />
           </div>
         </div>

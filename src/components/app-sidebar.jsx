@@ -303,6 +303,9 @@ export function AppSidebar({ chatbotSlug, ...props }) {
   const navSecondaryDynamic = data.navSecondary.map((item) => {
     const dynamicSecondary = ["/battery", "/help", "/docs", "/affiliates"];
     if (dynamicSecondary.includes(item.url)) {
+      if (item.url === "/affiliates") {
+        return { ...item, url: item.url };
+      }
       return { ...item, url: withChatbotSegment(item.url) };
     }
     return item;
