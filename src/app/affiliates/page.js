@@ -3,6 +3,16 @@ import { auth } from "@/lib/auth";
 import MarketingLayout from "@/components/marketing-layout";
 import { buildStrapiUrl } from "@/lib/strapi";
 
+// Validación en caso el referal no tenga una suscripción válida
+function sanitizeReferals(referals) {
+  const sanitized = [];
+  for (const referal of referals) {
+    if(!referal.subscription || !referal.subscription.plan) continue;
+    sanitized.push(referal);
+  }
+  return sanitized;
+}
+
 async function getAffiliateData(token, userId) {
   try {
     // 1. Fetch user data for commission_percent
@@ -25,8 +35,8 @@ async function getAffiliateData(token, userId) {
     });
     const referalsData = await referalsRes.json();
     const referals = Array.isArray(referalsData.data) ? referalsData.data : [];
-    // console.log("data:", userData, "comision:", commissionPercent, "referidos:", referals)
-    return { commissionPercent, referals };
+    const sanitizedReferals = sanitizeReferals(referals);
+    return { commissionPercent, referals: sanitizedReferals };
   } catch (error) {
     console.error("Error fetching affiliate data:", error);
     return { commissionPercent: 0, referals: [] };
