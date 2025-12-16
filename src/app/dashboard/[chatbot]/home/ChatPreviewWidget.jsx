@@ -19,8 +19,11 @@ export default function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [attachments, setAttachments] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const scrollRef = useRef(null);
   const sessionId = useRef("");
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!sessionId.current) {
@@ -156,6 +159,44 @@ export default function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
     }
   };
 
+  const handleFileSelect = async (e) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        setIsUploading(true);
+        const uploadedUrls = [];
+
+        for (const file of files) {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const res = await fetch("/api/upload", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (!res.ok) throw new Error("Upload failed");
+
+                const data = await res.json();
+                uploadedUrls.push({
+                    name: file.name,
+                    type: file.type,
+                    url: data.url
+                });
+                toast.success(`Archivo ${file.name} subido correctamente`);
+            } catch (error) {
+                console.error("Upload error:", error);
+                toast.error(`Error al subir ${file.name} `);
+            }
+        }
+
+        setAttachments((prev) => [...prev, ...uploadedUrls]);
+        setIsUploading(false);
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
   return (
     <>
       <AnimatePresence>
@@ -264,21 +305,63 @@ export default function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
 
               {/* Input Area */}
               <form onSubmit={handleSubmit} className="border-t p-4 bg-background">
+                {/* Attachments Preview */}
+                {attachments.length > 0 && (
+                    <div className="flex gap-2 pb-3 px-1 overflow-x-auto">
+                        {attachments.map((file, i) => (
+                            <div key={i} className="relative group shrink-0">
+                                <div className="h-14 w-14 rounded-lg border bg-muted flex items-center justify-center overflow-hidden">
+                                    {file.type.startsWith('image/') ? (
+                                        <img src={file.url} alt={file.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                        <Paperclip className="h-5 w-5 text-muted-foreground" />
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => removeAttachment(i)}
+                                    className="absolute -top-1.5 -right-1.5 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-80 hover:opacity-100 transition-opacity"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+                
                 <div className="flex items-center gap-2 rounded-[1.5rem] border bg-muted/40 px-2 py-1 shadow-sm focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30 transition-all">
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    ref={fileInputRef}
+                    onChange={handleFileSelect}
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-9 w-9 rounded-full text-muted-foreground hover:bg-background/50 hover:text-foreground"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+                  </Button>
+                  
                   <Input
                     value={input}
                     onChange={(event) => setInput(event.target.value)}
                     placeholder="Escribe un mensaje..."
                     className="flex-1 border-0 bg-transparent px-3 py-2 text-sm shadow-none focus-visible:ring-0 placeholder:text-muted-foreground"
-                    disabled={isLoading}
+                    disabled={isLoading || isUploading}
                   />
                   <Button
                     type="submit"
                     size="icon"
-                    disabled={!input.trim() || isLoading}
+                    disabled={(!input.trim() && attachments.length === 0) || isLoading || isUploading}
                     className={cn(
                         "h-9 w-9 rounded-full transition-all",
-                        input.trim() ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90" : "bg-transparent text-muted-foreground hover:bg-muted"
+                        (input.trim() || attachments.length > 0) ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary/90" : "bg-transparent text-muted-foreground hover:bg-muted"
                     )}
                   >
                     <SendHorizontal className="h-4 w-4" />
