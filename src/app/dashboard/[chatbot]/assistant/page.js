@@ -117,6 +117,12 @@ export default async function AppsPage({ params }) {
       : typeof attrs?.auto_assignement === "boolean"
         ? attrs.auto_assignement
         : !!(attrs?.auto_assignment ?? attrs?.auto_assignement);
+  const enableChatbot =
+    typeof attrs?.enable_chatbot === "boolean"
+      ? attrs.enable_chatbot
+      : typeof attrs?.enableChatbot === "boolean"
+        ? attrs.enableChatbot
+        : !!(attrs?.enable_chatbot ?? attrs?.enableChatbot ?? true);
   const chatbotSlugForUpdate =
     chatbots[0]?.slug || chatbot.slug || chatbot.documentId;
   const chatbotIdForUpdate = chatbots[0]?.documentId || documentId;
@@ -250,6 +256,7 @@ export default async function AppsPage({ params }) {
                   chatbotSlug={chatbotSlugForUpdate}
                   token={session.strapiToken}
                   initialAutoAssignement={autoAssignement}
+                  initialEnableChatbot={enableChatbot}
                 />
               </TabsContent>
             </div>

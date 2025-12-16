@@ -11,12 +11,19 @@ export default function ChatbotAdvancedSettings({
   chatbotId,
   token,
   initialAutoAssignement = false,
+  initialEnableChatbot = true,
 }) {
   const safeInitial =
     typeof initialAutoAssignement === "boolean"
       ? initialAutoAssignement
       : !!initialAutoAssignement;
+  const safeInitialEnable =
+    typeof initialEnableChatbot === "boolean"
+      ? initialEnableChatbot
+      : !!initialEnableChatbot;
+
   const [autoAssignEnabled, setAutoAssignEnabled] = useState(safeInitial);
+  const [chatbotEnabled, setChatbotEnabled] = useState(safeInitialEnable);
   const [loadingField, setLoadingField] = useState(null);
 
   const targetId = chatbotSlug;
@@ -87,6 +94,16 @@ export default function ChatbotAdvancedSettings({
     });
   };
 
+  const toggleChatbotEnabled = async (nextValue = !chatbotEnabled) => {
+    await updateBooleanField({
+      fieldKeys: "enable_chatbot",
+      nextValue,
+      onSuccess: setChatbotEnabled,
+      successMessage: (value) =>
+        value ? "Chatbot activado." : "Chatbot desactivado.",
+    });
+  };
+
   const loadingAutoAssign = loadingField === "auto_assignment";
 
   return (
@@ -112,6 +129,29 @@ export default function ChatbotAdvancedSettings({
           </div>
         </div>
       </div>
-    </div>
+
+
+      <div className="rounded-xl border bg-card p-6 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-base font-semibold">Activar Agente</p>
+            <p className="text-sm text-muted-foreground">
+              Activa o desactiva el agente para que responda a los clientes.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge variant={chatbotEnabled ? "default" : "secondary"}>
+              {chatbotEnabled ? "Activado" : "Desactivado"}
+            </Badge>
+            <Switch
+              id="enable-chatbot-switch"
+              checked={chatbotEnabled}
+              disabled={loadingField === "enable_chatbot" || !token || !targetId}
+              onCheckedChange={(checked) => toggleChatbotEnabled(checked)}
+            />
+          </div>
+        </div>
+      </div>
+    </div >
   );
 }
