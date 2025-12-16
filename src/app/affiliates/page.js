@@ -18,7 +18,7 @@ async function getAffiliateData(token, userId) {
     qs.set("filters[user][id][$eq]", userId);
     qs.set("populate[subscription][populate]", "plan");
     qs.set("sort", "createdAt:desc");
-    
+
     const referalsRes = await fetch(buildStrapiUrl(`/api/referals?${qs.toString()}`), {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
@@ -38,7 +38,7 @@ export default async function AffiliateDashboardPage({ params }) {
   const userId = session?.user?.strapiUserId || "";
   const token = session?.strapiToken;
 
-  const { commissionPercent, referals } = userId && token 
+  const { commissionPercent, referals } = userId && token
     ? await getAffiliateData(token, userId)
     : { commissionPercent: 0, referals: [] };
 
@@ -48,9 +48,9 @@ export default async function AffiliateDashboardPage({ params }) {
 
   return (
     <MarketingLayout>
-      <AffiliatesDashboard 
-        affiliatePath={affiliatePath} 
-        userId={userId} 
+      <AffiliatesDashboard
+        affiliatePath={affiliatePath}
+        userId={userId}
         commissionPercent={commissionPercent}
         referrals={referals}
       />

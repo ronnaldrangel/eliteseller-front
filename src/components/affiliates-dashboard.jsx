@@ -88,7 +88,7 @@ export default function AffiliatesDashboard({
   };
 
   return (
-    <div className="flex flex-col gap-6 px-4 py-4 md:px-6 md:py-6">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Panel de afiliados</h1>
@@ -149,23 +149,24 @@ export default function AffiliatesDashboard({
           </div>
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold">
-              Política de Retiro
+              Tu Comisión
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground relative z-10">
-              Puedes solicitar{" "}
-              <a href="#" className="underline hover:opacity-90">
-                el retiro de tus comisiones
-              </a>{" "}
-              acumuladas cuando superen los{" "}
-              <span className="font-semibold text-foreground">$20.00 USD</span>.
-            </p>
+            <div className="relative z-10">
+              <span className="text-4xl font-bold tracking-tight">
+                {commissionPercent}%
+              </span>
+              <p className="text-sm text-muted-foreground mt-1">
+                Ganas el {commissionPercent}% de cada pago de las suscripciones
+                que refieras.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <Card className="border-muted">
           <CardContent className="flex justify-between items-start p-6">
             <div className="flex flex-col gap-1">
@@ -177,7 +178,7 @@ export default function AffiliatesDashboard({
                 Suscripciones generadas
               </p>
             </div>
-            <div className="rounded-md bg-muted py-4 px-6 text-sky-600">
+            <div className="text-sky-600">
               <Users className="size-10" />
             </div>
           </CardContent>
@@ -196,7 +197,7 @@ export default function AffiliatesDashboard({
                 Ingresos generados
               </p>
             </div>
-            <div className="rounded-md bg-muted py-4 px-6 text-yellow-500">
+            <div className="text-yellow-500">
               <Wallet className="size-10" />
             </div>
           </CardContent>
@@ -213,23 +214,8 @@ export default function AffiliatesDashboard({
               </span>
               <p className="text-xs text-muted-foreground">Por liberar</p>
             </div>
-            <div className="rounded-md bg-muted py-4 px-6 text-muted-foreground">
-              <PiggyBank className="size-10 text-pink-400" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-muted">
-          <CardContent className="flex justify-between items-start p-6">
-            <div className="flex flex-col gap-1">
-              <span className="text-sm font-medium text-muted-foreground">
-                Tu Comisión
-              </span>
-              <span className="text-2xl font-bold">{commissionPercent}%</span>
-              <p className="text-xs text-muted-foreground">Por cada venta</p>
-            </div>
-            <div className="rounded-md bg-muted py-4 px-6 text-green-500">
-              <TrendingUp className="size-10" />
+            <div className="text-pink-400">
+              <PiggyBank className="size-10" />
             </div>
           </CardContent>
         </Card>
@@ -312,7 +298,7 @@ export default function AffiliatesDashboard({
                 const commission = (price * commissionPercent) / 100;
                 const statusColor =
                   ref.referal_status === "paid" ||
-                  ref.referal_status === "completed"
+                    ref.referal_status === "completed"
                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                     : "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400";
 
