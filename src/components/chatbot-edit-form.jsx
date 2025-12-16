@@ -13,7 +13,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { CheckCircle2Icon, Sparkles } from "lucide-react"
-import { toast } from "sonner"
+import { toast } from "sonner"  
 
 export default function ChatbotEditForm({ initialData = {}, chatbotSlug, token }) {
   const base = initialData?.attributes || initialData || {}
