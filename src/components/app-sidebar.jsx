@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useSession } from "next-auth/react"
-import md5 from "blueimp-md5"
+import * as React from "react";
+import { useSession } from "next-auth/react";
+import md5 from "blueimp-md5";
 import {
   ArrowUpCircleIcon,
   BarChartIcon,
@@ -27,12 +27,12 @@ import {
   MenuSquareIcon,
   MessageSquareIcon,
   ChevronRight,
-  PlugIcon
-} from "lucide-react"
+  PlugIcon,
+} from "lucide-react";
 
-import { NavMain } from "@/components/nav-main"
-import { NavSecondary } from "@/components/nav-secondary"
-import { NavUser } from "@/components/nav-user"
+import { NavMain } from "@/components/nav-main";
+import { NavSecondary } from "@/components/nav-secondary";
+import { NavUser } from "@/components/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -45,12 +45,16 @@ import {
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarMenuSubButton,
-} from "@/components/ui/sidebar"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import Image from "next/image"
-import { TeamSwitcher } from "@/components/team-switcher"
-import { useChatbot } from "@/contexts/chatbot-context"
-import { SidebarOptInForm } from "@/components/sidebar-optin-form"
+} from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import Image from "next/image";
+import { TeamSwitcher } from "@/components/team-switcher";
+import { useChatbot } from "@/contexts/chatbot-context";
+import { SidebarOptInForm } from "@/components/sidebar-optin-form";
 
 const data = {
   user: {
@@ -241,21 +245,18 @@ const data = {
       ),
     },
   ],
-}
+};
 
-export function AppSidebar({
-  chatbotSlug,
-  ...props
-}) {
-  const [mounted, setMounted] = React.useState(false)
+export function AppSidebar({ chatbotSlug, ...props }) {
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setMounted(true)
-  }, [])
+    setMounted(true);
+  }, []);
 
-  const { data: session } = useSession()
+  const { data: session } = useSession();
   // const { selectedChatbotId } = useChatbot()
-  const slug = chatbotSlug || null
+  const slug = chatbotSlug || null;
 
   if (!mounted) {
     return null;
@@ -263,40 +264,57 @@ export function AppSidebar({
 
   // const cid = selectedChatbotId ? encodeURIComponent(String(selectedChatbotId)) : null
   const withChatbotSegment = (path) => {
-    if (!slug) return "/select" // ← Usa slug en lugar de cid
-    const trimmed = path.startsWith('/') ? path : `/${path}`
-    if (trimmed === '/dashboard') return `/dashboard/${slug}`
-    return `/dashboard/${slug}${trimmed}`
-  }
+    if (!slug) return "/select"; // ← Usa slug en lugar de cid
+    const trimmed = path.startsWith("/") ? path : `/${path}`;
+    if (trimmed === "/dashboard") return `/dashboard/${slug}`;
+    return `/dashboard/${slug}${trimmed}`;
+  };
   const navMainDynamic = data.navMain.map((item) => {
-    const dynamicPaths = ["/dashboard", "/home", "/chats", "/tags", "/triggers", "/products", "/sales", "/assistant", "/integrations", "/contacts", "/reminders"]
+    const dynamicPaths = [
+      "/dashboard",
+      "/home",
+      "/chats",
+      "/tags",
+      "/triggers",
+      "/products",
+      "/sales",
+      "/assistant",
+      "/integrations",
+      "/contacts",
+      "/reminders",
+    ];
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs
       const mappedSubItems = item.items.map((sub) => ({
         ...sub,
-        url: withChatbotSegment(sub.url)
-      }))
-      const baseUrl = item.url && item.url !== "#" ? withChatbotSegment(item.url) : withChatbotSegment("/integrations")
-      return { ...item, url: baseUrl, items: mappedSubItems }
+        url: withChatbotSegment(sub.url),
+      }));
+      const baseUrl =
+        item.url && item.url !== "#"
+          ? withChatbotSegment(item.url)
+          : withChatbotSegment("/integrations");
+      return { ...item, url: baseUrl, items: mappedSubItems };
     } else if (dynamicPaths.includes(item.url)) {
-      return { ...item, url: withChatbotSegment(item.url) }
+      return { ...item, url: withChatbotSegment(item.url) };
     }
-    return item
-  })
+    return item;
+  });
 
   const navSecondaryDynamic = data.navSecondary.map((item) => {
-    const dynamicSecondary = ["/battery", "/help", "/docs", "/affiliates"]
+    const dynamicSecondary = ["/battery", "/help", "/docs", "/affiliates"];
     if (dynamicSecondary.includes(item.url)) {
-      return { ...item, url: withChatbotSegment(item.url) }
+      return { ...item, url: withChatbotSegment(item.url) };
     }
-    return item
-  })
+    return item;
+  });
 
   const userFromSession = {
     name: session?.user?.name || session?.user?.email || "Usuario",
     email: session?.user?.email || "",
-    avatar: `https://www.gravatar.com/avatar/${md5((session?.user?.email || "").trim().toLowerCase())}?d=retro`,
-  }
+    avatar: `https://www.gravatar.com/avatar/${md5(
+      (session?.user?.email || "").trim().toLowerCase()
+    )}?d=retro`,
+  };
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
