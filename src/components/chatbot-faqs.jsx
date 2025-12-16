@@ -192,7 +192,7 @@ export default function ChatbotFaqs({ items = [], token, chatbotId }) {
                     Editar
                   </Button>
                   <Button type="button" variant="destructive" size="sm" className="w-full sm:w-auto" onClick={() => setToDelete(f)}>
-                    <Trash2Icon className="size-4" />
+                    <Trash2Icon className="size-4 text-amber-50" />
                     Eliminar
                   </Button>
                 </div>

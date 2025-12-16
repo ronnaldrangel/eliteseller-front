@@ -1114,7 +1114,7 @@ export default function NewTriggerForm({
                 <FieldGroup className="gap-6">
                   <Field data-invalid={errors.keywords ? true : undefined}>
                     <FieldLabel htmlFor="trigger-keywords">
-                      Palabras clave
+                      Palabras Claves o Ads ID
                     </FieldLabel>
                     <FieldContent>
                       <div>
