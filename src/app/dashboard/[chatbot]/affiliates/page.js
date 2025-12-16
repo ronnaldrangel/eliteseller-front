@@ -1,95 +1,59 @@
-"use client";
+import AffiliatesDashboard from "@/components/affiliates-dashboard";
+import { auth } from "@/lib/auth";
+import MarketingLayout from "@/components/marketing-layout";
+import { buildStrapiUrl } from "@/lib/strapi";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import Image from "next/image";
+async function getAffiliateData(token, userId) {
+  try {
+    // 1. Fetch user data for commission_percent
+    const userRes = await fetch(buildStrapiUrl(`/api/users?filters[id][$eq]=${userId}`), {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const userData = await userRes.json();
+    const commissionPercent = userData[0]?.commission_percent || 0;
 
+    // 2. Fetch referrals
+    const qs = new URLSearchParams();
+    qs.set("filters[user][id][$eq]", userId);
+    qs.set("populate[subscription][populate]", "plan");
+    qs.set("sort", "createdAt:desc");
+    
+    const referalsRes = await fetch(buildStrapiUrl(`/api/referals?${qs.toString()}`), {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const referalsData = await referalsRes.json();
+    const referals = Array.isArray(referalsData.data) ? referalsData.data : [];
+    // console.log("data:", userData, "comision:", commissionPercent, "referidos:", referals)
+    return { commissionPercent, referals };
+  } catch (error) {
+    console.error("Error fetching affiliate data:", error);
+    return { commissionPercent: 0, referals: [] };
+  }
+}
 
-// Personalizar las imágenes por paso
-const STEP_IMAGES = [
-  "/images/affiliates/step1.webp",
-  "/images/affiliates/step2.webp",
-  "/images/affiliates/step3.webp",
-];
+export default async function AffiliateDashboardPage({ params }) {
+  const session = await auth();
+  const userId = session?.user?.strapiUserId || "";
+  const token = session?.strapiToken;
 
-const STEPS = [
-  {
-    title: "Invita a tu audiencia",
-    desc: "Comparte tu enlace de referencia único y deja que tus amigos o audiencia se unan al mundo y confiabilidad de EliteSeller.",
-  },
-  {
-    title: "Tus amigos/audiencia aceptan",
-    desc: "Ellos se registran, comienzan a usar EliteSeller y experimentan nuestra magia.",
-  },
-  {
-    title: "Recibe tu pago",
-    desc: "Cuando realizan un pago verificado, ganas 20% fácil y rápido.",
-  },
-];
+  const { commissionPercent, referals } = userId && token 
+    ? await getAffiliateData(token, userId)
+    : { commissionPercent: 0, referals: [] };
 
-export default function AffiliatePage() {
+  const affiliatePath = userId
+    ? `?ref=${encodeURIComponent(userId)}`
+    : "/dashboard";
+
   return (
-    <div className="flex flex-1 flex-col px-4 lg:px-6 py-4 md:py-6 gap-6">
-      <Card className="border-primary/10">
-        <CardHeader className="gap-2">
-          <CardTitle className="text-xl md:text-2xl">
-            Tu enlace de afiliado
-          </CardTitle>
-          <CardDescription className="max-w-3xl">
-            Necesitas activar el afiliado para obtener tu enlace de referencia
-            único, que te permite invitar a nuevos usuarios y ganar recompensas.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button
-            asChild
-            className="bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            <a href="https://calendly.com/elitecode2025dev/30min" target="_blank" rel="noopener noreferrer" aria-label="Activar Afiliado">
-              Activar Afiliado
-            </a>
-          </Button>
-        </CardContent>
-      </Card>
+    // <MarketingLayout>
+      <AffiliatesDashboard 
+        affiliatePath={affiliatePath} 
+        userId={userId} 
+        commissionPercent={commissionPercent}
+        referrals={referals}
+      />
 
-      <Card className="border-muted">
-        <CardContent className="p-6 md:p-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 items-start">
-            {STEPS.map((step, idx) => (
-              <div
-                key={step.title}
-                className="flex flex-col items-center text-center gap-4"
-              >
-                <div className="w-40 h-40 md:w-44 md:h-44">
-                  <Image
-                    src={STEP_IMAGES[idx]}
-                    alt={`Paso ${idx + 1}`}
-                    width={100}
-                    height={100}
-                    className="h-full w-full object-contain"
-                    priority={true}
-                  />
-                </div>
-
-                <div className="inline-flex h-9 w-9 items-center justify-center rounded-full border bg-background text-sm font-semibold text-muted-foreground">
-                  {idx + 1}
-                </div>
-
-                <h3 className="text-lg font-semibold">{step.title}</h3>
-                <p className="text-sm text-muted-foreground max-w-[28rem]">
-                  {step.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
   );
 }
