@@ -126,62 +126,54 @@ export default function AffiliatesDashboard({ affiliatePath, userId, commissionP
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card className="border-muted">
-          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+          <CardContent className="flex justify-between items-start p-6">
             <div className="flex flex-col gap-1">
-              <CardDescription>Referidos Totales</CardDescription>
-              <CardTitle className="text-2xl">{totalReferrals}</CardTitle>
+              <span className="text-sm font-medium text-muted-foreground">Referidos Totales</span>
+              <span className="text-2xl font-bold">{totalReferrals}</span>
+              <p className="text-xs text-muted-foreground">Suscripciones generadas</p>
             </div>
-            <div className="rounded-md bg-muted p-2 text-muted-foreground">
-              <Users className="size-5" />
+            <div className="rounded-md bg-muted py-4 px-6 text-sky-600">
+              <Users className="size-10" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Suscripciones generadas</p>
           </CardContent>
         </Card>
         
         <Card className="border-muted">
-          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+          <CardContent className="flex justify-between items-start p-6">
             <div className="flex flex-col gap-1">
-              <CardDescription>Comisión Total</CardDescription>
-              <CardTitle className="text-2xl">{formatCurrency(totalCommission)}</CardTitle>
+              <span className="text-sm font-medium text-muted-foreground">Comisión Total</span>
+              <span className="text-2xl font-bold">{formatCurrency(totalCommission)}</span>
+              <p className="text-xs text-muted-foreground">Ingresos generados</p>
             </div>
-            <div className="rounded-md bg-muted p-2 text-muted-foreground">
-              <Wallet className="size-5" />
+            <div className="rounded-md bg-muted py-4 px-6 text-yellow-500">
+              <Wallet className="size-10" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Ingresos generados</p>
           </CardContent>
         </Card>
 
         <Card className="border-muted">
-          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+          <CardContent className="flex justify-between items-start p-6">
             <div className="flex flex-col gap-1">
-              <CardDescription>Pendiente de Pago</CardDescription>
-              <CardTitle className="text-2xl">{formatCurrency(pendingCommission)}</CardTitle>
+              <span className="text-sm font-medium text-muted-foreground">Pendiente de Pago</span>
+              <span className="text-2xl font-bold">{formatCurrency(pendingCommission)}</span>
+              <p className="text-xs text-muted-foreground">Por liberar</p>
             </div>
-            <div className="rounded-md bg-muted p-2 text-muted-foreground">
-              <PiggyBank className="size-5" />
+            <div className="rounded-md bg-muted py-4 px-6 text-muted-foreground">
+              <PiggyBank className="size-10 text-pink-400" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Por liberar</p>
           </CardContent>
         </Card>
 
         <Card className="border-muted">
-          <CardHeader className="flex-row items-start justify-between space-y-0 pb-2">
+          <CardContent className="flex justify-between items-start p-6">
             <div className="flex flex-col gap-1">
-              <CardDescription>Tu Comisión</CardDescription>
-              <CardTitle className="text-2xl">{commissionPercent}%</CardTitle>
+              <span className="text-sm font-medium text-muted-foreground">Tu Comisión</span>
+              <span className="text-2xl font-bold">{commissionPercent}%</span>
+              <p className="text-xs text-muted-foreground">Por cada venta</p>
             </div>
-            <div className="rounded-md bg-muted p-2 text-muted-foreground">
-              <TrendingUp className="size-5" />
+            <div className="rounded-md bg-muted py-4 px-6 text-green-500">
+              <TrendingUp className="size-10" />
             </div>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">Por cada venta</p>
           </CardContent>
         </Card>
       </div>
