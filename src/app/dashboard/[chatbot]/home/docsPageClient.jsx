@@ -156,6 +156,7 @@ export default function DocsPageClient({
   initialNewsItems = [],
   newsError,
   messageStats = { tokensRemaining: null, tokensUsed: null },
+  friendlyChatbotName = "",
 }) {
   const params = useParams();
   const chatbotSegmentParam = params?.chatbot;
@@ -645,7 +646,7 @@ export default function DocsPageClient({
 
         </div>
       </div>
-      <ChatPreviewWidget chatbotName={chatbotSegment || "Chatbot"} />
+      <ChatPreviewWidget chatbotName={friendlyChatbotName || "Chatbot"} />
     </div>
   );
 }

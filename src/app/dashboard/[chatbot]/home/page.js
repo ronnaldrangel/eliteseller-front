@@ -20,6 +20,9 @@ export default async function DashboardPage({ params }) {
     session.strapiToken,
     session.user.strapiUserId
   );
+
+  const friendlyChatbotName = chatbot.name || chatbot.routeSegment;
+
   if (!chatbot) redirect("/select");
 
   const qs = new URLSearchParams();
@@ -112,6 +115,7 @@ export default async function DashboardPage({ params }) {
       initialNewsItems={cards}
       newsError={cardsError}
       messageStats={messageStats}
+      friendlyChatbotName={friendlyChatbotName}
     />
   );
 }
