@@ -136,11 +136,11 @@ export default async function SelectPage() {
                       height={120}
                       className="h-20 w-20 rounded-md object-cover grayscale group-hover:grayscale-0 group-focus-visible:grayscale-0 transition-all duration-200"
                     />
-                    <div className="mt-3 font-medium md:line-clamp-2 text-sm md:text-lg space-y-2">
-                      <span className="block">{c.name}</span>
+                    <div className="mt-3 font-medium text-sm md:text-lg space-y-2">
+                      <span className="block md:line-clamp-2">{c.name}</span>
                       {c.plan && (
                         <span
-                          className={`inline py-2 px-2.5 rounded-md text-white text-xs font-medium capitalize ${getPlanColor(
+                          className={`inline-block py-1 px-2.5 rounded-md text-white text-xs font-medium capitalize ${getPlanColor(
                             c.planId
                           )}`}
                         >{`plan ${c.plan}`}</span>
