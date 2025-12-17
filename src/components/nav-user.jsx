@@ -112,7 +112,7 @@ export function NavUser({
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href={withChatbotSegment("/affiliates/dashboard")}>
+                <Link href={'/affiliates'}>
                   <UsersIcon />
                   Afiliados
                 </Link>
