@@ -26,125 +26,22 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-// --- Subcomponente: Item Individual (Texto o Media) con tiempo ---
-function ContentItem({ item, index, onUpdate, onRemove }) {
-  const isMedia = item.type === "media";
-  const mime = String(item.mediaMime || (item.file && item.file.type) || "");
-  const isVid = !!(item.isVideo || mime.startsWith("video"));
-  const isImg = mime.startsWith("image");
-  const rawFileName = (() => {
-    if (item.file && item.file.name) return item.file.name;
-    if (item.mediaUrl && typeof item.mediaUrl === "string") {
-      try {
-        const parts = item.mediaUrl.split("/");
-        return parts[parts.length - 1] || "archivo";
-      } catch {
-        return "archivo";
-      }
-    }
-    return "archivo";
-  })();
-  const fileName = (() => {
-    const name = String(rawFileName || "archivo");
-    const max = 30;
-    if (name.length <= max) return name;
-    const dotIdx = name.lastIndexOf(".");
-    const ext = dotIdx >= 0 ? name.slice(dotIdx) : "";
-    const base = dotIdx >= 0 ? name.slice(0, dotIdx) : name;
-    const ell = "...";
-    const remain = max - (ell.length + ext.length);
-    if (remain <= 0) return ell + ext;
-    return base.slice(0, remain) + ell + ext;
-  })();
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableReminderItem } from "./sortable-reminder-item";
 
-  return (
-    <div className="p-3 sm:p-4 bg-background/50 rounded-lg border mb-3 max-w-full overflow-hidden">
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_36px] gap-3 sm:gap-4 items-start sm:items-center min-w-0">
-        <div className="flex flex-col gap-3 min-w-0">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <span className="text-sm font-bold text-muted-foreground">
-              Mensaje {index + 1}
-            </span>
-            <div className="flex flex-wrap gap-2 items-center">
-              <Label className="text-xs text-muted-foreground whitespace-nowrap">Tiempo:</Label>
-              <Input
-                type="number"
-                min="1"
-                placeholder="15"
-                className="w-16 sm:w-20 h-8 text-sm"
-                value={item.time_to_send || ""}
-                onChange={(e) =>
-                  onUpdate({ ...item, time_to_send: e.target.value })
-                }
-              />
-              <Select
-                value={item.timeUnit || "minutes"}
-                onValueChange={(val) => onUpdate({ ...item, timeUnit: val })}
-              >
-                <SelectTrigger className="w-24 sm:w-28 h-8 text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="minutes">Minutos</SelectItem>
-                  <SelectItem value="hours">Horas</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            {isMedia ? (
-              isVid ? (
-                item.previewUrl || item.mediaUrl ? (
-                  <video
-                    src={item.previewUrl || item.mediaUrl}
-                    className="w-full h-48 object-cover"
-                    controls
-                    muted
-                  />
-                ) : (
-                  <div className="w-full h-48 flex items-center justify-center">
-                    <FileVideo className="text-slate-400 w-10 h-10" />
-                  </div>
-                )
-              ) : isImg ? (
-                <img
-                  src={item.previewUrl || item.mediaUrl}
-                  alt=""
-                  className="w-full h-48 object-cover"
-                />
-              ) : (
-                <div className="w-full rounded border p-3 flex items-center gap-2 min-w-0">
-                  <FileText className="w-5 h-5 text-slate-500" />
-                  <span className="text-xs truncate flex-1 min-w-0" title={rawFileName}>
-                    {fileName}
-                  </span>
-                </div>
-              )
-            ) : (
-              <Textarea
-                className="w-full text-sm min-h-[80px] resize-none focus-visible:ring-offset-0"
-                placeholder="Escribe el mensaje..."
-                value={item.content || ""}
-                onChange={(e) => onUpdate({ ...item, content: e.target.value })}
-              />
-            )}
-          </div>
-        </div>
-        <div className="flex items-center justify-end sm:justify-center mt-2 sm:mt-0">
-          <Button
-            aria-label="Eliminar mensaje"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-destructive hover:bg-destructive/10 opacity-70 hover:opacity-100"
-            onClick={onRemove}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // --- Modal para gestionar los recordatorios ---
 function ReminderForm({
@@ -165,6 +62,26 @@ function ReminderForm({
   );
   const [itemsToDelete, setItemsToDelete] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = items.findIndex((item) => item.id === active.id);
+      const newIndex = items.findIndex((item) => item.id === over.id);
+
+      const newItems = arrayMove(items, oldIndex, newIndex);
+      setItems(newItems);
+      if (typeof onItemsChange === "function") onItemsChange(newItems);
+    }
+  };
 
   // Sync internal state when parent items change (e.g., after copy)
   useEffect(() => {
@@ -541,15 +458,26 @@ function ReminderForm({
           </div>
         )}
 
-        {items.map((item, idx) => (
-          <ContentItem
-            key={item.id}
-            item={item}
-            index={idx}
-            onUpdate={(updated) => updateItem(idx, updated)}
-            onRemove={() => removeItem(idx)}
-          />
-        ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={items.map((item) => item.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {items.map((item, idx) => (
+              <SortableReminderItem
+                key={item.id}
+                item={item}
+                index={idx}
+                onUpdate={(updated) => updateItem(idx, updated)}
+                onRemove={() => removeItem(idx)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
 
         <div className="flex flex-row flex-wrap gap-2 pt-4 w-full min-w-0">
           <Button
