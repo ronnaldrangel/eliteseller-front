@@ -16,12 +16,13 @@ export function normalizeChatbotRecord(raw = {}) {
     attrs.name ||
     attrs.title ||
     (typeof slug === "string" && slug.trim().length > 0 ? slug : `Chatbot #${id || documentId}`)
-
+  const hasWhatsAppConnected = attrs.isWhatsAppConnected || raw?.isWhatsAppConnected || false
   return {
     documentId: documentId ? String(documentId) : "",
     id: id ? String(id) : "",
     slug: slug ? String(slug) : "",
     name: name ? String(name) : "",
+    hasWhatsAppConnected: Boolean(hasWhatsAppConnected),
   }
 }
 

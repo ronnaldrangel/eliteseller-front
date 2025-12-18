@@ -60,7 +60,7 @@ export async function getChatbotBySlug(segment, token, userId = null) {
   if (!match) return null
 
   const meta = buildChatbotIdentifiers(match, userId || "")
-
+  console.log("getChatbotBySlug", meta)
   if (!meta.documentId) return null
 
   return {
@@ -69,6 +69,6 @@ export async function getChatbotBySlug(segment, token, userId = null) {
     slug: meta.slug || meta.documentId,
     routeSegment: meta.routeSegment,
     name: meta.name || meta.routeSegment,
-    isWhatsAppConnected: items[0].isWhatsAppConnected || false,
+    isWhatsAppConnected: meta.hasWhatsAppConnected || false,
   }
 }
