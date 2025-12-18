@@ -60,7 +60,7 @@ export async function getChatbotBySlug(segment, token, userId = null) {
   if (!match) return null
 
   const meta = buildChatbotIdentifiers(match, userId || "")
-  console.log("getChatbotBySlug", meta)
+  // console.log("getChatbotBySlug", meta)
   if (!meta.documentId) return null
 
   return {
