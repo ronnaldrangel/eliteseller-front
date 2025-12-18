@@ -100,7 +100,7 @@ export function ContentItem({ item, index, onUpdate, onRemove, dragHandleProps }
                     item.previewUrl || item.mediaUrl ? (
                     <video
                         src={item.previewUrl || item.mediaUrl}
-                        className="w-full h-48 object-cover"
+                        className="w-full h-48 object-cover rounded-sm"
                         controls
                         muted
                     />
@@ -113,7 +113,7 @@ export function ContentItem({ item, index, onUpdate, onRemove, dragHandleProps }
                     <img
                     src={item.previewUrl || item.mediaUrl}
                     alt=""
-                    className="w-full h-48 object-cover"
+                    className="w-full h-48 object-cover rounded-sm"
                     />
                 ) : (
                     <div className="w-full rounded border p-3 flex items-center gap-2 min-w-0">
@@ -130,6 +130,17 @@ export function ContentItem({ item, index, onUpdate, onRemove, dragHandleProps }
                     value={item.content || ""}
                     onChange={(e) => onUpdate({ ...item, content: e.target.value })}
                 />
+                )}
+                {isMedia && (
+                    <div className="mt-3">
+                         <Label className="text-xs text-muted-foreground mb-1 block">Mensaje adjunto (Opcional):</Label>
+                        <Textarea
+                            className="w-full text-sm min-h-[60px] resize-none focus-visible:ring-offset-0"
+                            placeholder="Añade una descripción al archivo..."
+                            value={item.media_description || ""}
+                            onChange={(e) => onUpdate({ ...item, media_description: e.target.value })}
+                        />
+                    </div>
                 )}
             </div>
             </div>

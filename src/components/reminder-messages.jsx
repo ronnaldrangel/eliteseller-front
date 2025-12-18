@@ -284,6 +284,7 @@ function ReminderForm({
           remarketing: effectiveParentId,
           media: mediaId ?? null,
           time_to_send: timeInMinutes,
+          media_description: item.media_description || null,
         };
 
         const existingAtOrder = existingByOrder[i] || {};

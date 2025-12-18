@@ -103,6 +103,7 @@ export default async function RemindersPage({ params }) {
                 ? mediaData.documentId || mediaData.id
                 : null,
               time_to_send: cAttrs.time_to_send || "",
+              media_description: cAttrs.media_description || "",
             };
           });
         }
