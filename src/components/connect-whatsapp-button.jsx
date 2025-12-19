@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function ConnectWhatsAppButton({
   documentId,
   chatbotHasWhatsApp = false,
   chatbotId,
   strapiToken,
+  className,
 }) {
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(chatbotHasWhatsApp);
@@ -80,7 +82,7 @@ export default function ConnectWhatsAppButton({
 
   if (isConnected) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg w-full md:w-auto">
+      <div className={cn("flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-200 rounded-lg w-full md:w-auto", className)}>
         <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0" />
         <span className="text-sm font-medium text-green-700">
           WhatsApp ya está conectado
@@ -92,7 +94,7 @@ export default function ConnectWhatsAppButton({
   return (
     <Button
       type="button"
-      className="w-full md:w-auto"
+      className={cn("w-full md:w-auto", className)}
       onClick={handleClick}
       disabled={loading || !documentId || isConnected}
     >

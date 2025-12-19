@@ -187,7 +187,7 @@ const data = {
     },
     {
       title: "Integraciones",
-      url: "#",
+      url: "/integrations/whatsapp",
       icon: () => (
         <Image
           src="/icons/integraciones.png"
@@ -197,11 +197,24 @@ const data = {
           className="size-4 rounded-sm object-cover"
         />
       ),
-      items: [
-        { title: "WhatsApp", url: "/integrations/whatsapp" },
-        // { title: "Shopify", url: "/integrations/shopify" },
-        // { title: "n8n", url: "/integrations/n8n" },
-      ],
+      // items: [
+      //   { title: "WhatsApp", url: "/integrations/whatsapp" },
+      //   // { title: "Shopify", url: "/integrations/shopify" },
+      //   // { title: "n8n", url: "/integrations/n8n" },
+      // ],
+    },
+    {
+      title: "Canales",
+      url: "/channels",
+      icon: () => (
+        <Image
+          src="/icons/canales.png"
+          alt="Canales"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
     },
   ],
   navSecondary: [
@@ -279,9 +292,10 @@ export function AppSidebar({ chatbotSlug, ...props }) {
       "/products",
       "/sales",
       "/assistant",
-      "/integrations",
+      "/channels",
       "/contacts",
       "/reminders",
+      "/integrations/whatsapp",
     ];
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs
