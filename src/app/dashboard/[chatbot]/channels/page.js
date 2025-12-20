@@ -2,7 +2,6 @@ import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
 import { getChatbotBySlug } from "@/lib/utils/chatbot-utils";
 import { redirect } from "next/navigation";
-import ConnectWhatsAppButton from "@/components/connect-whatsapp-button";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
 
 export default async function ChannelsPage({ params }) {
   const session = await auth();
@@ -71,7 +69,6 @@ export default async function ChannelsPage({ params }) {
       description: "Es el primer paso para empezar a vender con Eliteseller.",
       image: "/images/wazend/bot-friends.png",
       integrationUrl: `/dashboard/${chatbotSlug}/integrations/whatsapp`,
-      isWhatsApp: true,
     },
     {
       id: "messenger",
@@ -107,20 +104,6 @@ export default async function ChannelsPage({ params }) {
               key={item.id}
               className="group relative overflow-hidden transition hover:shadow-lg hover:-translate-y-1 h-full flex flex-col"
             >
-              {item.integrationUrl && (
-                <Link
-                  href={item.integrationUrl}                  className="absolute inset-0 z-0"
-                >
-                  <span className="sr-only">Ver integración</span>
-                </Link>
-              )}
-              {item.integrationUrl && (
-                <Link
-                  href={item.integrationUrl}                  className="absolute top-2 right-2 p-2 text-muted-foreground hover:text-primary z-10"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-              )}
               <CardContent className="space-y-2 text-left flex flex-1 flex-col pt-6">
                 {item.image ? (
                   <div className="w-[100px] h-auto mx-auto mb-4">
@@ -141,15 +124,11 @@ export default async function ChannelsPage({ params }) {
                   {item.description}
                 </CardDescription>
 
-                <div className="mt-auto w-full flex justify-center relative z-20">
-                  {item.isWhatsApp ? (
-                     <ConnectWhatsAppButton
-                      documentId={accountDocumentId}
-                      chatbotHasWhatsApp={chatbot.isWhatsAppConnected}
-                      chatbotId={chatbot.documentId}
-                      strapiToken={session.strapiToken}
-                      className="w-full"
-                    />
+                <div className="mt-auto w-full flex justify-center">
+                  {item.integrationUrl ? (
+                    <Button asChild className="w-full hover:cursor-pointer">
+                      <Link href={item.integrationUrl}>Conectar</Link>
+                    </Button>
                   ) : (
                     <Button disabled className="w-full">
                       Próximamente
