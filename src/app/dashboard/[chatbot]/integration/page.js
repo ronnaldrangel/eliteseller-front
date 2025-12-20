@@ -20,7 +20,7 @@ export default async function ChannelsPage({ params }) {
   const chatbotSlug = String(p?.chatbot || "");
 
   if (!session) {
-    redirect(`/auth/login?callbackUrl=/dashboard/${chatbotSlug}/channels`);
+    redirect(`/auth/login?callbackUrl=/dashboard/${chatbotSlug}/integration`);
   }
 
   const chatbot = await getChatbotBySlug(
@@ -66,23 +66,29 @@ export default async function ChannelsPage({ params }) {
 
   const integrations = [
     {
-      id: "whatsapp",
-      title: "WhatsApp Business",
-      description: "Es el primer paso para empezar a vender con Eliteseller.",
-      image: "/images/wazend/bot-friends.png",
-      integrationUrl: `/dashboard/${chatbotSlug}/integrations/whatsapp`,
-      isWhatsApp: true,
-    },
-    {
-      id: "messenger",
-      title: "Messenger",
+      id: "shalom",
+      title: "Shalom API",
       description: "Próximamente",
       image: "/images/bot.webp",
       isComingSoon: true,
     },
     {
-      id: "instagram",
-      title: "Instagram",
+      id: "rag",
+      title: "RAG",
+      description: "Próximamente",
+      image: "/images/bot.webp",
+      isComingSoon: true,
+    },
+    {
+      id: "pixel",
+      title: "Pixel",
+      description: "Próximamente",
+      image: "/images/bot.webp",
+      isComingSoon: true,
+    },
+    {
+      id: "elevenlabs",
+      title: "ElevenLabs",
       description: "Próximamente",
       image: "/images/bot.webp",
       isComingSoon: true,
@@ -94,9 +100,9 @@ export default async function ChannelsPage({ params }) {
        <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-2">
-            <h1 className="text-2xl font-semibold">Canales</h1>
+            <h1 className="text-2xl font-semibold">Integraciones</h1>
             <p className="text-sm text-muted-foreground">
-                Conecta tus canales de comunicación favoritos.
+                Conecta tus herramientas favoritas.
             </p>
           </div>
         </div>

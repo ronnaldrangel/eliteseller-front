@@ -187,7 +187,7 @@ const data = {
     },
     {
       title: "Integraciones",
-      url: "/integrations/whatsapp",
+      url: "/integration",
       icon: () => (
         <Image
           src="/icons/integraciones.png"
@@ -295,7 +295,7 @@ export function AppSidebar({ chatbotSlug, ...props }) {
       "/channels",
       "/contacts",
       "/reminders",
-      "/integrations/whatsapp",
+      "/integration",
     ];
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs
