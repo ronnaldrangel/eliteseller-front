@@ -215,9 +215,11 @@ export function ReminderSection({
             const item = group.items[j];
             let mediaId = item.mediaId || item.mediaDocumentId;
             let mediaUrl = item.mediaUrl;
+            let mediaMime = item.mediaMime;
 
             // Upload media if needed
             if (item.isNew && item.type === "media" && item.file) {
+                mediaMime = item.file.type;
                 const formData = new FormData();
                 formData.append("files", item.file);
 
@@ -277,6 +279,8 @@ export function ReminderSection({
                 documentId: savedItemDocId,
                 mediaId: mediaId,
                 mediaUrl: mediaUrl,
+                mediaMime: mediaMime,
+                order: j,
                 isNew: false,
                 file: undefined
             });
@@ -300,6 +304,9 @@ export function ReminderSection({
             id: savedGroupId,
             documentId: savedGroupDocId,
             items: savedItems,
+            remarketing_contents: savedItems,
+            time_to_send: timeInMinutes,
+            order: i,
             deletedItems: [],
             isNew: false
         });
