@@ -80,6 +80,7 @@ export default function ReminderMessages({
               chatbotId={chatbotId}
               token={token}
               onSaveSuccess={handleSaveSuccess}
+              allSectionsData={sectionData}
             />
           );
         })}

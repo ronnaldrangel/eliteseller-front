@@ -5,7 +5,14 @@ import { Button } from "@/components/ui/button";
 import {
   Loader2,
   Plus,
+  Import,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { buildStrapiUrl } from "@/lib/strapi";
 import {
@@ -31,6 +38,7 @@ export function ReminderSection({
   chatbotId,
   token,
   onSaveSuccess,
+  allSectionsData, // Global data to access other sections
 }) {
   const [groups, setGroups] = useState([]);
   const [groupsToDelete, setGroupsToDelete] = useState([]);
@@ -111,6 +119,49 @@ export function ReminderSection({
     }
     const newGroups = groups.filter((_, i) => i !== index);
     setGroups(newGroups);
+  };
+
+  const handleImport = (sourceKey) => {
+    if (!allSectionsData || !allSectionsData[sourceKey]) {
+      toast.error("No hay datos para importar.");
+      return;
+    }
+
+    const sourceGroups = allSectionsData[sourceKey].remarketing_groups || [];
+    if (sourceGroups.length === 0) {
+        toast.info("No hay grupos para copiar en esa sección.");
+        return;
+    }
+
+    // Deep copy and sanitize
+    const newGroups = sourceGroups.map((g) => {
+        // Normalize data structure
+        const minutes = Number(g.time_to_send) || 0;
+        const isHours = minutes > 0 && minutes % 60 === 0;
+
+        const sortedItems = g.remarketing_contents ? [...g.remarketing_contents].sort((a, b) => (a.order || 0) - (b.order || 0)) : 
+                            g.items ? [...g.items].sort((a, b) => (a.order || 0) - (b.order || 0)) : []; 
+
+        return {
+            ...g,
+            id: `imported-group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            documentId: null, // Clear ID so it creates new
+            isNew: true,
+            timeUnit: isHours ? "hours" : "minutes",
+            time_to_send: isHours ? String(minutes / 60) : String(minutes),
+            items: sortedItems.map((item) => ({
+                ...item,
+                id: `imported-item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                documentId: null, // Clear ID
+                isNew: true, // Mark as new for creation
+                // We keep mediaId/mediaUrl so it references the same file
+            })),
+            deletedItems: [],
+        };
+    });
+
+    setGroups([...groups, ...newGroups]);
+    toast.success(`Se importaron ${newGroups.length} grupos de ${sourceKey}`);
   };
 
   const handleSave = async () => {
@@ -390,6 +441,23 @@ export function ReminderSection({
         >
             <Plus className="w-4 h-4 mr-2" /> Añadir Grupo de Mensajes
         </Button>
+
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full border-dashed">
+                    <Import className="w-4 h-4 mr-2" /> Importar de...
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+                {["hot", "normal", "cold"]
+                    .filter((k) => k !== typeKey) // Don't import from self
+                    .map((k) => (
+                        <DropdownMenuItem key={k} onClick={() => handleImport(k)}>
+                            Importar de {k.charAt(0).toUpperCase() + k.slice(1)}
+                        </DropdownMenuItem>
+                    ))}
+            </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <div className="flex justify-end gap-2 pt-4 border-t mt-auto">
