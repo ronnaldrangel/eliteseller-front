@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import {
     Card,
     CardContent,
@@ -60,68 +60,12 @@ import {
     ToggleGroup,
     ToggleGroupItem,
 } from "@/components/ui/toggle-group"
+import { analyticsService } from "@/services/analytics.service"
+import { paymentsService } from "@/services/payments.service"
+import jsPDF from "jspdf"
+import autoTable from "jspdf-autotable"
 
-
-const adminMetrics = [
-    {
-        title: "Monthly Revenue",
-        value: "$45,231.89",
-        change: "+20.1% from last month",
-        trend: "up",
-        icon: DollarSign,
-        color: "text-green-500",
-    },
-    {
-        title: "Avg LTV per User",
-        value: "$1,250.00",
-        change: "+4.5% from last month",
-        trend: "up",
-        icon: Users,
-        color: "text-blue-500",
-    },
-    {
-        title: "Churn Rate",
-        value: "2.4%",
-        change: "-0.5% from last month",
-        trend: "down", // Good for churn
-        icon: UserMinus,
-        color: "text-red-500",
-    },
-    {
-        title: "Retention Rate",
-        value: "97.6%",
-        change: "+0.5% from last month",
-        trend: "up",
-        icon: Activity,
-        color: "text-purple-500",
-    },
-]
-
-// Extended Mock Data for filtering simulation
-const fullRevenueData = [
-    // 90 days worth of weekly-like chunks or monthly for simplicity in this mock
-    { name: "Week 1", total: 3500, newSubs: 500 },
-    { name: "Week 2", total: 3800, newSubs: 600 },
-    { name: "Week 3", total: 4200, newSubs: 700 }, // ~ last 30d starts around here if we go backwards
-    { name: "Week 4", total: 3500, newSubs: 200 },
-    { name: "Week 5", total: 8000, newSubs: 1200 },
-    { name: "Week 6", total: 9500, newSubs: 1400 },
-    { name: "Week 7", total: 11000, newSubs: 1600 },
-    { name: "Week 8", total: 10500, newSubs: 1500 }, // ~ last 14d
-    { name: "Week 9", total: 12000, newSubs: 1800 },
-    { name: "Week 10", total: 11500, newSubs: 1700 }, // ~ last 7d
-    { name: "Week 11", total: 13000, newSubs: 2000 },
-    { name: "Week 12", total: 14000, newSubs: 2200 },
-]
-
-// To make it feel real, we map 'days' to slices of the array
-const CHART_RANGE_OPTIONS = [
-    { id: "90d", label: "Last 3 months" },
-    { id: "30d", label: "Last 30 days" },
-    { id: "14d", label: "Last 14 days" },
-    { id: "7d", label: "Last 7 days" },
-];
-
+// Mock for users (left as requested to focus on the cards shown in screenshots)
 const recentUsers = [
     {
         id: "USR-001",
@@ -197,27 +141,185 @@ const recentUsers = [
     },
 ]
 
+const CHART_RANGE_OPTIONS = [
+    { id: "90d", label: "Last 3 months" },
+    { id: "30d", label: "Last 30 days" },
+    { id: "14d", label: "Last 14 days" },
+    { id: "7d", label: "Last 7 days" },
+];
+
 export default function SuperAdminDashboard() {
     const [showNewSubs, setShowNewSubs] = useState(false);
     const [chartRange, setChartRange] = useState("90d");
-    const [userFilter, setUserFilter] = useState("all"); // 'all', '7d', '30d'
+    const [userFilter, setUserFilter] = useState("all");
 
-    // Filter data based on range
-    const filteredData = useMemo(() => {
-        let count = 12; // default 90d (all)
-        if (chartRange === '30d') count = 5;
-        if (chartRange === '14d') count = 3;
-        if (chartRange === '7d') count = 2; // minimalist mock data
-        return fullRevenueData.slice(fullRevenueData.length - count);
+    // Data States
+    const [revenueData, setRevenueData] = useState(null);
+    const [churnData, setChurnData] = useState(null);
+    const [planData, setPlanData] = useState(null);
+    const [ltvData, setLtvData] = useState(null);
+    const [users, setUsers] = useState([]);
+    const [chartData, setChartData] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // Initial Data Fetch
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [revenue, churn, plans, ltv, customers] = await Promise.all([
+                    analyticsService.getMonthlyRevenue(),
+                    analyticsService.getChurnMetrics(),
+                    analyticsService.getPlanUsage(),
+                    analyticsService.getLtvMetrics(),
+                    paymentsService.getCustomers()
+                ]);
+                setRevenueData(revenue);
+                setChurnData(churn);
+                setPlanData(plans);
+                setLtvData(ltv);
+                setUsers(customers);
+            } catch (error) {
+                console.error("Error fetching admin dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    // Chart Data Fetch when Range Changes
+    useEffect(() => {
+        const fetchChart = async () => {
+            try {
+                const data = await analyticsService.getRevenueChart(chartRange);
+                // Transform data into Recharts format
+                // API: [{ date: "2025-12-04", revenue: 0, netRevenue: 0 }, ...]
+                const formatted = data.map(item => ({
+                    name: item.date,
+                    total: Number(item.revenue),
+                    newSubs: Number(item.netRevenue)
+                }));
+                setChartData(formatted);
+            } catch (error) {
+                console.error("Error fetching chart data:", error);
+            }
+        };
+        fetchChart();
     }, [chartRange]);
 
+
+    // Computed Admin Metrics
+    const adminMetrics = useMemo(() => {
+        if (loading || !revenueData || !churnData) return [
+            { title: "Monthly Revenue", value: "Loading...", change: "...", trend: "neutral", icon: DollarSign, color: "text-muted-foreground" },
+            { title: "Avg LTV per User", value: "$1,250.00", change: "+4.5%", trend: "up", icon: Users, color: "text-blue-500" }, // Static for now
+            { title: "Churn Rate", value: "Loading...", change: "...", trend: "neutral", icon: UserMinus, color: "text-muted-foreground" },
+            { title: "Retention Rate", value: "Loading...", change: "...", trend: "neutral", icon: Activity, color: "text-muted-foreground" },
+        ];
+
+        return [
+            {
+                title: "Monthly Revenue",
+                // FIXED: structure is { lastThirtyDaysRevenue: { value, ... } }
+                value: `$${revenueData.lastThirtyDaysRevenue.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                change: `${revenueData.comparison.isPositiveChange ? '+' : ''}${revenueData.comparison.value.toFixed(1)}% vs last month`,
+                trend: revenueData.comparison.trend,
+                icon: DollarSign,
+                color: "text-green-500",
+            },
+            {
+                title: "Avg LTV per User",
+                value: ltvData ? `$${ltvData.ltv.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
+                change: ltvData ? `${ltvData.comparison.isPositiveChange ? '+' : ''}${ltvData.comparison.value.toFixed(1)}% vs last month` : "...",
+                trend: ltvData ? ltvData.comparison.trend : "neutral",
+                icon: Users,
+                color: "text-blue-500",
+            },
+            {
+                title: "Churn Rate",
+                // FIXED: structure is { currentChurn: number, ... }
+                value: `${churnData.currentChurn.toFixed(2)}%`,
+                change: `${churnData.comparison.churnRate.isPositiveChange ? '' : '-'} vs previous`,
+                trend: churnData.comparison.churnRate.trend,
+                icon: UserMinus,
+                color: "text-red-500",
+            },
+            {
+                title: "Retention Rate",
+                // FIXED: structure is { currentRetention: number, ... }
+                value: `${churnData.currentRetention.toFixed(2)}%`,
+                change: `vs previous`,
+                trend: churnData.comparison.retentionRate.trend,
+                icon: Activity,
+                color: "text-purple-500",
+            },
+        ];
+    }, [revenueData, churnData, ltvData, loading]);
+
+
     const filteredUsers = useMemo(() => {
-        if (userFilter === 'all') return recentUsers;
-        // Mock filtering logic assuming "today" is approx Jan 2025 for mocking purposes or just taking last N items
-        if (userFilter === '7d') return recentUsers.slice(-2); // Mocking "recent"
-        if (userFilter === '30d') return recentUsers.slice(-4);
-        return recentUsers;
-    }, [userFilter]);
+        if (!users) return [];
+        let result = [...users];
+
+        // Map backend fields to frontend format if needed
+        // Assuming backend returns: { customerId, name, email, registerDate, ... }
+        const mappedUsers = result.map(u => ({
+            id: u.customerId,
+            name: u.name,
+            email: u.email,
+            // Mock missing fields for now or map if available
+            plan: "Pro",
+            status: u.status === 1 ? "Active" : "Inactive",
+            joined: (u.registerDate || u.created || "").split(' ')[0] || "N/A",
+            amount: "$0.00" // Backend doesn't seem to return total amount spent per user in this list
+        }));
+
+        if (userFilter === 'all') return mappedUsers;
+
+        const now = new Date();
+        const days = userFilter === '30d' ? 30 : 7;
+        const cutoff = new Date(now.setDate(now.getDate() - days));
+
+        return mappedUsers.filter(u => {
+            const joinedDate = new Date(u.joined);
+            return joinedDate >= cutoff;
+        });
+
+    }, [userFilter, users]);
+
+    const handleExport = () => {
+        if (!filteredUsers || filteredUsers.length === 0) return;
+
+        // Sort by joined date descending
+        const sortedUsers = [...filteredUsers].sort((a, b) => {
+            const dateA = new Date(a.joined === "N/A" ? 0 : a.joined);
+            const dateB = new Date(b.joined === "N/A" ? 0 : b.joined);
+            return dateB - dateA;
+        });
+
+        const doc = new jsPDF();
+
+        doc.text("User Database Export", 14, 20);
+
+        const tableColumn = ["User ID", "Name", "Email", "Plan", "Status", "Joined", "Amount"];
+        const tableRows = sortedUsers.map(user => [
+            user.id,
+            user.name,
+            user.email,
+            user.plan,
+            user.status,
+            user.joined,
+            user.amount
+        ]);
+
+        autoTable(doc, {
+            head: [tableColumn],
+            body: tableRows,
+            startY: 25,
+        });
+
+        doc.save(`users_export_${new Date().toISOString().split('T')[0]}.pdf`);
+    };
 
     // Config for ChartContainer
     const chartConfig = {
@@ -251,7 +353,7 @@ export default function SuperAdminDashboard() {
                         <TrendingUp className="mr-2 h-4 w-4" />
                         {showNewSubs ? "Show Total Revenue" : "Show New Subs Revenue"}
                     </Button>
-                    <Button variant="outline" className="hidden sm:flex">
+                    <Button variant="outline" className="hidden sm:flex" onClick={handleExport} disabled={loading || filteredUsers.length === 0}>
                         <Download className="mr-2 h-4 w-4" />
                         Export Data
                     </Button>
@@ -282,13 +384,13 @@ export default function SuperAdminDashboard() {
                                         className="flex gap-1 rounded-xl border-border/60 text-xs text-foreground"
                                     >
                                         <TrendIcon className="h-3 w-3" />
-                                        {metric.change.split(' ')[0]}
+                                        {/* Simple visualization of trend */}
                                     </Badge>
                                 </div>
                             </CardHeader>
                             <CardFooter className="flex-col items-start gap-1 text-sm">
                                 <div className="line-clamp-1 flex gap-2 font-medium">
-                                    {metric.trend === 'up' ? "Trending Up" : "Trending Down"}
+                                    {metric.trend === 'up' ? "Trending Up" : metric.trend === 'down' ? "Trending Down" : "Stable"}
                                     <TrendIcon className="h-4 w-4" />
                                 </div>
                                 <div className="text-muted-foreground">{metric.change}</div>
@@ -313,7 +415,7 @@ export default function SuperAdminDashboard() {
                     <CardContent className="space-y-6 px-6 pb-6">
                         <div className="h-48 sm:h-64">
                             <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
-                                <AreaChart data={filteredData}>
+                                <AreaChart data={chartData}>
                                     <defs>
                                         <linearGradient id={chartGradientId} x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor={showNewSubs ? "#10b981" : "#6d8df6"} stopOpacity={0.25} />
@@ -326,6 +428,11 @@ export default function SuperAdminDashboard() {
                                         tickLine={false}
                                         axisLine={false}
                                         tickMargin={8}
+                                        minTickGap={32}
+                                        tickFormatter={(value) => {
+                                            const date = new Date(value);
+                                            return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+                                        }}
                                     />
                                     <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
                                     <Area
@@ -369,29 +476,28 @@ export default function SuperAdminDashboard() {
                     </CardHeader>
                     <CardContent className="flex-1 flex items-center justify-center">
                         <div className="text-center space-y-6 w-full">
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className="flex items-center justify-between p-3 rounded-xl bg-primary/10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full bg-primary" />
-                                        <span className="font-medium">Enterprise</span>
-                                    </div>
-                                    <span className="font-bold">15%</span>
+                            {!planData ? <p>Loading...</p> : (
+                                <div className="grid grid-cols-1 gap-4">
+                                    {Object.entries(planData).map(([planName, details]) => {
+                                        let bgClass = "bg-primary/10";
+                                        let dotClass = "bg-primary";
+
+                                        // Simple deterministic coloring hash or switch
+                                        if (planName === 'BASICO') { bgClass = "bg-slate-300/20"; dotClass = "bg-slate-400"; }
+                                        if (planName === 'GALACTICO') { bgClass = "bg-purple-500/10"; dotClass = "bg-purple-500"; }
+
+                                        return (
+                                            <div key={planName} className={`flex items-center justify-between p-3 rounded-xl ${bgClass}`}>
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-3 h-3 rounded-full ${dotClass}`} />
+                                                    <span className="font-medium capitalization">{planName.toLowerCase()}</span>
+                                                </div>
+                                                <span className="font-bold">{details.percentage}%</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <div className="flex items-center justify-between p-3 rounded-xl bg-blue-500/10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full bg-blue-500" />
-                                        <span className="font-medium">Pro</span>
-                                    </div>
-                                    <span className="font-bold">45%</span>
-                                </div>
-                                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-300/20">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-3 h-3 rounded-full bg-slate-400" />
-                                        <span className="font-medium">Basic</span>
-                                    </div>
-                                    <span className="font-bold">40%</span>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

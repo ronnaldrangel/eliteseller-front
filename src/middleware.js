@@ -11,12 +11,12 @@ export default auth((req) => {
   const authRoutes = ["/auth/login", "/auth/register"]
 
   // Check if the current path is a protected route
-  const isProtectedRoute = protectedRoutes.some(route => 
+  const isProtectedRoute = protectedRoutes.some(route =>
     pathname.startsWith(route)
   )
 
   // Check if the current path is an auth route
-  const isAuthRoute = authRoutes.some(route => 
+  const isAuthRoute = authRoutes.some(route =>
     pathname.startsWith(route)
   )
 
@@ -29,6 +29,17 @@ export default auth((req) => {
     const loginUrl = new URL("/auth/login", req.url)
     loginUrl.searchParams.set("callbackUrl", pathname)
     res = NextResponse.redirect(loginUrl)
+  }
+
+  // Restrict /super-admin to specific email
+  if (isLoggedIn && pathname.startsWith("/super-admin")) {
+    const userEmail = req.auth.user?.email;
+    const allowedEmail = process.env.SUPER_ADMIN_EMAIL;
+
+    if (userEmail !== allowedEmail) {
+      // Redirect unauthorized users to dashboard
+      res = NextResponse.redirect(new URL("/dashboard", req.url));
+    }
   }
 
   if (!res) {
