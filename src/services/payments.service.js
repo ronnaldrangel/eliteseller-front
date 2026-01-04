@@ -1,7 +1,7 @@
 
 import { signOut } from "next-auth/react";
 
-const API_URL = process.env.NEXT_PUBLIC_ANALYTICS_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_ANALYTICS_API_URL || 'https://app-remarketing.s3cbwu.easypanel.host';
 
 async function fetchJson(endpoint, options = {}) {
     const res = await fetch(`${API_URL}/payments/${endpoint}`, {
