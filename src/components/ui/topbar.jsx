@@ -40,7 +40,7 @@ export function Topbar() {
         if (typeof document !== "undefined") {
             const root = document.documentElement;
             if (config?.isActive) {
-                root.style.setProperty("--topbar-offset", "3.5rem");
+                root.style.setProperty("--topbar-offset", "3rem");
             } else {
                 root.style.setProperty("--topbar-offset", "0px");
             }
@@ -55,13 +55,13 @@ export function Topbar() {
     return (
         <div
             className="fixed inset-x-0 top-0 z-50"
-            style={{ background: "linear-gradient(90deg, rgb(62, 134, 198) 0%, rgb(166, 102, 170) 25%, rgb(236, 68, 146) 50%, rgb(238, 68, 84) 75%, rgb(240, 84, 39) 100%)" }}
+            style={{ background: "linear-gradient(90deg, rgb(150, 52, 231) 0%, rgb(229, 69, 157) 100%)" }}
         >
-            <div className="flex items-center gap-3 h-14">
-                <Marquee pauseOnHover className="flex-1 min-w-0 [--duration:20s] [--gap:1.5rem]">
+            <div className="flex items-center gap-3 h-9">
+                <Marquee pauseOnHover repeat={10} className="flex-1 min-w-0 [--duration:20s] [--gap:1.5rem]">
                     {Array.isArray(config.topbarContent) && config.topbarContent.length > 0
                         ? config.topbarContent.map((t, i) => (
-                            <span key={`top-${i}`} className="text-sm font-medium text-white">
+                            <span key={`top-${i}`} className="text-sm font-base text-white">
                                 {t}
                             </span>
                         ))
