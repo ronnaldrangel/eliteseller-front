@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Lock, AlertCircle } from "lucide-react"
+import { Lock, AlertCircle, KeyRound } from "lucide-react"
 import { verifySuperAdmin } from "@/app/super-admin/actions"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export function Gatekeeper({ onAuthorized }) {
-    const [email, setEmail] = useState("");
+    const [code, setCode] = useState("");
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
 
@@ -26,11 +26,11 @@ export function Gatekeeper({ onAuthorized }) {
         setLoading(true);
 
         try {
-            const result = await verifySuperAdmin(email);
+            const result = await verifySuperAdmin(code);
             if (result.success) {
                 onAuthorized();
             } else {
-                setError("Email does not match the super admin records.");
+                setError("Incorrect access code.");
             }
         } catch (err) {
             setError("Something went wrong. Please try again.");
@@ -45,23 +45,23 @@ export function Gatekeeper({ onAuthorized }) {
                 <CardHeader className="space-y-1 text-center">
                     <div className="flex justify-center mb-4">
                         <div className="p-3 bg-primary/10 rounded-full">
-                            <Lock className="h-8 w-8 text-primary" />
+                            <KeyRound className="h-8 w-8 text-primary" />
                         </div>
                     </div>
-                    <CardTitle className="text-2xl font-bold">Admin Verification</CardTitle>
+                    <CardTitle className="text-2xl font-bold">Admin Access</CardTitle>
                     <CardDescription>
-                        Please enter the Super Admin email to proceed.
+                        Enter the access code to continue.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="space-y-2">
                             <Input
-                                type="email"
-                                placeholder="admin@example.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="rounded-xl h-11"
+                                type="password"
+                                placeholder="Access Code"
+                                value={code}
+                                onChange={(e) => setCode(e.target.value)}
+                                className="rounded-xl h-11 text-center tracking-widest"
                                 required
                             />
                         </div>
@@ -75,13 +75,13 @@ export function Gatekeeper({ onAuthorized }) {
                             </Alert>
                         )}
                         <Button type="submit" className="w-full rounded-xl h-11 font-medium" disabled={loading}>
-                            {loading ? "Verifying..." : "Verify Access"}
+                            {loading ? "Verifying..." : "Unlock Dashboard"}
                         </Button>
                     </form>
                 </CardContent>
                 <CardFooter className="justify-center border-t p-6">
                     <p className="text-xs text-muted-foreground text-center">
-                        This additional check is required for security purposes when environment variables are not automatically detected.
+                        Secure Gateway
                     </p>
                 </CardFooter>
             </Card>

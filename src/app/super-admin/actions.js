@@ -1,14 +1,15 @@
 "use server"
 
-export async function verifySuperAdmin(email) {
-    const allowedEmail = process.env.SUPER_ADMIN_EMAIL;
+export async function verifySuperAdmin(code) {
+    // User requested hardcoded access code to bypass environment issues
+    const VALID_CODE = "ramoncitoviral";
 
-    if (!email || !allowedEmail) {
+    if (!code) {
         return { success: false };
     }
 
-    // Trim and case-insensitive comparison to avoid trivial mismatches
-    const isValid = email.trim().toLowerCase() === allowedEmail.trim().toLowerCase();
+    // Simple string comparison
+    const isValid = code.trim() === VALID_CODE;
 
     return { success: isValid };
 }
