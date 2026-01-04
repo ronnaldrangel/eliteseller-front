@@ -31,16 +31,16 @@ export default auth((req) => {
     res = NextResponse.redirect(loginUrl)
   }
 
-  // Restrict /super-admin to specific email
-  if (isLoggedIn && pathname.startsWith("/super-admin")) {
-    const userEmail = req.auth.user?.email;
-    const allowedEmail = process.env.SUPER_ADMIN_EMAIL;
-
-    if (userEmail !== allowedEmail) {
-      // Redirect unauthorized users to dashboard
-      res = NextResponse.redirect(new URL("/dashboard", req.url));
-    }
-  }
+  // Restrict /super-admin to specific email - MOVED TO PAGE GATEKEEPER
+  // if (isLoggedIn && pathname.startsWith("/super-admin")) {
+  //   const userEmail = req.auth.user?.email;
+  //   const allowedEmail = process.env.SUPER_ADMIN_EMAIL;
+  //
+  //   if (userEmail !== allowedEmail) {
+  //     // Redirect unauthorized users to dashboard
+  //     res = NextResponse.redirect(new URL("/dashboard", req.url));
+  //   }
+  // }
 
   if (!res) {
     res = NextResponse.next()
