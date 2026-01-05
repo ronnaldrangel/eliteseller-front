@@ -1,4 +1,11 @@
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Marquee } from "@/components/ui/marquee";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -7,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import MarketingLayout from "@/components/marketing-layout";
-import { Check } from "lucide-react";
+import { Check, Star, ShieldCheck, Zap, Headset, Smile, Rocket } from "lucide-react";
 import CountdownOffer from "@/components/countdown-offer";
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
@@ -67,28 +74,6 @@ export default async function PlansPage() {
     error = "Error al conectar con Strapi. Verifica tu conexión.";
   }
 
-  // Este plan rompe el patrón de los demás por el precio y personalización
-  const empresarialPlan = {
-    title: "Empresarial",
-    price: "Precio a medida",
-    priceClass: "text-3xl font-bold",
-    perText: "",
-    beforePrice: "",
-    features: [
-      "Todas las funciones incluidas",
-      "Multiples número de WhatsApp",
-      "Ilimitados miembros del equipo",
-      "Flujos automatizados ilimitados",
-      "Reportes avanzados y analytics",
-      "Soporte 24/7 dedicado",
-      "Integraciones personalizadas",
-    ],
-    href: "https://www.instagram.com/elitecode.es/",
-    delay: "300ms",
-    highlight: false,
-    featureIconColor: "text-green-600",
-  };
-
   const sortedPlans = [...dynamicPlans].sort(
     (a, b) => Number(a?.price ?? 0) - Number(b?.price ?? 0)
   );
@@ -102,7 +87,7 @@ export default async function PlansPage() {
         priceClass: isPremium
           ? "text-4xl font-extrabold"
           : "text-3xl font-bold",
-        perText: `al ${plan.billing_period}`,
+        perText: `/ ${plan.billing_period}`,
         beforePrice: plan.regular_price
           ? `${plan.regular_price}$/${plan.billing_period}`
           : "",
@@ -113,8 +98,7 @@ export default async function PlansPage() {
         badgeText: isPremium ? "Mejor opción" : undefined,
         featureIconColor: isPremium ? "text-cyan-600" : "text-green-600",
       };
-    }),
-    empresarialPlan,
+    })
   ];
 
   const PlanCard = ({
@@ -132,48 +116,74 @@ export default async function PlansPage() {
     featureIconColor,
   }) => {
     const highlightClasses = highlight
-      ? "relative ring-opacity-70 shadow-xl bg-gradient-to-b from-[rgba(84,162,177,0.12)] dark:from-[rgba(84,162,177,0.12)] hover:shadow-2xl"
-      : "hover:shadow-lg";
+      ? "relative ring-2 ring-primary ring-opacity-10 shadow-2xl bg-gradient-to-b from-primary/5 via-transparent to-transparent border-primary/20"
+      : "hover:shadow-xl border-border/50";
 
     return (
       <Card
         style={{ animationDelay: delay, animationFillMode: "both" }}
-        className={`animate-in fade-in-0 slide-in-from-bottom-2 duration-1000 ease-out transition-shadow h-full flex flex-col ${highlightClasses}`}
+        className={`animate-in fade-in-0 slide-in-from-bottom-4 duration-1000 ease-out transition-all h-full flex flex-col group ${highlightClasses} rounded-2xl overflow-hidden`}
       >
         {highlight && (
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary text-primary-foreground text-xs font-semibold px-3 py-1 shadow">
-            {badgeText || "Mejor opción"}
+          <div className="absolute top-0 right-0 overflow-hidden w-24 h-24">
+            <div className="absolute top-4 -right-8 bg-primary text-primary-foreground text-[10px] font-bold py-1 px-10 rotate-45 shadow-sm">
+              {badgeText || "POPULAR"}
+            </div>
           </div>
         )}
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>
-            <span className={`${priceClass} text-foreground`}>{price}</span>
-            {perText && <span className="ml-1">{perText}</span>}
-          </CardDescription>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl font-bold tracking-tight">{title}</CardTitle>
+          </div>
+          <div className="mt-2 flex items-baseline gap-1">
+            <span className={`${priceClass} text-foreground tracking-tight`}>{price}</span>
+            {perText && <span className="text-muted-foreground text-sm font-medium">{perText}</span>}
+          </div>
           {beforePrice && (
-            <div className="mt-1 text-xs">
-              <span className="text-muted-foreground">Antes: </span>
-              <span className="line-through opacity-70">{beforePrice}</span>
+            <div className="mt-1 text-sm flex items-center gap-2">
+              <span className="text-muted-foreground line-through opacity-60">{beforePrice}</span>
+              <span className="text-emerald-500 font-semibold text-xs bg-emerald-500/10 px-1.5 py-0.5 rounded">¡AHORRA!</span>
             </div>
           )}
         </CardHeader>
-        <CardContent className="pt-2 flex flex-col flex-1">
-          <ul className="space-y-2 text-sm text-muted-foreground mb-6">
+        <CardContent className="pt-0 flex flex-col flex-1">
+          <div className="h-px w-full bg-border/50 mb-6" />
+          <ul className="space-y-3.5 text-sm text-muted-foreground mb-8">
             {features.map((f, i) => (
-              <li key={i} className="flex items-center gap-2">
-                <Check className={`h-4 w-4 ${featureIconColor}`} />
-                <span>{f}</span>
+              <li key={i} className="flex items-start gap-3 leading-snug">
+                <div className={`mt-0.5 rounded-full p-0.5 ${highlight ? "bg-primary/10" : "bg-muted"}`}>
+                  <Check className={`h-3.5 w-3.5 ${featureIconColor}`} />
+                </div>
+                <span className="group-hover:text-foreground transition-colors">{f}</span>
               </li>
             ))}
           </ul>
           {planId ? (
             <div className="w-full mt-auto">
-              <SubscribePlanButton planId={planId} userId={session?.user?.strapiUserId} />
+              <SubscribePlanButton planId={planId} userId={session?.user?.strapiUserId} highlight={highlight} />
             </div>
           ) : (
-            <Button size="lg" className="w-full mt-auto h-12 text-base cursor-pointer" asChild>
-              <a href={href}>Empieza ahora</a>
+            <Button
+              size="lg"
+              className={`w-full mt-auto h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform group relative overflow-hidden flex items-center justify-center gap-2 ${highlight
+                ? "bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 hover:shadow-primary/40 scale-100 hover:scale-[1.02] active:scale-[0.98]"
+                : "hover:scale-[1.02] active:scale-[0.98]"
+                }`}
+              asChild
+            >
+              <a href={href} className="flex items-center gap-2">
+                <span>Empieza ahora</span>
+                <svg
+                  className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+                {/* Shine effect */}
+                <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine" />
+              </a>
             </Button>
           )}
         </CardContent>
@@ -181,27 +191,135 @@ export default async function PlansPage() {
     );
   };
 
+  const FAQS = [
+    {
+      q: "¿Puedo cancelar mi plan en cualquier momento?",
+      a: "Sí, puedes cancelar tu suscripción cuando quieras desde el panel de facturación. No hay contratos forzosos."
+    },
+    {
+      q: "¿Existen descuentos por pago anual?",
+      a: "Actualmente ofrecemos estos precios promocionales. Mantente atento a nuestras comunicaciones para futuras ofertas anuales."
+    },
+    {
+      q: "¿Qué métodos de pago aceptan?",
+      a: "Aceptamos todas las tarjetas de crédito y débito principales a través de nuestra plataforma segura de pagos."
+    }
+  ];
+
+  const brands = [
+    "Amazon FBA", "Mercado Libre", "Shopify", "Walmart", "eBay", "WooCommerce"
+  ];
+
   return (
     <MarketingLayout>
-      <div className="mt-2">
-        <h1 className="text-2xl font-semibold">🚀 Empieza ahora</h1>
-        <p className="text-sm text-muted-foreground mt-2">
-          Elige el plan que mejor se adapte a tu negocio.
-        </p>
-      </div>
-      {error ? (
-        <div className="mt-2 rounded-md border border-destructive/40 bg-destructive/10 p-4 text-destructive">
-          {error}
+      {/* Hero Section */}
+      <div className="relative text-center overflow-hidden py-6">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(84,162,177,0.1)_0%,rgba(255,255,255,0)_100%)]" />
+        <div className="animate-in fade-in slide-in-from-top-4 duration-1000">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+            Escala tu negocio <br className="hidden md:block" />
+            <span className="text-primary italic">al siguiente nivel</span>
+          </h1>
+          <p className="max-w-[600px] mx-auto text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed">
+            Sin precios ocultos, cancela cuando quieras.
+          </p>
         </div>
-      ) : (
-        <>
-          <CountdownOffer days={7} color="#ef4444" />
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {plans.map((p, idx) => (
-              <PlanCard key={`${p.planId || p.title || "plan"}-${idx}`} {...p} />
-            ))}
+
+        {error ? (
+          <div className="mt-8 rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-destructive max-w-2xl mx-auto backdrop-blur-sm">
+            <div className="flex items-center justify-center gap-2 mb-2 font-bold">
+              <ShieldCheck className="h-5 w-5" />
+              Error de conexión
+            </div>
+            {error}
           </div>
-        </>
+        ) : (
+          <>
+            <div className="mx-auto">
+
+              <div className="max-w-4xl mx-auto ">
+                <CountdownOffer days={7} color="#ef4444" />
+              </div>
+
+              <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-2">
+                {plans.map((p, idx) => (
+                  <PlanCard key={`${p.planId || p.title || "plan"}-${idx}`} {...p} />
+                ))}
+              </div>
+
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Social Proof / Marquee */}
+
+      {/* {!error && (
+        <div className="py-16 border-y bg-muted/30 -mx-4 md:-mx-12 lg:-mx-24 px-4 md:px-12 lg:px-24">
+          <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-8">
+            Empoderando vendedores en las mejores plataformas
+          </p>
+          <Marquee className="py-2" pauseOnHover>
+            {brands.map((brand) => (
+              <div key={brand} className="mx-8 text-xl md:text-2xl font-bold opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-default uppercase tracking-tighter">
+                {brand}
+              </div>
+            ))}
+          </Marquee>
+        </div>
+      )} */}
+
+      {/* Simple Benefits */}
+      {/* Simple Benefits */}
+      {!error && (
+        <div className="max-w-5xl py-20 mx-auto">
+          <h2 className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-12">
+            TU NEGOCIO SEGURO CON NOSOTROS
+          </h2>
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 md:gap-4 px-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-100/80 text-green-600 dark:bg-green-500/10 dark:text-green-400">
+                <Headset className="h-6 w-6" />
+              </div>
+              <span className="font-semibold text-lg">Soporte 24/7</span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-purple-100/80 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400">
+                <Smile className="h-6 w-6" />
+              </div>
+              <span className="font-semibold text-lg">Cancela cuando quieras</span>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-orange-100/80 text-orange-600 dark:bg-orange-500/10 dark:text-orange-400">
+                <Rocket className="h-6 w-6" />
+              </div>
+              <span className="font-semibold text-lg">7 Días de Garantía</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FAQ Section */}
+      {!error && (
+        <div className="py-20 border-t">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">Preguntas <span className="text-primary">Frecuentes</span></h2>
+            <Accordion type="single" collapsible className="w-full">
+              {FAQS.map((faq, i) => (
+                <AccordionItem key={i} value={`item-${i}`} className="border-b/50">
+                  <AccordionTrigger className="text-left font-semibold text-lg py-6 hover:text-primary transition-colors">
+                    {faq.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground text-base pb-6 leading-relaxed">
+                    {faq.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
       )}
     </MarketingLayout>
   );

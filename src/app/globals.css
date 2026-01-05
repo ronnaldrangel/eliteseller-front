@@ -148,7 +148,19 @@
   --shadow-2xl: var(--shadow-2xl);
   --animate-marquee: marquee var(--duration) infinite linear;
   --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+  --animate-shine: shine 1.5s ease-in-out infinite;
   --breakpoint-2xl: 115rem;
+  @keyframes shine {
+    0% {
+      left: -100%;
+    }
+    50% {
+      left: 100%;
+    }
+    100% {
+      left: 100%;
+    }
+  }
   @keyframes marquee {
   from {
     transform: translateX(0);

@@ -13,6 +13,8 @@ export default function VerifyEmail() {
   const [email, setEmail] = useState("")
   const [message, setMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [cooldown, setCooldown] = useState(120)
+  const [isCooldownActive, setIsCooldownActive] = useState(true)
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search)
@@ -21,6 +23,20 @@ export default function VerifyEmail() {
       setEmail(emailParam)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isCooldownActive) return
+    const id = setInterval(() => {
+      setCooldown((s) => (s > 0 ? s - 1 : 0))
+    }, 1000)
+    return () => clearInterval(id)
+  }, [isCooldownActive])
+
+  useEffect(() => {
+    if (cooldown === 0) {
+      setIsCooldownActive(false)
+    }
+  }, [cooldown])
 
   const handleResendEmail = async () => {
     if (!email) {
@@ -45,6 +61,8 @@ export default function VerifyEmail() {
       if (response.ok) {
         toast.success("Email de verificación reenviado exitosamente. Revisa tu bandeja de entrada.")
         setMessage("")
+        setCooldown(120)
+        setIsCooldownActive(true)
       } else {
         toast.error(data.error || "Error al reenviar el email de verificación.")
         setMessage("")
@@ -76,14 +94,16 @@ export default function VerifyEmail() {
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@ejemplo.com" readOnly />
           </div>
 
-          <Button onClick={handleResendEmail} disabled={isLoading || !email} className="w-full" type="button">
+          <Button onClick={handleResendEmail} disabled={isLoading || !email || isCooldownActive} className="w-full" type="button">
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Reenviando...
               </>
             ) : (
-              "Reenviar email de verificación"
+              isCooldownActive
+                ? `Podrás reenviar en ${String(Math.floor(cooldown / 60)).padStart(2, "0")}:${String(cooldown % 60).padStart(2, "0")}`
+                : "Reenviar email de verificación"
             )}
           </Button>
 

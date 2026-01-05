@@ -70,14 +70,14 @@ export default function CountdownOffer({ days = 7, color = '#54a2b1' }) {
       <div className="flex flex-col items-center justify-center sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="flex items-center justify-center sm:justify-start gap-2 text-center sm:text-left text-xs sm:text-sm leading-tight">
           <Clock className="h-4 w-4" style={{ color }} />
-          <span className="font-medium">🔥 BLACK FRIDAY: 50% de descuento en todos los planes 🔥</span>
+          <span className="font-bold">🔥 POR LANZAMIENTO: 50% de descuento en todos los planes 🔥</span>
         </div>
         <div className="flex items-center justify-center sm:justify-end gap-2 sm:gap-3 font-mono flex-wrap" role="timer" aria-live="polite">
           <span className="text-muted-foreground font-sans mr-1 sm:mr-2">Termina en:</span>
-          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm">{d}d</span>
-          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm">{hours}h</span>
-          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm">{minutes}m</span>
-          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm">{seconds}s</span>
+          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm font-bold">{d}d</span>
+          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm font-bold">{hours}h</span>
+          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm font-bold">{minutes}m</span>
+          <span className="inline-flex items-center justify-center rounded px-2 py-1 min-w-[34px] bg-black/5 dark:bg-white/10 text-[11px] sm:text-sm font-bold">{seconds}s</span>
         </div>
       </div>
     </div>

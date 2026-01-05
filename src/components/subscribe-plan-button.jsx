@@ -2,34 +2,21 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-export default function SubscribePlanButton({ planId, userId }) {
+export default function SubscribePlanButton({ planId, userId, highlight }) {
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false);
   const router = useRouter();
 
-  const handleClick = () => {
+  const handleClick = async () => {
     if (!planId || loading) return;
     if (!userId) {
       toast.error("Inicia sesión para suscribirte");
       router.push("/auth/login?callbackUrl=/plans");
       return;
     }
-    setShowModal(true);
-  };
 
-  const handleConfirm = async () => {
-    setShowModal(false);
     setLoading(true);
     try {
       const url = `/api/plans/subscribe?plan_id=${encodeURIComponent(
@@ -43,11 +30,11 @@ export default function SubscribePlanButton({ planId, userId }) {
       if (contentType.includes("application/json")) {
         try {
           data = await res.json();
-        } catch {}
+        } catch { }
       } else {
         try {
           text = await res.text();
-        } catch {}
+        } catch { }
       }
 
       if (res.ok) {
@@ -95,51 +82,33 @@ export default function SubscribePlanButton({ planId, userId }) {
     }
   };
 
-  const handleCancel = () => {
-    setShowModal(false);
-  };
-
   return (
-    <>
-      <Button
-        type="button"
-        size="lg"
-        className="w-full mt-auto h-12 text-base cursor-pointer"
-        onClick={handleClick}
-        disabled={loading || !planId || !userId}
-      >
+    <Button
+      type="button"
+      size="lg"
+      className={`w-full mt-auto h-12 text-base cursor-pointer transition-all duration-300 transform group relative overflow-hidden flex items-center justify-center gap-2 ${highlight
+        ? "bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 hover:shadow-primary/40 scale-100 hover:scale-[1.02] active:scale-[0.98]"
+        : "hover:scale-[1.02] active:scale-[0.98]"
+        }`}
+      onClick={handleClick}
+      disabled={loading || !planId || !userId}
+    >
+      <span className="relative z-10 flex items-center gap-2">
         {loading ? "Procesando…" : "Empieza ahora"}
-      </Button>
+        {!loading && (
+          <svg
+            className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        )}
+      </span>
 
-      <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar suscripción</DialogTitle>
-            <DialogDescription>
-              Al darle a confirmar, serás redirigido al proceso de pago.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4 gap-2">
-            {/* <Button
-              type="button"
-              variant="outline"
-              className="cursor-pointer"
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              Cancelar
-            </Button> */}
-            <Button
-              type="button"
-              className="w-full h-12 cursor-pointer bg-emerald-500 hover:bg-emerald-600 text-white"
-              onClick={handleConfirm}
-              disabled={loading}
-            >
-              Confirmar suscripción
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+      {/* Shine effect */}
+      <div className="absolute top-0 -inset-full h-full w-1/2 z-5 block transform -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-shine" />
+    </Button>
   );
 }
