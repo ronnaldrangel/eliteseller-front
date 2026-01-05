@@ -19,6 +19,7 @@ export default function SelectUserAvatarMenu() {
 
   const email = (session?.user?.email || "").trim().toLowerCase();
   const name = session?.user?.name || session?.user?.email || "Usuario";
+  const role = session?.user?.role || undefined;
   const gravatarUrl = email
     ? `https://www.gravatar.com/avatar/${md5(email)}?d=retro`
     : undefined;
@@ -49,14 +50,18 @@ export default function SelectUserAvatarMenu() {
           </Avatar>
           <div className="flex flex-col text-left leading-tight">
             <span className="text-sm font-medium">{name}</span>
-            {email && <span className="text-xs text-muted-foreground">{email}</span>}
+            {email && (
+              <span className="text-xs text-muted-foreground">{email}</span>
+            )}
           </div>
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="min-w-56">
         <DropdownMenuLabel className="leading-tight">
           <div className="font-medium">{name}</div>
-          {email && <div className="text-xs text-muted-foreground">{email}</div>}
+          {email && (
+            <div className="text-xs text-muted-foreground">{email}</div>
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
@@ -71,8 +76,18 @@ export default function SelectUserAvatarMenu() {
         <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
           <Link href="/affiliates">Afiliados</Link>
         </DropdownMenuItem>
+        {role === "Admin" && (
+          <DropdownMenuItem
+            className="transition-colors cursor-pointer"
+            asChild
+          >
+            <Link href="/super-admin">Super Admin</Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/auth/login" })}>
+        <DropdownMenuItem
+          onClick={() => signOut({ callbackUrl: "/auth/login" })}
+        >
           Cerrar sesión
         </DropdownMenuItem>
       </DropdownMenuContent>

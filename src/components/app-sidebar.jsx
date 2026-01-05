@@ -331,7 +331,9 @@ export function AppSidebar({ chatbotSlug, ...props }) {
     avatar: `https://www.gravatar.com/avatar/${md5(
       (session?.user?.email || "").trim().toLowerCase()
     )}?d=retro`,
+    role: session?.user?.role || undefined,
   };
+
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       <SidebarHeader>
