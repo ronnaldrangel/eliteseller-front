@@ -22,10 +22,22 @@ import { analyticsService } from "@/services/analytics.service";
 import { Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 
 const STATUS_MAP = {
-  1: { label: "Activo", variant: "default" },
-  2: { label: "Prueba", variant: "secondary" },
-  3: { label: "Inactivo", variant: "outline" },
-  4: { label: "Cancelado", variant: "destructive" },
+  1: {
+    label: "Activo",
+    className: "text-green-600 border-green-200 bg-green-50",
+  },
+  2: {
+    label: "Prueba",
+    className: "text-purple-600 border-purple-200 bg-purple-50",
+  },
+  3: {
+    label: "Inactivo",
+    className: "text-amber-600 border-amber-200 bg-amber-50",
+  },
+  4: {
+    label: "Cancelado",
+    className: "text-red-600 border-red-200 bg-red-50",
+  },
 };
 
 export function SubscriptionsView() {
@@ -239,7 +251,10 @@ export function SubscriptionsView() {
                           {formatDate(sub.next_invoice_date)}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={statusInfo.variant}>
+                          <Badge
+                            variant="outline"
+                            className={`rounded-lg ${statusInfo.className}`}
+                          >
                             {statusInfo.label}
                           </Badge>
                         </TableCell>
