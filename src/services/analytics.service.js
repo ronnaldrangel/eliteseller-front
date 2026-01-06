@@ -1,36 +1,52 @@
-
 import { signOut } from "next-auth/react";
 
-const API_URL = process.env.NEXT_PUBLIC_ANALYTICS_API_URL || 'https://app-remarketing.s3cbwu.easypanel.host';
+const API_URL =
+  process.env.NEXT_PUBLIC_ANALYTICS_API_URL ||
+  "https://app-remarketing.s3cbwu.easypanel.host";
 
-async function fetchJson(endpoint, options = {}) {
-    const res = await fetch(`${API_URL}/analytics/${endpoint}`, {
-        ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        },
-    });
+async function fetchJson(endpoint, options = {}, queryParams = {}, controllerName = "analytics") {
+  const queryString = new URLSearchParams(queryParams).toString();
+  const url = `${API_URL}/${controllerName}/${endpoint}${queryString ? `?${queryString}` : ''}`;
 
-    if (res.status === 401) {
-        if (typeof window !== 'undefined') {
-            signOut({ callbackUrl: '/auth/login' });
-        }
-        throw new Error('Session expired');
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+  if (res.status === 401) {
+    if (typeof window !== "undefined") {
+      signOut({ callbackUrl: "/auth/login" });
     }
+    throw new Error("Session expired");
+  }
 
-    if (!res.ok) {
-        throw new Error(`Error fetching ${endpoint}: ${res.statusText}`);
-    }
+  if (!res.ok) {
+    throw new Error(`Error fetching ${url}: ${res.statusText}`);
+  }
 
-    return res.json();
+  return res.json();
 }
 
 export const analyticsService = {
-    getMonthlyRevenue: () => fetchJson('last-thirty-days-revenue'),
-    getRevenueChart: (range) => fetchJson(`revenue-chart?range=${range}`),
-    getPlanUsage: () => fetchJson('plans-usage'),
-    getChurnMetrics: () => fetchJson('churn-metrics'),
-    getLtvMetrics: () => fetchJson('ltv-metrics'),
-    getUsers: (page = 1, limit = 10, status = 'all') => fetchJson(`users?page=${page}&limit=${limit}&status=${status}`),
+  getMonthlyRevenue: () => fetchJson("last-thirty-days-revenue"),
+  getRevenueChart: (range) => fetchJson(`revenue-chart?range=${range}`),
+  getPlanUsage: () => fetchJson("plans-usage"),
+  getChurnMetrics: () => fetchJson("churn-metrics"),
+  getLtvMetrics: () => fetchJson("ltv-metrics"),
+  getUsers: (page = 1, limit = 10, status = "all") =>
+    fetchJson(`users?page=${page}&limit=${limit}&status=${status}`),
+  getSubscriptionsByPlan: (planId, start = 0, limit = 10, status = "") => {
+    const params = { start, limit };
+    if (status) params.status = status;
+    
+    return fetchJson(
+      `subscriptions/${planId}/list`,
+      {},
+      params,
+      "payments"
+    );
+  },
 };

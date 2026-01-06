@@ -1,73 +1,258 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react";
 import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card"
-import { analyticsService } from "@/services/analytics.service"
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { analyticsService } from "@/services/analytics.service";
+import { Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+
+const STATUS_MAP = {
+  1: { label: "Active", variant: "default" },
+  2: { label: "Trial", variant: "secondary" },
+  3: { label: "Inactive", variant: "outline" },
+  4: { label: "Canceled", variant: "destructive" },
+};
 
 export function SubscriptionsView() {
-    const [planData, setPlanData] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [planData, setPlanData] = useState(null);
+  const [loadingPlans, setLoadingPlans] = useState(true);
 
-    useEffect(() => {
-        const fetchPlanData = async () => {
-            try {
-                const plans = await analyticsService.getPlanUsage();
-                setPlanData(plans);
-            } catch (error) {
-                console.error("Error fetching plan data:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPlanData();
-    }, []);
+  const [selectedPlanId, setSelectedPlanId] = useState(null);
+  const [subscriptions, setSubscriptions] = useState([]);
+  const [loadingSubs, setLoadingSubs] = useState(false);
 
-    return (
-        <div className="space-y-6">
-             <div>
-                <h2 className="text-3xl font-bold tracking-tight">Subscriptions</h2>
-                <p className="text-muted-foreground">Manage and analyze subscription plans.</p>
-            </div>
-            
-            <Card className="@container/card overflow-hidden rounded-[2rem] flex flex-col max-w-2xl">
-                <CardHeader>
-                    <CardTitle>Subscription Distribution</CardTitle>
-                    <CardDescription>
-                        User breakdown by plan type.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-1 flex items-center justify-center">
-                    <div className="text-center space-y-6 w-full">
-                        {loading ? <p>Loading...</p> : !planData ? <p>No data available</p> : (
-                            <div className="grid grid-cols-1 gap-4">
-                                {Object.entries(planData).map(([planName, details]) => {
-                                    let bgClass = "bg-primary/10";
-                                    let dotClass = "bg-primary";
+  const [start, setStart] = useState(0);
+  const [limit] = useState(10);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
 
-                                    if (planName === 'BASICO') { bgClass = "bg-slate-300/20"; dotClass = "bg-slate-400"; }
-                                    if (planName === 'GALACTICO') { bgClass = "bg-purple-500/10"; dotClass = "bg-purple-500"; }
+  useEffect(() => {
+    const fetchPlanData = async () => {
+      try {
+        const plans = await analyticsService.getPlanUsage();
+        setPlanData(plans);
+        const planIds = Object.keys(plans || {});
+        if (planIds.length > 0) {
+          setSelectedPlanId(planIds[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching plan data:", error);
+      } finally {
+        setLoadingPlans(false);
+      }
+    };
+    fetchPlanData();
+  }, []);
 
-                                    return (
-                                        <div key={planName} className={`flex items-center justify-between p-3 rounded-xl ${bgClass}`}>
-                                            <div className="flex items-center gap-3">
-                                                <div className={`w-3 h-3 rounded-full ${dotClass}`} />
-                                                <span className="font-medium capitalization">{planName.toLowerCase()}</span>
-                                            </div>
-                                            <span className="font-bold">{details.percentage}%</span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+  useEffect(() => {
+    if (!selectedPlanId) return;
+
+    const fetchSubs = async () => {
+      setLoadingSubs(true);
+      try {
+        const res = await analyticsService.getSubscriptionsByPlan(
+          selectedPlanId,
+          start,
+          limit
+        );
+        setSubscriptions(res.data || []);
+        setHasMore(res.hasMore);
+        setTotal(res.total);
+      } catch (error) {
+        console.error("Error fetching subscriptions:", error);
+        setSubscriptions([]);
+        setTotal(0);
+        setHasMore(false);
+      } finally {
+        setLoadingSubs(false);
+      }
+    };
+
+    fetchSubs();
+  }, [selectedPlanId, start, limit]);
+
+  const handlePlanSelect = (planId) => {
+    if (planId === selectedPlanId) return;
+    setSelectedPlanId(planId);
+    setStart(0);
+    setSubscriptions([]);
+  };
+
+  const handleNext = () => {
+    if (hasMore) {
+      setStart((prev) => prev + limit);
+    }
+  };
+
+  const handlePrev = () => {
+    setStart((prev) => Math.max(0, prev - limit));
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString();
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Subscriptions</h2>
+        <p className="text-muted-foreground">
+          Manage and analyze subscription plans.
+        </p>
+      </div>
+
+      <div>
+        <Card className="h-fit">
+          <CardHeader>
+            <CardTitle>Plans</CardTitle>
+            <CardDescription>
+              Select a plan to view subscriptions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {loadingPlans ? (
+                <Loader2 className="animate-spin text-primary" />
+              ) : !planData ? (
+                <p>No plans found</p>
+              ) : (
+                Object.entries(planData).map(([planId, details]) => {
+                  const isSelected = selectedPlanId === planId;
+                  let dotClass = "bg-primary";
+                  if (planId === "BASICO") dotClass = "bg-slate-400";
+                  if (planId === "GALACTICO") dotClass = "bg-purple-500";
+
+                  return (
+                    <div
+                      key={planId}
+                      onClick={() => handlePlanSelect(planId)}
+                      className={`flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors border ${
+                        isSelected
+                          ? "bg-primary/10 border-primary"
+                          : "bg-card border-transparent hover:bg-muted"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${dotClass}`} />
+                        <span className="font-medium capitalize">
+                          {planId.toLowerCase()}
+                        </span>
+                      </div>
+                      <span className="font-bold text-sm">
+                        {details.percentage}%
+                      </span>
                     </div>
-                </CardContent>
-            </Card>
-        </div>
-    )
+                  );
+                })
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+      <div>
+        <Card className="col-span-1 md:col-span-2">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Subscriptions List</CardTitle>
+              <CardDescription>
+                Used by {selectedPlanId || "..."} ({total} total)
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground mr-2">
+                {start + 1}-{Math.min(start + limit, total)} of {total}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePrev}
+                disabled={start === 0 || loadingSubs}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleNext}
+                disabled={!hasMore || loadingSubs}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {loadingSubs ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : subscriptions.length === 0 ? (
+              <p className="text-center text-muted-foreground p-8">
+                No subscriptions found for this plan.
+              </p>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Customer</TableHead>
+                    <TableHead>Start Date</TableHead>
+                    <TableHead>End Date</TableHead>
+                    <TableHead>Next Invoice</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {subscriptions.map((sub) => {
+                    const statusInfo = STATUS_MAP[sub.status] || {
+                      label: "Unknown",
+                      variant: "outline",
+                    };
+                    return (
+                      <TableRow key={sub.subscriptionId}>
+                        <TableCell>
+                          <div className="font-medium">
+                            {sub.name || "Unknown"}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {sub.customerId}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {formatDate(sub.subscription_start)}
+                        </TableCell>
+                        <TableCell>{formatDate(sub.period_end)}</TableCell>
+                        <TableCell>
+                          {formatDate(sub.next_invoice_date)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={statusInfo.variant}>
+                            {statusInfo.label}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 }
