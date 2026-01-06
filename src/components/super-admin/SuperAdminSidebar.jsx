@@ -24,9 +24,9 @@ export function SuperAdminSidebar({ activeView, setActiveView, ...props }) {
   const { data: session } = useSession();
 
   const navItems = [
-    { id: "overview", title: "Overview", icon: LayoutDashboard },
-    { id: "users", title: "Users", icon: Users },
-    { id: "subscriptions", title: "Subscriptions", icon: CreditCard },
+    { id: "overview", title: "Resumen", icon: LayoutDashboard },
+    { id: "users", title: "Usuarios", icon: Users },
+    { id: "subscriptions", title: "Suscripciones", icon: CreditCard },
     { id: "chatbots", title: "Chatbots", icon: Bot },
   ];
 

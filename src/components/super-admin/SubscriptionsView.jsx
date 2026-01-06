@@ -22,10 +22,10 @@ import { analyticsService } from "@/services/analytics.service";
 import { Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 
 const STATUS_MAP = {
-  1: { label: "Active", variant: "default" },
-  2: { label: "Trial", variant: "secondary" },
-  3: { label: "Inactive", variant: "outline" },
-  4: { label: "Canceled", variant: "destructive" },
+  1: { label: "Activo", variant: "default" },
+  2: { label: "Prueba", variant: "secondary" },
+  3: { label: "Inactivo", variant: "outline" },
+  4: { label: "Cancelado", variant: "destructive" },
 };
 
 export function SubscriptionsView() {
@@ -111,18 +111,18 @@ export function SubscriptionsView() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Subscriptions</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Suscripciones</h2>
         <p className="text-muted-foreground">
-          Manage and analyze subscription plans.
+          Administra y analiza los planes de suscripción.
         </p>
       </div>
 
       <div>
         <Card className="h-fit">
           <CardHeader>
-            <CardTitle>Plans</CardTitle>
+            <CardTitle>Planes</CardTitle>
             <CardDescription>
-              Select a plan to view subscriptions.
+              Selecciona un plan para ver sus suscripciones.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -130,7 +130,7 @@ export function SubscriptionsView() {
               {loadingPlans ? (
                 <Loader2 className="animate-spin text-primary" />
               ) : !planData ? (
-                <p>No plans found</p>
+                <p>No se encontraron planes</p>
               ) : (
                 Object.entries(planData).map(([planId, details]) => {
                   const isSelected = selectedPlanId === planId;
@@ -166,17 +166,15 @@ export function SubscriptionsView() {
         </Card>
       </div>
       <div>
-        <Card className="col-span-1 md:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>Subscriptions List</CardTitle>
-              <CardDescription>
-                Used by {selectedPlanId || "..."} ({total} total)
-              </CardDescription>
-            </div>
+      <div className="flex flex-col gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 justify-between items-center py-4">
+             <div className="text-sm text-muted-foreground">
+                <span className="font-medium">Plan:</span> {selectedPlanId || "..."} ({total} total)
+             </div>
+
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground mr-2">
-                {start + 1}-{Math.min(start + limit, total)} of {total}
+                {start + 1}-{Math.min(start + limit, total)} de {total}
               </span>
               <Button
                 variant="outline"
@@ -195,25 +193,26 @@ export function SubscriptionsView() {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </div>
-          </CardHeader>
-          <CardContent>
+          </div>
+          
+          <div className="rounded-2xl border shadow-sm overflow-hidden">
             {loadingSubs ? (
               <div className="flex justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : subscriptions.length === 0 ? (
               <p className="text-center text-muted-foreground p-8">
-                No subscriptions found for this plan.
+                No se encontraron suscripciones para este plan.
               </p>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Customer</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Next Invoice</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Fecha Inicio</TableHead>
+                    <TableHead>Fecha Fin</TableHead>
+                    <TableHead>Prox. Factura</TableHead>
+                    <TableHead>Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -250,8 +249,8 @@ export function SubscriptionsView() {
                 </TableBody>
               </Table>
             )}
-          </CardContent>
-        </Card>
+          </div>
+      </div>
       </div>
     </div>
   );

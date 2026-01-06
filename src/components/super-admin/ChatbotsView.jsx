@@ -45,17 +45,7 @@ export function ChatbotsView() {
                 <p className="text-muted-foreground">Gestión de chatbots de IA.</p>
             </div>
 
-            <Card className="rounded-[2rem]">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Bot className="h-6 w-6" />
-                        Listado de Chatbots
-                    </CardTitle>
-                    <CardDescription>
-                        Vista general de todos los chatbots registrados.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
+            <div className="rounded-2xl border shadow-sm overflow-hidden">
                     <div className="rounded-md border">
                         <Table>
                             <TableHeader>
@@ -134,8 +124,7 @@ export function ChatbotsView() {
                             </TableBody>
                         </Table>
                     </div>
-                </CardContent>
-            </Card>
+            </div>
         </div>
     )
 }

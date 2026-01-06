@@ -17,6 +17,8 @@ export default async function SelectPage() {
   let chatbots = [];
   let error = null;
 
+  let shouldRedirect = false;
+
   try {
     const userId = session?.user?.strapiUserId;
     const url = buildStrapiUrl(
@@ -34,7 +36,9 @@ export default async function SelectPage() {
       cache: "no-store",
     });
 
-    if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      shouldRedirect = true;
+    } else if (!res.ok) {
       const details = await res.json().catch(() => ({}));
       error =
         details?.error?.message ||
@@ -46,6 +50,10 @@ export default async function SelectPage() {
   } catch (e) {
     console.error("Error fetching chatbots:", e);
     error = "Error al conectar con Strapi. Verifica tu conexión.";
+  }
+
+  if (shouldRedirect) {
+    redirect("/auth/login?callbackUrl=/select");
   }
 
   // Si el usuario tiene al menos un chatbot, redirige automáticamente al primero usando documentId
@@ -70,26 +78,26 @@ export default async function SelectPage() {
 
   const cards = Array.isArray(chatbots)
     ? chatbots.map((item) => {
-        const attrs = item?.attributes || {};
-        const meta = buildChatbotIdentifiers(
-          item,
-          session?.user?.strapiUserId || ""
-        );
-        const planId = item.subscription?.plan?.plan_id || null;
-        const plan = item.subscription?.plan?.name || null;
-        const description = attrs.description || "";
-        const custom = !!(attrs.custom ?? item?.custom ?? false);
-        return {
-          documentId: meta.documentId,
-          displayId: meta.id,
-          name: meta.name,
-          routeSegment: meta.routeSegment,
-          description,
-          custom,
-          planId,
-          plan,
-        };
-      })
+      const attrs = item?.attributes || {};
+      const meta = buildChatbotIdentifiers(
+        item,
+        session?.user?.strapiUserId || ""
+      );
+      const planId = item.subscription?.plan?.plan_id || null;
+      const plan = item.subscription?.plan?.name || null;
+      const description = attrs.description || "";
+      const custom = !!(attrs.custom ?? item?.custom ?? false);
+      return {
+        documentId: meta.documentId,
+        displayId: meta.id,
+        name: meta.name,
+        routeSegment: meta.routeSegment,
+        description,
+        custom,
+        planId,
+        plan,
+      };
+    })
     : [];
 
   return (

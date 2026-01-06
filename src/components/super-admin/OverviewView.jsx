@@ -32,10 +32,10 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 import { analyticsService } from "@/services/analytics.service"
 
 const CHART_RANGE_OPTIONS = [
-    { id: "90d", label: "Last 3 months" },
-    { id: "30d", label: "Last 30 days" },
-    { id: "14d", label: "Last 14 days" },
-    { id: "7d", label: "Last 7 days" },
+    { id: "90d", label: "Últimos 3 meses" },
+    { id: "30d", label: "Últimos 30 días" },
+    { id: "14d", label: "Últimos 14 días" },
+    { id: "7d", label: "Últimos 7 días" },
 ];
 
 export function OverviewView() {
@@ -93,35 +93,35 @@ export function OverviewView() {
 
         return [
             {
-                title: "Monthly Revenue",
+                title: "Ingresos Mensuales",
                 value: `$${revenueData.lastThirtyDaysRevenue.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-                change: `${revenueData.comparison.isPositiveChange ? '+' : ''}${revenueData.comparison.value.toFixed(1)}% vs last month`,
+                change: `${revenueData.comparison.isPositiveChange ? '+' : ''}${revenueData.comparison.value.toFixed(1)}% vs mes anterior`,
                 trend: revenueData.comparison.trend,
                 icon: DollarSign,
                 color: "text-green-500",
             },
             {
-                title: "Total Users",
+                title: "Total Usuarios",
                 value: countsData.users.toLocaleString(),
-                change: "Active Users", // Or "Total Registered"
-                trend: "neutral", // We don't have trend data for counts yet unless we calculate it
+                change: "Usuarios Activos",
+                trend: "neutral",
                 icon: Users,
                 color: "text-blue-500",
             },
             {
-                title: "Active Chatbots",
+                title: "Chatbots Activos",
                 value: countsData.chatbots.toLocaleString(),
-                change: "Total Created",
+                change: "Total Creados",
                 trend: "neutral",
-                icon: UserMinus, // You might want to import Bot icon
+                icon: UserMinus,
                 color: "text-purple-500",
             },
             {
-                title: "Total Subscriptions",
+                title: "Total Suscripciones",
                 value: countsData.subscriptions.toLocaleString(),
-                change: "Active Plans",
+                change: "Planes Activos",
                 trend: "neutral",
-                icon: Activity, // You might want to import CreditCard icon
+                icon: Activity,
                 color: "text-orange-500",
             },
         ];
@@ -129,11 +129,11 @@ export function OverviewView() {
 
     const chartConfig = {
         total: {
-            label: "Total Revenue",
+            label: "Ingresos Totales",
             color: "hsl(var(--primary))",
         },
         newSubs: {
-            label: "New Subs Revenue",
+            label: "Ingresos Nuevas Subs",
             color: "#10b981",
         },
     }
@@ -144,9 +144,9 @@ export function OverviewView() {
         <div className="space-y-8">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">Overview</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">Resumen</h2>
                     <p className="text-muted-foreground">
-                        Platform performance metrics.
+                        Métricas de rendimiento de la plataforma.
                     </p>
                 </div>
                  <Button
@@ -155,7 +155,7 @@ export function OverviewView() {
                     className="flex w-fit"
                 >
                     <TrendingUp className="mr-2 h-4 w-4" />
-                    {showNewSubs ? "Show Total Revenue" : "Show New Subs Revenue"}
+                    {showNewSubs ? "Ver Ingresos Totales" : "Ver Ingresos Nuevas Subs."}
                 </Button>
             </div>
 
@@ -179,7 +179,7 @@ export function OverviewView() {
                             </CardHeader>
                             <CardFooter className="flex-col items-start gap-1 text-sm">
                                 <div className="line-clamp-1 flex gap-2 font-medium">
-                                    {metric.trend === 'up' ? "Trending Up" : metric.trend === 'down' ? "Trending Down" : "Stable"}
+                                    {metric.trend === 'up' ? "Tendencia Alza" : metric.trend === 'down' ? "Tendencia Baja" : "Estable"}
                                     <TrendIcon className="h-4 w-4" />
                                 </div>
                                 <div className="text-muted-foreground">{metric.change}</div>
@@ -193,10 +193,10 @@ export function OverviewView() {
                 <CardHeader className="gap-2 pb-2">
                     <div>
                         <CardTitle className="mb-2">
-                            {showNewSubs ? "New Subscriptions Revenue" : "Revenue Overview"}
+                            {showNewSubs ? "Ingresos Nuevas Suscripciones" : "Resumen de Ingresos"}
                         </CardTitle>
                         <CardDescription>
-                            {showNewSubs ? "Revenue from new subscriptions." : "Revenue performance over time."}
+                            {showNewSubs ? "Ingresos de nuevas suscripciones." : "Rendimiento de ingresos en el tiempo."}
                         </CardDescription>
                     </div>
                 </CardHeader>

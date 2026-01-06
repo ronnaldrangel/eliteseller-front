@@ -72,6 +72,7 @@ export function UsersView() {
       id: u.id,
       documentId: u.documentId,
       username: u.username,
+      name: u.name || u.username,
       email: u.email,
       provider: u.provider,
       confirmed: u.confirmed,
@@ -105,7 +106,7 @@ export function UsersView() {
 
     const tableColumn = [
       "ID",
-      "Username",
+      "Name",
       "Email",
       "Provider",
       "Status",
@@ -113,7 +114,7 @@ export function UsersView() {
     ];
     const tableRows = filteredUsers.map((user) => [
       user.id,
-      user.username,
+      user.name,
       user.email,
       user.provider,
       user.status,
@@ -230,7 +231,7 @@ export function UsersView() {
               <TableRow className="bg-muted/50">
                 <TableHead className="w-[50px]"></TableHead>
                 <TableHead>ID</TableHead>
-                <TableHead>Username</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead className="hidden md:table-cell">Email</TableHead>
                 <TableHead>Provider</TableHead>
                 <TableHead>Status</TableHead>
@@ -262,7 +263,7 @@ export function UsersView() {
                       </TableCell>
                       <TableCell className="font-medium">#{user.id}</TableCell>
                       <TableCell className="font-semibold">
-                        {user.username}
+                        {user.name}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-muted-foreground">
                         {user.email}
