@@ -49,4 +49,5 @@ export const analyticsService = {
       "payments"
     );
   },
+  getUsersWithDetails: () => fetchJson('users', {}, {}, 'strapi'),
 };
