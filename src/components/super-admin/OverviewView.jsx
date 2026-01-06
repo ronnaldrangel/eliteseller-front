@@ -44,22 +44,19 @@ export function OverviewView() {
     
     // Data States
     const [revenueData, setRevenueData] = useState(null);
-    const [churnData, setChurnData] = useState(null);
-    const [ltvData, setLtvData] = useState(null);
+    const [countsData, setCountsData] = useState(null);
     const [chartData, setChartData] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [revenue, churn, ltv] = await Promise.all([
+                const [revenue, counts] = await Promise.all([
                     analyticsService.getMonthlyRevenue(),
-                    analyticsService.getChurnMetrics(),
-                    analyticsService.getLtvMetrics(),
+                    analyticsService.getDashboardCounts(),
                 ]);
                 setRevenueData(revenue);
-                setChurnData(churn);
-                setLtvData(ltv);
+                setCountsData(counts);
             } catch (error) {
                 console.error("Error fetching admin dashboard data:", error);
             } finally {
@@ -87,11 +84,11 @@ export function OverviewView() {
     }, [chartRange]);
 
     const adminMetrics = useMemo(() => {
-        if (loading || !revenueData || !churnData) return [
+        if (loading || !revenueData || !countsData) return [
             { title: "Monthly Revenue", value: "Loading...", change: "...", trend: "neutral", icon: DollarSign, color: "text-muted-foreground" },
-            { title: "Avg LTV per User", value: "Loading...", change: "...", trend: "neutral", icon: Users, color: "text-blue-500" },
-            { title: "Churn Rate", value: "Loading...", change: "...", trend: "neutral", icon: UserMinus, color: "text-muted-foreground" },
-            { title: "Retention Rate", value: "Loading...", change: "...", trend: "neutral", icon: Activity, color: "text-muted-foreground" },
+            { title: "Total Users", value: "Loading...", change: "...", trend: "neutral", icon: Users, color: "text-blue-500" },
+            { title: "Active Chatbots", value: "Loading...", change: "...", trend: "neutral", icon: UserMinus, color: "text-muted-foreground" },
+            { title: "Total Subscriptions", value: "Loading...", change: "...", trend: "neutral", icon: Activity, color: "text-muted-foreground" },
         ];
 
         return [
@@ -104,31 +101,31 @@ export function OverviewView() {
                 color: "text-green-500",
             },
             {
-                title: "Avg LTV per User",
-                value: ltvData ? `$${ltvData.ltv.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "$0.00",
-                change: ltvData ? `${ltvData.comparison.isPositiveChange ? '+' : ''}${ltvData.comparison.value.toFixed(1)}% vs last month` : "...",
-                trend: ltvData ? ltvData.comparison.trend : "neutral",
+                title: "Total Users",
+                value: countsData.users.toLocaleString(),
+                change: "Active Users", // Or "Total Registered"
+                trend: "neutral", // We don't have trend data for counts yet unless we calculate it
                 icon: Users,
                 color: "text-blue-500",
             },
             {
-                title: "Churn Rate",
-                value: `${churnData.currentChurn.toFixed(2)}%`,
-                change: `${churnData.comparison.churnRate.isPositiveChange ? '' : '-'} vs previous`,
-                trend: churnData.comparison.churnRate.trend,
-                icon: UserMinus,
-                color: "text-red-500",
-            },
-            {
-                title: "Retention Rate",
-                value: `${churnData.currentRetention.toFixed(2)}%`,
-                change: `vs previous`,
-                trend: churnData.comparison.retentionRate.trend,
-                icon: Activity,
+                title: "Active Chatbots",
+                value: countsData.chatbots.toLocaleString(),
+                change: "Total Created",
+                trend: "neutral",
+                icon: UserMinus, // You might want to import Bot icon
                 color: "text-purple-500",
             },
+            {
+                title: "Total Subscriptions",
+                value: countsData.subscriptions.toLocaleString(),
+                change: "Active Plans",
+                trend: "neutral",
+                icon: Activity, // You might want to import CreditCard icon
+                color: "text-orange-500",
+            },
         ];
-    }, [revenueData, churnData, ltvData, loading]);
+    }, [revenueData, countsData, loading]);
 
     const chartConfig = {
         total: {

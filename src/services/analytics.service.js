@@ -51,4 +51,5 @@ export const analyticsService = {
   },
   getUsersWithDetails: () => fetchJson('users', {}, {}, 'strapi'),
   getChatbots: () => fetchJson('chatbots', {}, {}, 'strapi'),
+  getDashboardCounts: () => fetchJson('counts', {}, {}, 'strapi'),
 };
