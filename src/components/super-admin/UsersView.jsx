@@ -145,7 +145,7 @@ export function UsersView() {
         <div>
           <h2 className="text-3xl font-bold tracking-tight">User Database</h2>
           <p className="text-muted-foreground">
-            View and manage all registered users (Strapi).
+            Vista de administracion de usuarios  (Strapi).
           </p>
         </div>
         <Button
@@ -207,7 +207,7 @@ export function UsersView() {
                 disabled={currentPage === 1}
               >
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous
+                Atras
               </Button>
               <Button
                 variant="outline"
@@ -217,7 +217,7 @@ export function UsersView() {
                 }
                 disabled={currentPage === totalPages || totalPages === 0}
               >
-                Next
+                Siguiente
                 <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
@@ -299,7 +299,7 @@ export function UsersView() {
                             <div className="space-y-4">
                               <h3 className="text-sm font-medium flex items-center gap-2 text-primary">
                                 <CreditCard className="h-4 w-4" />
-                                Billing Information
+                                Informacion de Pago
                               </h3>
                               {user.customer ? (
                                 <div className="bg-background rounded-xl border p-4 shadow-sm space-y-3">
@@ -313,7 +313,7 @@ export function UsersView() {
                                   </div>
                                   <div className="flex justify-between items-center text-sm">
                                     <span className="text-muted-foreground">
-                                      Payment Mode
+                                      Modo de Pago
                                     </span>
                                     <Badge variant="outline">
                                       {user.customer.pay_mode}
@@ -321,7 +321,7 @@ export function UsersView() {
                                   </div>
                                   <div className="flex justify-between items-center text-sm">
                                     <span className="text-muted-foreground">
-                                      Card Info
+                                      Informacion de la tarjeta
                                     </span>
                                     <div className="flex items-center gap-2">
                                       <span className="font-medium">
@@ -339,7 +339,7 @@ export function UsersView() {
                                 </div>
                               ) : (
                                 <div className="bg-background/50 rounded-xl border border-dashed p-6 text-center text-muted-foreground text-sm">
-                                  No billing profile attached.
+                                  No perfil de facturacion adjuntado.
                                 </div>
                               )}
                             </div>
@@ -348,7 +348,7 @@ export function UsersView() {
                             <div className="space-y-4">
                               <h3 className="text-sm font-medium flex items-center gap-2 text-primary">
                                 <Bot className="h-4 w-4" />
-                                Chatbots Overview
+                                Resumen de Chatbots
                               </h3>
                               {user.chatbots.length > 0 ? (
                                 <div className="grid gap-3">

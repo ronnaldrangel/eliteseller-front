@@ -41,7 +41,7 @@ export const analyticsService = {
   getSubscriptionsByPlan: (planId, start = 0, limit = 10, status = "") => {
     const params = { start, limit };
     if (status) params.status = status;
-    
+
     return fetchJson(
       `subscriptions/${planId}/list`,
       {},
@@ -50,4 +50,5 @@ export const analyticsService = {
     );
   },
   getUsersWithDetails: () => fetchJson('users', {}, {}, 'strapi'),
+  getChatbots: () => fetchJson('chatbots', {}, {}, 'strapi'),
 };
