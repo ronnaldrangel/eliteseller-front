@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { analyticsService } from "@/services/analytics.service";
-import { Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 
 const STATUS_MAP = {
   1: {
@@ -190,19 +190,21 @@ export function SubscriptionsView() {
               </span>
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={handlePrev}
                 disabled={start === 0 || loadingSubs}
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Atras
               </Button>
               <Button
                 variant="outline"
-                size="icon"
+                size="sm"
                 onClick={handleNext}
                 disabled={!hasMore || loadingSubs}
               >
-                <ArrowRight className="h-4 w-4" />
+                Siguiente
+                <ChevronRight className="h-4 w-4 ml-2" />
               </Button>
             </div>
           </div>
