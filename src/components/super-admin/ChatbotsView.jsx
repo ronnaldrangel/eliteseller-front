@@ -28,7 +28,7 @@ export function ChatbotsView() {
         const fetchChatbots = async () => {
             try {
                 const data = await analyticsService.getChatbots()
-                setChatbots(data)
+                setChatbots(data.data || [])
             } catch (error) {
                 console.error("Error fetching chatbots:", error)
             } finally {
