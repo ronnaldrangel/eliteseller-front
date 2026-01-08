@@ -21,7 +21,8 @@ export default function ChatInterface({
     isWidget = false, 
     onClose, 
     chatbotName = "EliteSeller AI",
-    userName = "Ronald" // In a real app this would come from auth context
+    userName = "Ronald", // In a real app this would come from auth context
+    chatbotSlug
 }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState("");
@@ -131,6 +132,7 @@ export default function ChatInterface({
                     sessionId: sessionId.current,
                     model: selectedModel,
                     attachments: sentAttachments.map(a => a.url),
+                    slug: chatbotSlug,
                     history: newMessages.map(m => ({
                         role: m.role,
                         content: m.content,

@@ -5,7 +5,7 @@ import { Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import ChatInterface from "@/components/chat/ChatInterface";
 
-export default function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
+export default function ChatPreviewWidget({ chatbotName = "Chatbot", chatbotSlug }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -32,6 +32,7 @@ export default function ChatPreviewWidget({ chatbotName = "Chatbot" }) {
                     isWidget={true} 
                     onClose={() => setOpen(false)} 
                     chatbotName={chatbotName} 
+                    chatbotSlug={chatbotSlug}
                />
             </motion.div>
           </>

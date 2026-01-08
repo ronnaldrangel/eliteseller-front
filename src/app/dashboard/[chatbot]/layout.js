@@ -16,7 +16,7 @@ export default async function ChatbotLayout({ children, params }) {
       <SidebarInset>
         <SiteHeader />
         {children}
-        <ChatPreviewWidget chatbotName={chatbotSlug || "Chatbot"} />
+        <ChatPreviewWidget chatbotName={chatbotSlug || "Chatbot"} chatbotSlug={chatbotSlug} />
       </SidebarInset>
     </SidebarProvider>
   )
