@@ -38,12 +38,15 @@ export const analyticsService = {
   getLtvMetrics: () => fetchJson("ltv-metrics"),
   getUsers: (page = 1, limit = 10, status = "all") =>
     fetchJson(`users?page=${page}&limit=${limit}&status=${status}`),
-  getSubscriptionsByPlan: (planId) => {
+  getSubscriptionsByPlan: (planId, start = 0, limit = 10, status = "") => {
+    const params = { start, limit };
+    if (status) params.status = status;
+
     return fetchJson(
-      `subscriptions/${planId}`,
+      `subscriptions/${planId}/list`,
       {},
-      {},
-      "strapi"
+      params,
+      "payments"
     );
   },
   getUsersWithDetails: () => fetchJson('users', {}, {}, 'strapi'),

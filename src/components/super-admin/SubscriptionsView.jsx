@@ -45,15 +45,13 @@ export function SubscriptionsView() {
   const [loadingPlans, setLoadingPlans] = useState(true);
 
   const [selectedPlanId, setSelectedPlanId] = useState(null);
-  const [allSubscriptions, setAllSubscriptions] = useState([]);
+  const [subscriptions, setSubscriptions] = useState([]);
   const [loadingSubs, setLoadingSubs] = useState(false);
 
   const [start, setStart] = useState(0);
   const [limit] = useState(10);
-
-  const total = allSubscriptions.length;
-  const hasMore = start + limit < total;
-  const displayedSubscriptions = allSubscriptions.slice(start, start + limit);
+  const [hasMore, setHasMore] = useState(false);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const fetchPlanData = async () => {
@@ -79,25 +77,32 @@ export function SubscriptionsView() {
     const fetchSubs = async () => {
       setLoadingSubs(true);
       try {
-        const data = await analyticsService.getSubscriptionsByPlan(selectedPlanId);
-        setAllSubscriptions(Array.isArray(data) ? data : []);
-        setStart(0);
+        const res = await analyticsService.getSubscriptionsByPlan(
+          selectedPlanId,
+          start,
+          limit
+        );
+        setSubscriptions(res.data || []);
+        setHasMore(res.hasMore);
+        setTotal(res.total);
       } catch (error) {
         console.error("Error fetching subscriptions:", error);
-        setAllSubscriptions([]);
+        setSubscriptions([]);
+        setTotal(0);
+        setHasMore(false);
       } finally {
         setLoadingSubs(false);
       }
     };
 
     fetchSubs();
-  }, [selectedPlanId]); // Removed start/limit dep so it doesn't refetch on page change
+  }, [selectedPlanId, start, limit]);
 
   const handlePlanSelect = (planId) => {
     if (planId === selectedPlanId) return;
     setSelectedPlanId(planId);
     setStart(0);
-    setAllSubscriptions([]);
+    setSubscriptions([]);
   };
 
   const handleNext = () => {
@@ -209,7 +214,7 @@ export function SubscriptionsView() {
               <div className="flex justify-center p-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-            ) : displayedSubscriptions.length === 0 ? (
+            ) : subscriptions.length === 0 ? (
               <p className="text-center text-muted-foreground p-8">
                 No se encontraron suscripciones para este plan.
               </p>
@@ -225,13 +230,13 @@ export function SubscriptionsView() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayedSubscriptions.map((sub) => {
+                  {subscriptions.map((sub) => {
                     const statusInfo = STATUS_MAP[sub.status] || {
                       label: "Unknown",
                       variant: "outline",
                     };
                     return (
-                      <TableRow key={sub.id || sub.subscriptionId}>
+                      <TableRow key={sub.subscriptionId}>
                         <TableCell>
                           <div className="font-medium">
                             {sub.name || "Unknown"}
