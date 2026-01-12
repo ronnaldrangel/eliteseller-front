@@ -91,7 +91,7 @@ export default async function PlansPage() {
         annualPriceDisplay = `${price}$ facturado anualmente`;
         const monthly = parseFloat(price) / 12;
         price = monthly % 1 === 0 ? monthly.toFixed(0) : monthly.toFixed(2);
-        billingPeriod = 'mes';
+        billingPeriod = 'mensual';
 
         if (regularPrice) {
           const monthlyRegular = parseFloat(regularPrice) / 12;
@@ -114,6 +114,8 @@ export default async function PlansPage() {
         badgeText: undefined,
         featureIconColor: "text-green-600",
         annualPriceDisplay,
+        billingPeriod,
+        originalBillingPeriod: plan.billing_period,
       };
     })
   ];
@@ -132,6 +134,8 @@ export default async function PlansPage() {
     badgeText,
     featureIconColor,
     annualPriceDisplay,
+    billingPeriod,
+    originalBillingPeriod,
   }) => {
     const highlightClasses = highlight
       ? "relative ring-2 ring-primary ring-opacity-10 shadow-2xl bg-gradient-to-b from-primary/5 via-transparent to-transparent border-primary/20"
@@ -151,9 +155,9 @@ export default async function PlansPage() {
         )}
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-md font-medium tracking-tight uppercase">{title}</CardTitle>
+            <CardTitle className="text-md font-medium tracking-tight uppercase">PLAN {originalBillingPeriod}</CardTitle>
           </div>
-          <div className="text-xl font-semibold text-foreground mt-1 text-left">Eliteseller Pro</div>
+          <div className="text-xl font-semibold text-foreground mt-1 text-left">{title}</div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className={`${priceClass} text-foreground tracking-tight`}>{price}</span>
             {perText && <span className="text-muted-foreground text-sm font-medium">{perText}</span>}
