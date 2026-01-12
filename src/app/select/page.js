@@ -4,8 +4,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import MarketingLayout from "@/components/marketing-layout";
-import { PlusIcon } from "lucide-react";
+
 import { buildChatbotIdentifiers } from "@/lib/utils/chatbot-route";
+import CreateBotModal from "@/components/create-bot-modal";
 
 export default async function SelectPage() {
   const session = await auth();
@@ -107,15 +108,11 @@ export default async function SelectPage() {
           </div>
         ) : (
           <>
-            <Link
-              href="/plans"
-              className="group rounded-lg border bg-card p-6 aspect-square flex flex-col items-center justify-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring hover:bg-accent/30"
-              aria-label="Crear bot"
-              title="Crear bot"
-            >
-              <PlusIcon className="size-16 text-muted-foreground group-hover:text-primary transition-colors" />
-              <div className="mt-3 text-sm md:text-base font-semibold">Crear bot</div>
-            </Link>
+            <CreateBotModal
+              strapiToken={session.strapiToken}
+              userId={session?.user?.strapiUserId}
+              strapiUrl={buildStrapiUrl('')}
+            />
 
             {cards.length > 0 ? (
               <>

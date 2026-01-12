@@ -46,10 +46,10 @@ export function TeamSwitcher({
   const chatbotsUrl =
     token && userId
       ? buildStrapiUrl(
-          `/api/chatbots?filters[users_permissions_user][id][$eq]=${encodeURIComponent(
-            userId
-          )}`
-        )
+        `/api/chatbots?filters[users_permissions_user][id][$eq]=${encodeURIComponent(
+          userId
+        )}`
+      )
       : null;
 
   const { data: chatbotsData, isLoading } = useSWR(chatbotsUrl);
@@ -177,7 +177,7 @@ export function TeamSwitcher({
     if (idx !== -1 && idx + 1 < parts.length) {
       parts[idx + 1] = team.routeSegment;
       const dest = parts.join("/") || `/dashboard/${team.routeSegment}`;
-      if(pathname !== dest) router.replace(dest);
+      if (pathname !== dest) router.replace(dest);
     } else {
       router.push(`/dashboard/${team.routeSegment}/home`);
     }
@@ -247,14 +247,14 @@ export function TeamSwitcher({
                 if (typeof onAdd === "function") {
                   onAdd();
                 } else {
-                  router.push("/plans");
+                  router.push("/select");
                 }
               }}
             >
               <div className="flex size-6 items-center justify-center rounded-md border bg-transparent">
                 <Plus className="size-4" />
               </div>
-              <div className="text-muted-foreground font-medium">{addLabel}</div>
+              <div className="text-muted-foreground font-medium">Ver chatbots</div>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
