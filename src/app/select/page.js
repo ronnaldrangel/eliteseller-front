@@ -65,16 +65,7 @@ export default async function SelectPage() {
   //   }
   // }
 
-  const getPlanColor = (planId) => {
-    if (!planId) return "bg-muted";
 
-    if (planId === "BASICO" || planId === "TRIAL_BASICO") {
-      return "bg-sky-600";
-    } else if (planId === "GALACTICO" || planId === "TRIAL_GALACTICO") {
-      return "bg-gradient-to-r from-purple-600 to-pink-600";
-    }
-    return "bg-muted";
-  };
 
   const cards = Array.isArray(chatbots)
     ? chatbots.map((item) => {
@@ -148,10 +139,8 @@ export default async function SelectPage() {
                       <span className="block md:line-clamp-2">{c.name}</span>
                       {c.plan && (
                         <span
-                          className={`inline-block py-1 px-2.5 rounded-md text-white text-xs font-medium capitalize ${getPlanColor(
-                            c.planId
-                          )}`}
-                        >{`plan ${c.plan}`}</span>
+                          className={`inline-block py-1 px-2.5 rounded-md text-white text-xs font-medium capitalize bg-gradient-to-r from-purple-600 to-pink-600`}
+                        >{`${c.plan}`}</span>
                       )}
                     </div>
                     {c.custom && (

@@ -151,8 +151,9 @@ export default async function PlansPage() {
         )}
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-semibold tracking-tight">{title}</CardTitle>
+            <CardTitle className="text-md font-medium tracking-tight uppercase">{title}</CardTitle>
           </div>
+          <div className="text-xl font-semibold text-foreground mt-1 text-left">Eliteseller Pro</div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className={`${priceClass} text-foreground tracking-tight`}>{price}</span>
             {perText && <span className="text-muted-foreground text-sm font-medium">{perText}</span>}
@@ -167,6 +168,7 @@ export default async function PlansPage() {
               {annualPriceDisplay}
             </div>
           )}
+
         </CardHeader>
         <CardContent className="pt-0 flex flex-col flex-1">
           <div className="h-px w-full bg-border/50 mb-6" />

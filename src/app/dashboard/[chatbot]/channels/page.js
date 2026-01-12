@@ -56,8 +56,8 @@ export default async function ChannelsPage({ params }) {
   const items = Array.isArray(accountsPayload)
     ? accountsPayload
     : Array.isArray(accountsPayload?.data)
-    ? accountsPayload.data
-    : [];
+      ? accountsPayload.data
+      : [];
   const firstAccount = items[0] || null;
   const accountAttrs = firstAccount?.attributes || firstAccount || {};
   const accountDocumentId = accountAttrs?.documentId || firstAccount?.documentId || null;
@@ -84,16 +84,23 @@ export default async function ChannelsPage({ params }) {
       image: "/images/bot.webp",
       isComingSoon: true,
     },
+    {
+      id: "tiktok",
+      title: "TikTok",
+      description: "Próximamente",
+      image: "/images/bot.webp",
+      isComingSoon: true,
+    },
   ];
 
   return (
     <div className="flex flex-1 flex-col px-4 lg:px-6">
-       <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+      <div className="@container/main flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-2">
             <h1 className="text-2xl font-semibold">Canales</h1>
             <p className="text-sm text-muted-foreground">
-                Conecta tus canales de comunicación favoritos.
+              Conecta tus canales de comunicación favoritos.
             </p>
           </div>
         </div>

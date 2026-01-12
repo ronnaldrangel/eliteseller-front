@@ -4,6 +4,7 @@ import AffiliatePaymentCta from "@/components/affiliate-payment-cta";
 import ChangeCardCta from "@/components/change-card-cta";
 import { auth } from "@/lib/auth";
 import { buildStrapiUrl } from "@/lib/strapi";
+import { CreditCard } from "lucide-react";
 
 export default async function BillingPage() {
   // Obtener sesión y construir consulta a Strapi por customers del usuario logueado
@@ -123,7 +124,10 @@ export default async function BillingPage() {
             <h3 className="text-sm font-semibold">Método de pago</h3>
             <div className="mt-4">
               <div className="flex justify-between items-center">
-                <p className="text-sm">{payMethod}</p>
+                <p className="text-sm flex items-center gap-2">
+                  {payMethod}
+                  {customer?.creditCardType && <CreditCard className="h-4 w-4 text-muted-foreground" />}
+                </p>
                 <p className="text-sm">{payMethodLast4}</p>
               </div>
               {customer?.pay_mode === "manual" ? (
