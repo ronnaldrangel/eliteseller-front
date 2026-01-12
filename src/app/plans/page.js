@@ -80,23 +80,40 @@ export default async function PlansPage() {
 
   const plans = [
     ...sortedPlans.map((plan, index) => {
-      const isPremium = plan.plan_id === "PREMIUM";
+      let price = plan.price;
+      let billingPeriod = plan.billing_period;
+      let regularPrice = plan.regular_price;
+      let annualPriceDisplay = null;
+
+      const isAnnual = ['year', 'annual', 'anual'].includes((billingPeriod || '').toLowerCase());
+
+      if (isAnnual && price) {
+        annualPriceDisplay = `${price}$ facturado anualmente`;
+        const monthly = parseFloat(price) / 12;
+        price = monthly % 1 === 0 ? monthly.toFixed(0) : monthly.toFixed(2);
+        billingPeriod = 'mes';
+
+        if (regularPrice) {
+          const monthlyRegular = parseFloat(regularPrice) / 12;
+          regularPrice = monthlyRegular % 1 === 0 ? monthlyRegular.toFixed(0) : monthlyRegular.toFixed(2);
+        }
+      }
+
       return {
         title: plan.name,
-        price: `${plan.price}$`,
-        priceClass: isPremium
-          ? "text-4xl font-extrabold"
-          : "text-3xl font-bold",
-        perText: `/ ${plan.billing_period}`,
-        beforePrice: plan.regular_price
-          ? `${plan.regular_price}$/${plan.billing_period}`
+        price: `${price}$`,
+        priceClass: "text-3xl font-bold",
+        perText: `/ ${billingPeriod}`,
+        beforePrice: regularPrice
+          ? `${regularPrice}$/${billingPeriod}`
           : "",
         features: plan.features || [],
         planId: plan.plan_id,
         delay: `${index * 150}ms`,
-        highlight: isPremium,
-        badgeText: isPremium ? "Mejor opción" : undefined,
-        featureIconColor: isPremium ? "text-cyan-600" : "text-green-600",
+        highlight: false,
+        badgeText: undefined,
+        featureIconColor: "text-green-600",
+        annualPriceDisplay,
       };
     })
   ];
@@ -114,6 +131,7 @@ export default async function PlansPage() {
     highlight,
     badgeText,
     featureIconColor,
+    annualPriceDisplay,
   }) => {
     const highlightClasses = highlight
       ? "relative ring-2 ring-primary ring-opacity-10 shadow-2xl bg-gradient-to-b from-primary/5 via-transparent to-transparent border-primary/20"
@@ -133,7 +151,7 @@ export default async function PlansPage() {
         )}
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-bold tracking-tight">{title}</CardTitle>
+            <CardTitle className="text-xl font-semibold tracking-tight">{title}</CardTitle>
           </div>
           <div className="mt-2 flex items-baseline gap-1">
             <span className={`${priceClass} text-foreground tracking-tight`}>{price}</span>
@@ -142,7 +160,11 @@ export default async function PlansPage() {
           {beforePrice && (
             <div className="mt-1 text-sm flex items-center gap-2">
               <span className="text-muted-foreground line-through opacity-60">{beforePrice}</span>
-              <span className="text-emerald-500 font-semibold text-xs bg-emerald-500/10 px-1.5 py-0.5 rounded">¡AHORRA!</span>
+            </div>
+          )}
+          {annualPriceDisplay && (
+            <div className="mt-1 text-xs text-muted-foreground font-medium text-left">
+              {annualPriceDisplay}
             </div>
           )}
         </CardHeader>
@@ -214,14 +236,13 @@ export default async function PlansPage() {
     <MarketingLayout>
       {/* Hero Section */}
       <div className="relative text-center overflow-hidden py-6">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(45%_45%_at_50%_50%,rgba(84,162,177,0.1)_0%,rgba(255,255,255,0)_100%)]" />
         <div className="animate-in fade-in slide-in-from-top-4 duration-1000">
           <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
-            Escala tu negocio <br className="hidden md:block" />
-            <span className="text-primary italic">al siguiente nivel</span>
+            Antes de crea tu bot <br className="hidden md:block" />
+            <span className="text-primary">elige tu plan</span>
           </h1>
           <p className="max-w-[600px] mx-auto text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed">
-            Sin precios ocultos, cancela cuando quieras.
+            Empieza sin riesgo, cancela cuando quieras.
           </p>
         </div>
 
@@ -252,25 +273,6 @@ export default async function PlansPage() {
         )}
       </div>
 
-      {/* Social Proof / Marquee */}
-
-      {/* {!error && (
-        <div className="py-16 border-y bg-muted/30 -mx-4 md:-mx-12 lg:-mx-24 px-4 md:px-12 lg:px-24">
-          <p className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-8">
-            Empoderando vendedores en las mejores plataformas
-          </p>
-          <Marquee className="py-2" pauseOnHover>
-            {brands.map((brand) => (
-              <div key={brand} className="mx-8 text-xl md:text-2xl font-bold opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-default uppercase tracking-tighter">
-                {brand}
-              </div>
-            ))}
-          </Marquee>
-        </div>
-      )} */}
-
-      {/* Simple Benefits */}
-      {/* Simple Benefits */}
       {!error && (
         <div className="max-w-5xl py-20 mx-auto">
           <h2 className="text-center text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-12">

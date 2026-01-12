@@ -64,9 +64,9 @@ export default function SelectUserAvatarMenu() {
           )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
+        {/* <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
           <Link href="/select">Inicio</Link>
-        </DropdownMenuItem>
+        </DropdownMenuItem> */}
         <DropdownMenuItem className="transition-colors cursor-pointer" asChild>
           <Link href="/account">Mi cuenta</Link>
         </DropdownMenuItem>

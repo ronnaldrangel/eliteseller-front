@@ -14,10 +14,10 @@ export async function GET(request) {
   }
 
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const affiliateRef = cookieStore.get("affiliate-ref-id")?.value || null
     const payload = { plan_id, userId }
-    if (affiliateRef && affiliateRef !== userId ) payload.affiliate_ref_id = affiliateRef
+    if (affiliateRef && affiliateRef !== userId) payload.affiliate_ref_id = affiliateRef
     const res = await fetch("https://n8n.eliteseller.app/webhook/flow/subscribe", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
