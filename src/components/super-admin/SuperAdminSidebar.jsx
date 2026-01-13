@@ -7,7 +7,8 @@ import {
   LayoutDashboard,
   Users,
   CreditCard,
-  Bot
+  Bot,
+  PlayCircle
 } from "lucide-react";
 import Image from "next/image";
 
@@ -28,6 +29,7 @@ export function SuperAdminSidebar({ activeView, setActiveView, ...props }) {
     { id: "users", title: "Usuarios", icon: Users },
     { id: "subscriptions", title: "Suscripciones", icon: CreditCard },
     { id: "chatbots", title: "Chatbots", icon: Bot },
+    { id: "tutorials", title: "Tutoriales", icon: PlayCircle },
   ];
 
   const userFromSession = {

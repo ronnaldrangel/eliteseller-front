@@ -28,6 +28,7 @@ import {
   MessageSquareIcon,
   ChevronRight,
   PlugIcon,
+  PlayCircle
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -216,6 +217,11 @@ const data = {
         />
       ),
     },
+    {
+      title: "Tutoriales",
+      url: "/tutorials",
+      icon: PlayCircle,
+    },
   ],
   navSecondary: [
     {
@@ -296,6 +302,7 @@ export function AppSidebar({ chatbotSlug, ...props }) {
       "/contacts",
       "/reminders",
       "/integration",
+      "/tutorials",
     ];
     if (item.items && item.items.length > 0) {
       // Map sub-items (e.g., Integrations) to dynamic URLs

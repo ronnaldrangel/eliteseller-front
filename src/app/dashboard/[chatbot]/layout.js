@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth"
 import ChatPreviewWidget from "./home/ChatPreviewWidget"
 
 
+import { OnboardingPopup } from "@/components/dashboard/OnboardingPopup";
+
 export default async function ChatbotLayout({ children, params }) {
   const { chatbot: chatbotSlug } = await params
 
@@ -17,6 +19,7 @@ export default async function ChatbotLayout({ children, params }) {
         <SiteHeader />
         {children}
         <ChatPreviewWidget chatbotName={chatbotSlug || "Chatbot"} chatbotSlug={chatbotSlug} />
+        <OnboardingPopup chatbotSlug={chatbotSlug} />
       </SidebarInset>
     </SidebarProvider>
   )

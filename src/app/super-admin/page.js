@@ -7,6 +7,8 @@ import { OverviewView } from "@/components/super-admin/OverviewView";
 import { UsersView } from "@/components/super-admin/UsersView";
 import { SubscriptionsView } from "@/components/super-admin/SubscriptionsView";
 import { ChatbotsView } from "@/components/super-admin/ChatbotsView";
+import { TutorialsView } from "@/components/super-admin/TutorialsView";
+import { OnboardingPopup } from "@/components/super-admin/OnboardingPopup";
 import { SuperAdminSidebar } from "@/components/super-admin/SuperAdminSidebar";
 import {
   SidebarProvider,
@@ -53,7 +55,9 @@ export default function SuperAdminDashboard() {
           {activeView === "users" && <UsersView />}
           {activeView === "subscriptions" && <SubscriptionsView />}
           {activeView === "chatbots" && <ChatbotsView />}
+          {activeView === "tutorials" && <TutorialsView />}
         </main>
+        <OnboardingPopup onNavigate={setActiveView} />
       </SidebarInset>
     </SidebarProvider>
   );
