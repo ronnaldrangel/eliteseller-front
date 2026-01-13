@@ -26,31 +26,6 @@ import { toast } from "sonner";
 
 export const columns = [
   {
-    id: "thumbnail",
-    header: "",
-    cell: ({ row }) => {
-      const media = row.original?.media;
-      const thumbUrl =
-        Array.isArray(media) && media.length > 0 ? media[0]?.url : null;
-      return (
-        <div className="flex items-center">
-          {thumbUrl ? (
-            <img
-              src={thumbUrl}
-              alt={row.original?.name || "Producto"}
-              className="h-12 w-12 rounded-md object-cover border"
-            />
-          ) : (
-            <div className="h-12 w-12 rounded-md bg-muted flex items-center justify-center text-xs text-muted-foreground">
-              N/A
-            </div>
-          )}
-        </div>
-      );
-    },
-    enableSorting: false,
-  },
-  {
     accessorKey: "name",
     header: ({ column }) => (
       <div
@@ -67,6 +42,11 @@ export const columns = [
         row.original?.attributes?.documentId ||
         row.original?.id;
       const name = row.getValue("name");
+
+      const media = row.original?.media;
+      const thumbUrl =
+        Array.isArray(media) && media.length > 0 ? media[0]?.url : null;
+
       const handleClick = () => {
         if (!documentId) return;
         const base =
@@ -76,13 +56,26 @@ export const columns = [
         router.push(`${base}/${encodeURIComponent(documentId)}/edit`);
       };
       return (
-        <button
-          type="button"
-          onClick={handleClick}
-          className="font-medium text-primary hover:underline focus:outline-none"
-        >
-          {name || "-"}
-        </button>
+        <div className="flex items-center gap-3">
+          {thumbUrl ? (
+            <img
+              src={thumbUrl}
+              alt={name || "Producto"}
+              className="h-10 w-10 rounded-md object-cover border shrink-0"
+            />
+          ) : (
+            <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center text-[10px] text-muted-foreground shrink-0">
+              N/A
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleClick}
+            className="font-medium text-primary hover:underline focus:outline-none text-left"
+          >
+            {name || "-"}
+          </button>
+        </div>
       );
     },
   },

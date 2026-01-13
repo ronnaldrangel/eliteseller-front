@@ -38,6 +38,7 @@ const STAT_ITEMS = [
   {
     key: "contacts",
     label: "Contactos",
+    path: "contacts",
     helper: "Contactos totales registrados",
     baseline: 120,
     positiveSummary: "Alza en contactos",
@@ -48,6 +49,7 @@ const STAT_ITEMS = [
   {
     key: "triggers",
     label: "Disparadores",
+    path: "triggers",
     helper: "Automatizaciones activas",
     baseline: 18,
     positiveSummary: "Automatización saludable",
@@ -58,6 +60,7 @@ const STAT_ITEMS = [
   {
     key: "products",
     label: "Productos",
+    path: "products",
     helper: "Productos publicados",
     baseline: 40,
     positiveSummary: "Catálogo robusto",
@@ -440,6 +443,9 @@ export default function DocsPageClient({
                         : trend.direction === "down"
                           ? TrendingDown
                           : Minus;
+                    const itemHref = chatbotSegment
+                      ? `/dashboard/${encodeURIComponent(chatbotSegment)}/${item.path}`
+                      : "#";
                     return (
                       <Card
                         key={item.key}
@@ -450,9 +456,11 @@ export default function DocsPageClient({
                           <CardDescription className="text-sm font-medium">
                             {item.label}
                           </CardDescription>
-                          <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
-                            {displayValue}
-                          </CardTitle>
+                          <Link href={itemHref} className="hover:text-primary transition-colors inline-block">
+                            <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
+                              {displayValue}
+                            </CardTitle>
+                          </Link>
                           <div className="absolute right-4 top-4">
                             <Badge
                               variant="outline"
@@ -477,7 +485,7 @@ export default function DocsPageClient({
                   <Card className="@container/card overflow-hidden rounded-3xl bg-gradient-to-t from-primary/5 via-card to-card dark:bg-card">
                     <CardHeader className="relative">
                       <CardDescription className="text-sm font-medium flex items-center gap-2">
-                        Tienes bateria para enviar
+                        Bateria
                       </CardDescription>
                       <CardTitle className="@[250px]/card:text-3xl text-2xl font-semibold tabular-nums">
                         {remainingMessages}
@@ -647,7 +655,7 @@ export default function DocsPageClient({
             {/* Gestiona tus chats */}
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-2">
-                <h2 className="text-xl font-semibold">Gestiona tus chats</h2>
+                <h2 className="text-xl font-semibold">Accede a tus chats</h2>
                 <p className="text-sm text-muted-foreground">
                   Gestiona todas las conversaciones con tus clientes y rendimiento del bot.
                 </p>
@@ -729,6 +737,7 @@ export default function DocsPageClient({
                 </Card>
               </div>
             </div>
+
           </div>
 
         </div>

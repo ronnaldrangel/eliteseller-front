@@ -30,17 +30,7 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
     : [];
 
   // Lista de items sin categorías
-  const items = [
-    {
-      id: "docs-static",
-      title: "Centro de Aprendizaje",
-      description: "Domina EliteSeller con guías detalladas y videos paso a paso.",
-      cta: "Comenzar a aprender",
-      href: "http://help.eliteseller.app/",
-      image: "/images/bot.webp", 
-    },
-    ...initialHelpItems
-  ];
+  const items = [...initialHelpItems];
 
   // Se elimina buscador y tabs de categorías; se muestran todas las cards.
 
@@ -69,54 +59,49 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
         {/* Grid de cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 auto-rows-fr">
           {items.map((item) => {
-             const isDocs = item.id === "docs-static";
-             return (
-            <Card
-              key={item.id}
-              className={`group overflow-hidden transition hover:shadow-lg h-full flex flex-col ${
-                isDocs 
-                  ? "border-primary/50 bg-gradient-to-br from-primary/5 via-background to-background ring-1 ring-primary/20" 
-                  : ""
-              }`}
-            >
+            return (
+              <Card
+                key={item.id}
+                className="group overflow-hidden transition hover:shadow-lg h-full flex flex-col"
+              >
 
-              <CardContent className="space-y-2 text-left flex flex-1 flex-col">
+                <CardContent className="space-y-2 text-left flex flex-1 flex-col">
 
-                {item.image ? (
-                  <div className="w-[100px] h-auto mx-auto">
-                    <Image
-                      src={item.image}
-                      alt={item.imageAlt || item.title || "Ayuda"}
-                      width={100}
-                      height={100}
-                      className="h-full w-full object-cover"
-                      priority={true}
-                    />
-                  </div>
-                ) : null}
+                  {item.image ? (
+                    <div className="w-[100px] h-auto mx-auto">
+                      <Image
+                        src={item.image}
+                        alt={item.imageAlt || item.title || "Ayuda"}
+                        width={100}
+                        height={100}
+                        className="h-full w-full object-cover"
+                        priority={true}
+                      />
+                    </div>
+                  ) : null}
 
-                <CardTitle className="mt-6 line-clamp-2 text-left">{item.title}</CardTitle>
+                  <CardTitle className="mt-6 line-clamp-2 text-left">{item.title}</CardTitle>
 
-                {item.description ? (
-                  <CardDescription className="line-clamp-3 text-left mb-6">
-                    {item.description}
-                  </CardDescription>
-                ) : null}
+                  {item.description ? (
+                    <CardDescription className="line-clamp-3 text-left mb-6">
+                      {item.description}
+                    </CardDescription>
+                  ) : null}
 
-                <Button asChild className="mt-auto w-full gap-1">
-                  <a
-                    href={item.href || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`Abrir: ${item.title}`}
-                  >
-                    {item.cta || "Ver guía"}
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </Button>
-              </CardContent>
-            </Card>
-              );
+                  <Button asChild className="mt-auto w-full gap-1">
+                    <a
+                      href={item.href || "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`Abrir: ${item.title}`}
+                    >
+                      {item.cta || "Ver guía"}
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                </CardContent>
+              </Card>
+            );
           })}
         </div>
 

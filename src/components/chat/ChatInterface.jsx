@@ -226,11 +226,10 @@ export default function ChatInterface({
   };
 
   const suggestions = [
-    { label: "Crear imagen", icon: "🎨" },
-    { label: "Crear un video", icon: "🎥" }, // Video creation
-    { label: "Escribir cualquier cosa", icon: "✍️" },
-    { label: "Ayúdame a aprender", icon: "🎓" },
-    { label: "Dale un impulso a mi día", icon: "🚀" },
+    { label: "¿Qué métodos de pago tienen?", icon: "💳" },
+    { label: "¿Tienen envíos gratis?", icon: "🚚" },
+    { label: "¿Que productos tienen?", icon: "📦" },
+    { label: "Hablar con un asesor", icon: "👨‍💼" },
   ];
 
   return (

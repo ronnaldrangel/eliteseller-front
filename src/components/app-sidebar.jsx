@@ -186,24 +186,19 @@ const data = {
         />
       ),
     },
-    {
-      title: "Integraciones",
-      url: "/integration",
-      icon: () => (
-        <Image
-          src="/icons/integraciones.png"
-          alt="Integraciones"
-          width={16}
-          height={16}
-          className="size-4 rounded-sm object-cover"
-        />
-      ),
-      // items: [
-      //   { title: "WhatsApp", url: "/integrations/whatsapp" },
-      //   // { title: "Shopify", url: "/integrations/shopify" },
-      //   // { title: "n8n", url: "/integrations/n8n" },
-      // ],
-    },
+    // {
+    //   title: "Integraciones",
+    //   url: "/integration",
+    //   icon: () => (
+    //     <Image
+    //       src="/icons/integraciones.png"
+    //       alt="Integraciones"
+    //       width={16}
+    //       height={16}
+    //       className="size-4 rounded-sm object-cover"
+    //     />
+    //   ),
+    // },
     {
       title: "Canales",
       url: "/channels",
@@ -244,19 +239,6 @@ const data = {
         <Image
           src="/icons/ayuda.png"
           alt="Centro de ayuda"
-          width={16}
-          height={16}
-          className="size-4 rounded-sm object-cover"
-        />
-      ),
-    },
-    {
-      title: "Afiliados",
-      url: "/affiliates",
-      icon: () => (
-        <Image
-          src="/icons/afiliados.png"
-          alt="Afiliados"
           width={16}
           height={16}
           className="size-4 rounded-sm object-cover"

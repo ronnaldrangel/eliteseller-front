@@ -138,7 +138,7 @@ export function NavUser({ user }) {
               onClick={() => signOut({ callbackUrl: "/auth/login" })}
             >
               <LogOutIcon />
-              Log out
+              Cerrar sesión
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
