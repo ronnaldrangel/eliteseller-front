@@ -33,7 +33,7 @@ export function OnboardingPopup({ chatbotSlug }) {
 
   const handleNavigation = () => {
     handleClose();
-    router.push(`/dashboard/${chatbotSlug}/tutorials`);
+    window.open("http://help.eliteseller.app/", "_blank");
   };
 
   if (!hasChecked) return null; // Avoid hydration mismatch
@@ -54,7 +54,7 @@ export function OnboardingPopup({ chatbotSlug }) {
           </div>
           <DialogTitle className="text-center text-2xl font-bold">¡Bienvenido a EliteSeller!</DialogTitle>
            <DialogDescription className="text-center text-md pt-2">
-            Hemos preparado unos videos para ti. Explora nuestra nueva sección de tutoriales para sacar el máximo provecho de tu Bot Seller.
+            Hemos preparado documentación detallada para ti. Visita nuestro centro de ayuda para sacar el máximo provecho de tu Bot Seller.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex-col sm:flex-row sm:justify-center gap-2 mt-4">
@@ -62,7 +62,7 @@ export function OnboardingPopup({ chatbotSlug }) {
             Más tarde
           </Button>
           <Button className="sm:w-auto w-full" onClick={handleNavigation}>
-            Ver Tutoriales
+            Ver Documentación
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -77,19 +77,19 @@ const data = {
         />
       ),
     },
-    {
-      title: "Chats",
-      url: "/chats",
-      icon: () => (
-        <Image
-          src="/icons/chats.png"
-          alt="Chats"
-          width={16}
-          height={16}
-          className="size-4 rounded-sm object-cover"
-        />
-      ),
-    },
+    // {
+    //   title: "Chats",
+    //   url: "/chats",
+    //   icon: () => (
+    //     <Image
+    //       src="/icons/chats.png"
+    //       alt="Chats"
+    //       width={16}
+    //       height={16}
+    //       className="size-4 rounded-sm object-cover"
+    //     />
+    //   ),
+    // },
     // {
     //   title: "Etiquetas",
     //   url: "/tags",
@@ -217,11 +217,11 @@ const data = {
         />
       ),
     },
-    {
-      title: "Tutoriales",
-      url: "/tutorials",
-      icon: PlayCircle,
-    },
+    // {
+    //   title: "Tutoriales",
+    //   url: "/tutorials",
+    //   icon: PlayCircle,
+    // },
   ],
   navSecondary: [
     {
@@ -238,12 +238,12 @@ const data = {
       ),
     },
     {
-      title: "Ayuda",
+      title: "Centro de ayuda",
       url: "/help",
       icon: () => (
         <Image
           src="/icons/ayuda.png"
-          alt="Ayuda"
+          alt="Centro de ayuda"
           width={16}
           height={16}
           className="size-4 rounded-sm object-cover"

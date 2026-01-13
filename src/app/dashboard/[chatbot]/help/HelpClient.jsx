@@ -30,7 +30,17 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
     : [];
 
   // Lista de items sin categorías
-  const items = initialHelpItems;
+  const items = [
+    {
+      id: "docs-static",
+      title: "Centro de Aprendizaje",
+      description: "Domina EliteSeller con guías detalladas y videos paso a paso.",
+      cta: "Comenzar a aprender",
+      href: "http://help.eliteseller.app/",
+      image: "/images/bot.webp", 
+    },
+    ...initialHelpItems
+  ];
 
   // Se elimina buscador y tabs de categorías; se muestran todas las cards.
 
@@ -58,10 +68,16 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
 
         {/* Grid de cards */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 auto-rows-fr">
-          {items.map((item) => (
+          {items.map((item) => {
+             const isDocs = item.id === "docs-static";
+             return (
             <Card
               key={item.id}
-              className="group overflow-hidden transition hover:shadow-lg h-full flex flex-col"
+              className={`group overflow-hidden transition hover:shadow-lg h-full flex flex-col ${
+                isDocs 
+                  ? "border-primary/50 bg-gradient-to-br from-primary/5 via-background to-background ring-1 ring-primary/20" 
+                  : ""
+              }`}
             >
 
               <CardContent className="space-y-2 text-left flex flex-1 flex-col">
@@ -100,7 +116,8 @@ export default function HelpClient({ initialNewsItems = [], helpError }) {
                 </Button>
               </CardContent>
             </Card>
-          ))}
+              );
+          })}
         </div>
 
         {/* Empty state */}
