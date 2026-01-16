@@ -77,19 +77,19 @@ const data = {
         />
       ),
     },
-    // {
-    //   title: "Chats",
-    //   url: "/chats",
-    //   icon: () => (
-    //     <Image
-    //       src="/icons/chats.png"
-    //       alt="Chats"
-    //       width={16}
-    //       height={16}
-    //       className="size-4 rounded-sm object-cover"
-    //     />
-    //   ),
-    // },
+    {
+      title: "Chats",
+      url: "/chats",
+      icon: () => (
+        <Image
+          src="/icons/chats.png"
+          alt="Chats"
+          width={16}
+          height={16}
+          className="size-4 rounded-sm object-cover"
+        />
+      ),
+    },
     // {
     //   title: "Etiquetas",
     //   url: "/tags",
