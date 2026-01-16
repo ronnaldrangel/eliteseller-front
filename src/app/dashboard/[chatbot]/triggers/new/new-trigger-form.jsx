@@ -36,7 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
 const MAX_KEYWORDS_LENGTH = 360;
-const MAX_MESSAGE_LENGTH = 500;
+const MAX_MESSAGE_LENGTH = 1000;
 
 const ACCEPT =
   "image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";

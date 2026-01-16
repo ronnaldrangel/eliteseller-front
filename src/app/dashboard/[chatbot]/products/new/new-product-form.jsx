@@ -27,7 +27,7 @@ import { Plus, X, Trash2 } from "lucide-react";
 import { useTranslation } from "@/contexts/language-context";
 import { CURRENCY_OPTIONS, DEFAULT_CURRENCY } from "@/constants/currencies";
 
-const SHORT_DESCRIPTION_LIMIT = 500;
+const SHORT_DESCRIPTION_LIMIT = 1000;
 const LONG_DESCRIPTION_LIMIT = 1000;
 const NAME_LIMIT = 250;
 
