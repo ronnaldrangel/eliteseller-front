@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/ui/rich-text-editor";
 import {
   Select,
   SelectContent,
@@ -761,13 +762,11 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                   Descripción del producto en WhatsApp *
                 </label>
                 <div className="relative">
-                  <Textarea
-                    id="description-wsp"
+                  <RichTextEditor
                     placeholder="Escribe tu mensaje aquí..."
                     value={form.description_wsp}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const truncated = value.substring(
+                    onChange={(val) => {
+                      const truncated = val.substring(
                         0,
                         SHORT_DESCRIPTION_LIMIT
                       );
@@ -776,8 +775,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                         description_wsp: truncated,
                       }));
                     }}
-                    maxLength={SHORT_DESCRIPTION_LIMIT}
-                    className="min-h-[100px] resize-none"
+                    className="min-h-[100px]"
                   />
                   <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background px-1">
                     {form.description_wsp.length}/{SHORT_DESCRIPTION_LIMIT}
@@ -798,13 +796,11 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                   Descripción del producto
                 </label>
                 <div className="relative">
-                  <Textarea
-                    id="description-complete"
+                  <RichTextEditor
                     placeholder="Escribe los detalles aquí..."
                     value={form.description_complete}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const truncated = value.substring(
+                    onChange={(val) => {
+                      const truncated = val.substring(
                         0,
                         LONG_DESCRIPTION_LIMIT
                       );
@@ -813,8 +809,7 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
                         description_complete: truncated,
                       }));
                     }}
-                    maxLength={LONG_DESCRIPTION_LIMIT}
-                    className="min-h-[100px] resize-none"
+                    className="min-h-[100px]"
                   />
                   <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background px-1">
                     {form.description_complete.length}/{LONG_DESCRIPTION_LIMIT}
@@ -849,17 +844,14 @@ export default function NewProductForm({ token, chatbotId, chatbotSlug }) {
               </div>
               <div className="space-y-2">
                 <div className="relative">
-                  <Textarea
-                    id="auto-delivery-msg"
+                  <RichTextEditor
                     placeholder="Escribe el mensaje que verán tras la compra..."
                     value={form.auto_delivery_msg}
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      const truncated = value.substring(0, LONG_DESCRIPTION_LIMIT);
+                    onChange={(val) => {
+                      const truncated = val.substring(0, LONG_DESCRIPTION_LIMIT);
                       setForm((prev) => ({ ...prev, auto_delivery_msg: truncated }));
                     }}
-                    maxLength={LONG_DESCRIPTION_LIMIT}
-                    className="min-h-[100px] resize-none"
+                    className="min-h-[100px]"
                     disabled={!form.is_auto_delivery}
                   />
                   <div className="absolute bottom-2 right-2 text-xs text-muted-foreground bg-background px-1">

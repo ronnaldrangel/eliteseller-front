@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/ui/rich-text-editor";
 import { Switch } from "@/components/ui/switch";
 
 const MAX_KEYWORDS_LENGTH = 360;
@@ -823,15 +824,12 @@ export default function NewTriggerForm({
 
                       {msg.type === "message" ? (
                         <>
-                          <Textarea
-                            rows={3}
-                            maxLength={MAX_MESSAGE_LENGTH}
-                            placeholder="Escribe el mensaje de respuesta"
+                          <RichTextEditor
                             value={msg.message}
-                            onChange={(e) =>
-                              handleUpdateMessage(index, e.target.value)
+                            onChange={(val) =>
+                              handleUpdateMessage(index, val)
                             }
-                            className="resize-none"
+                            className="min-h-[100px]"
                           />
                           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
                             <span>Mensaje {index + 1}</span>
@@ -939,19 +937,11 @@ export default function NewTriggerForm({
 
               {newType === "message" ? (
                 <>
-                  <Textarea
-                    rows={3}
-                    maxLength={MAX_MESSAGE_LENGTH}
-                    placeholder="Escribe un nuevo mensaje"
+                  <RichTextEditor
                     value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.ctrlKey) {
-                        e.preventDefault();
-                        handleAddMessage();
-                      }
-                    }}
-                    className="resize-none"
+                    onChange={(val) => setNewMessage(val)}
+                    placeholder="Escribe un nuevo mensaje"
+                    className="min-h-[100px]"
                   />
                   <div className="mt-2 flex items-center justify-between">
                     <span className="text-xs text-muted-foreground">

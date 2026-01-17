@@ -42,6 +42,8 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-table": "^8.21.3",
+    "@tiptap/react": "^3.15.3",
+    "@tiptap/starter-kit": "^3.15.3",
     "bcryptjs": "^3.0.2",
     "blueimp-md5": "^2.19.0",
     "class-variance-authority": "^0.7.1",
@@ -69,6 +71,7 @@
     "sonner": "^2.0.7",
     "swr": "^2.3.6",
     "tailwind-merge": "^3.3.1",
+    "tiptap-markdown": "^0.9.0",
     "vaul": "^1.1.2",
     "zod": "^4.1.12"
   },
