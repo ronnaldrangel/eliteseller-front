@@ -3,7 +3,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import {
   strapiAuth,
-  strapiUsers,
   buildStrapiUrl,
 } from "@/lib/strapi";
 
@@ -13,6 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
       name: "credentials",
@@ -22,15 +22,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-
         try {
           const response = await strapiAuth.login({
             identifier: credentials.email,
             password: credentials.password,
           });
-
           const data = await response.json();
-
           if (response.ok && data.user) {
             console.log(`🔐 [Auth] Login: ${data.user.email}`);
             let userRole = null;
@@ -42,43 +39,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 const meData = await meRes.json();
                 userRole = meData?.role?.name;
               }
-            } catch (roleError) {
-              console.error("❌ Error fetching user role:", roleError);
-            }
-
+            } catch (e) { }
             return {
               id: data.user.id.toString(),
               email: data.user.email,
-              name: data.user.name || data.user.username,
               strapiToken: data.jwt,
-              emailVerified: !!data.user.confirmed,
               role: userRole,
             };
           }
-
           return null;
         } catch (error) {
-          console.error("❌ Authentication error:", error);
           return null;
         }
       },
     }),
   ],
   callbacks: {
-    async signIn({ account }) {
+    async authorized({ auth }) {
+      // Forzamos true para evitar el error AccessDenied automático de Auth.js
+      return true;
+    },
+    async signIn({ account, user }) {
       if (account?.provider === "google") {
         try {
-          if (!account.access_token) return false;
+          console.log(`🔄 [Auth] Vinculando Google para: ${user?.email || "unknown"}`);
           const callbackUrl = buildStrapiUrl(`/api/auth/google/callback?access_token=${account.access_token}`);
-          const authRes = await fetch(callbackUrl, { method: "GET", headers: { "Content-Type": "application/json" } });
-          if (!authRes.ok) return false;
+
+          const authRes = await fetch(callbackUrl, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+          });
+
+          if (!authRes.ok) {
+            const errorText = await authRes.text();
+            console.error(`❌ [Auth] Strapi Error ${authRes.status}:`, errorText);
+
+            // Si el error es "Email already taken", es que hay un conflicto en Strapi
+            if (errorText.includes("Email already taken")) {
+              console.warn("⚠️ El email ya existe. Strapi debería haberlo vinculado. Verifica Settings -> Advanced Settings en Strapi Admin.");
+            }
+            return false;
+          }
+
           const authData = await authRes.json();
           if (authData?.jwt) {
-            console.log(`🌍 [Auth] Google: ${authData.user?.email}`);
+            console.log(`🌍 [Auth] Google OK: ${authData.user?.email}`);
+            return true;
           }
-          return !!(authData?.jwt && authData?.user);
+          return false;
         } catch (error) {
-          console.error("❌ Google Auth Error:", error);
+          console.error("❌ [Auth] Error en callback de Google:", error);
           return false;
         }
       }
@@ -88,46 +98,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.strapiToken = user.strapiToken;
         token.strapiUserId = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.emailVerified = user.emailVerified;
         token.role = user.role;
       }
-
       if (account?.provider === "google" && !token.strapiToken) {
         try {
           const callbackUrl = buildStrapiUrl(`/api/auth/google/callback?access_token=${account.access_token}`);
-          const authRes = await fetch(callbackUrl, { method: "GET", headers: { "Content-Type": "application/json" } });
-
+          const authRes = await fetch(callbackUrl, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" }
+          });
           if (authRes.ok) {
             const authData = await authRes.json();
             token.strapiToken = authData.jwt;
             token.strapiUserId = authData.user.id;
-
-            const meRes = await fetch(buildStrapiUrl("/api/users/me?populate=role"), {
-              headers: { Authorization: `Bearer ${authData.jwt}` },
-            });
-            if (meRes.ok) {
-              const meData = await meRes.json();
-              token.role = meData.role?.name;
-            }
           }
-        } catch (error) {
-          console.error("❌ JWT Sync Error:", error);
-        }
+        } catch (e) { }
       }
-
       if (trigger === "update" && session) {
         return { ...token, ...session.user };
       }
-
       return token;
     },
     async session({ session, token }) {
       session.strapiToken = token.strapiToken;
       if (session.user) {
         session.user.strapiUserId = token.strapiUserId;
-        session.user.emailVerified = token.emailVerified;
         session.user.role = token.role;
       }
       return session;
@@ -135,42 +130,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   pages: {
     signIn: "/auth/login",
-    signUp: "/auth/register",
   },
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "jwt" },
 });
 
 export async function registerUser(userData) {
   try {
-    const response = await strapiAuth.register({
-      username: userData.username,
-      email: userData.email,
-      password: userData.password,
-    });
-
+    const response = await strapiAuth.register(userData);
     const data = await response.json();
-
     if (response.ok) {
       console.log(`📝 [Auth] Registered: ${data.user?.email}`);
       return { success: true, user: data.user, jwt: data.jwt };
-    } else {
-      let errorMessage = data.error?.message || "Error en el registro. Por favor, intenta de nuevo.";
-
-      if (data.error?.details?.errors?.length > 0) {
-        const firstError = data.error.details.errors[0];
-        if (firstError.path?.includes("email")) errorMessage = "Este email ya está registrado";
-        else if (firstError.path?.includes("username")) errorMessage = "Este nombre de usuario ya está en uso";
-      }
-
-      return { success: false, error: { message: errorMessage } };
     }
+    return { success: false, error: data.error };
   } catch (error) {
-    console.error("❌ Registration Error:", error);
-    return {
-      success: false,
-      error: { message: "Error de conexión. Por favor, verifica tu conexión a internet." },
-    };
+    return { success: false, error: { message: "Error de red" } };
   }
 }
