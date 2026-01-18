@@ -6,7 +6,6 @@
 // Configuración base
 const STRAPI_CONFIG = {
   apiUrl: process.env.STRAPI_API_URL,
-  apiToken: process.env.STRAPI_API_TOKEN,
 }
 
 // Validación de configuración
@@ -33,15 +32,9 @@ export const STRAPI_ENDPOINTS = {
 
 // Headers por defecto para las peticiones
 export const getDefaultHeaders = () => {
-  const headers = {
+  return {
     'Content-Type': 'application/json',
   }
-  
-  if (STRAPI_CONFIG.apiToken) {
-    headers['Authorization'] = `Bearer ${STRAPI_CONFIG.apiToken}`
-  }
-  
-  return headers
 }
 
 // Función para construir URL completa
@@ -55,7 +48,7 @@ export const strapiRequest = async (endpoint, options = {}) => {
   const defaultOptions = {
     headers: getDefaultHeaders(),
   }
-  
+
   const mergedOptions = {
     ...defaultOptions,
     ...options,
@@ -64,9 +57,9 @@ export const strapiRequest = async (endpoint, options = {}) => {
       ...options.headers,
     },
   }
-  
-  console.log(`🌐 Strapi Request: ${options.method || 'GET'} ${url}`)
-  
+  const endpointName = url.includes('/api/') ? url.split('/api/')[1].split('?')[0] : endpoint;
+  console.log(`📡 Strapi: ${mergedOptions.method} /${endpointName}`);
+
   try {
     const response = await fetch(url, mergedOptions)
     return response
@@ -84,28 +77,28 @@ export const strapiAuth = {
       body: JSON.stringify(credentials),
     })
   },
-  
+
   register: async (userData) => {
     return strapiRequest(STRAPI_ENDPOINTS.auth.register, {
       method: 'POST',
       body: JSON.stringify(userData),
     })
   },
-  
+
   forgotPassword: async (email) => {
     return strapiRequest(STRAPI_ENDPOINTS.auth.forgotPassword, {
       method: 'POST',
       body: JSON.stringify({ email }),
     })
   },
-  
+
   resetPassword: async (resetData) => {
     return strapiRequest(STRAPI_ENDPOINTS.auth.resetPassword, {
       method: 'POST',
       body: JSON.stringify(resetData),
     })
   },
-  
+
   sendEmailConfirmation: async (email) => {
     return strapiRequest(STRAPI_ENDPOINTS.auth.sendEmailConfirmation, {
       method: 'POST',
@@ -119,17 +112,17 @@ export const strapiUsers = {
   findByEmail: async (email) => {
     return strapiRequest(STRAPI_ENDPOINTS.users.byEmail(email))
   },
-  
+
   list: async (filters = {}) => {
     const queryParams = new URLSearchParams()
     Object.entries(filters).forEach(([key, value]) => {
       queryParams.append(key, value)
     })
-    
-    const endpoint = queryParams.toString() 
+
+    const endpoint = queryParams.toString()
       ? `${STRAPI_ENDPOINTS.users.list}?${queryParams.toString()}`
       : STRAPI_ENDPOINTS.users.list
-      
+
     return strapiRequest(endpoint)
   },
 }
@@ -137,7 +130,6 @@ export const strapiUsers = {
 // Exportar configuración para casos especiales
 export const getStrapiConfig = () => ({
   apiUrl: STRAPI_CONFIG.apiUrl,
-  apiToken: STRAPI_CONFIG.apiToken,
 })
 
 export default {

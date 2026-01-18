@@ -93,25 +93,62 @@ const Providers = ({ children }) => {
   }, [router]);
 
   const fetcher = async (url) => {
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        ...(session?.strapiToken
-          ? { Authorization: `Bearer ${session.strapiToken}` }
-          : {}),
-      },
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      const err = new Error(
-        data?.error?.message || `Fetch failed with status ${res.status}`
-      );
-      err.data = data;
-      err.status = res.status;
-      throw err;
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.strapiToken
+            ? { Authorization: `Bearer ${session.strapiToken}` }
+            : {}),
+        },
+      });
+
+      if (res.status === 401) {
+        console.warn("⚠️ Sesión de Strapi expirada (401). Cerrando sesión...");
+        const { signOut } = await import("next-auth/react");
+        signOut({ callbackUrl: "/auth/login" });
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        const err = new Error(
+          data?.error?.message || `Fetch failed with status ${res.status}`
+        );
+        err.data = data;
+        err.status = res.status;
+        throw err;
+      }
+      return res.json();
+    } catch (error) {
+      console.error("❌ Fetch error:", error);
+      throw error;
     }
-    return res.json();
   };
+
+  // Validación periódica de la sesión
+  useEffect(() => {
+    if (!session?.strapiToken) return;
+
+    const checkSession = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_API_URL || "http://localhost:1337"}/api/users/me`, {
+          headers: { Authorization: `Bearer ${session.strapiToken}` },
+        });
+
+        if (res.status === 401) {
+          const { signOut } = await import("next-auth/react");
+          signOut({ callbackUrl: "/auth/login" });
+        }
+      } catch (e) {
+        console.error("Session check failed", e);
+      }
+    };
+
+    // Validar al montar y cada 10 minutos
+    const interval = setInterval(checkSession, 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [session]);
 
   return (
     <>

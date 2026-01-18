@@ -36,18 +36,15 @@ export default async function PlansPage() {
 
   try {
     const url = buildStrapiUrl(`/api/plans?${qs.toString()}`);
-    const apiToken = process.env.STRAPI_API_TOKEN;
-    const authHeader =
-      apiToken?.trim().length > 0
-        ? { Authorization: `Bearer ${apiToken}` }
-        : session?.strapiToken
-          ? { Authorization: `Bearer ${session.strapiToken}` }
-          : {};
+    const authHeaders = session?.strapiToken
+      ? { Authorization: `Bearer ${session.strapiToken}` }
+      : {};
+
     const res = await fetch(url, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
-        ...authHeader,
+        ...authHeaders,
       },
       cache: "no-store",
     });

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 const STRAPI_URL = process.env.STRAPI_API_URL || "http://localhost:1337";
-const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 
 export async function GET() {
     try {
@@ -19,7 +18,6 @@ export async function GET() {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${STRAPI_API_TOKEN}`,
             },
             cache: "no-store",
         });
